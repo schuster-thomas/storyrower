@@ -33,10 +33,27 @@ Aufzeichnung: [recordings/woodrower-2026-11-16-18-56-39.json](recordings/woodrow
 
 → Pause und Start lassen sich im Spiel direkt aus den Events erkennen (z. B. Spiel automatisch pausieren).
 
-## Auffälligkeiten / noch offen
-- **Kurze Aufzeichnung:** 95 s, davon ca. 50 s Rudern (30 Schläge, 124 m, 18–55 W). Für den Simulator und für die Bewertung von Latenz und Watt-Plausibilität fehlt noch die **10-Minuten-Session mit Tempowechseln**.
-- **SPM wirkt hoch:** Die Konsole meldet 43–49 spm. Aus dem Schlagzähler ergeben sich im selben Zeitraum ca. 36 spm. Möglicherweise wurden schnelle, kurze Testschläge gerudert. In der langen Aufzeichnung mit der Anzeige an der Konsole vergleichen.
-- **Latenz** (Gefühl: Wie schnell reagieren die Werte auf einen Tempowechsel?) und **Verbindungsstabilität** über eine längere Zeit sind noch nicht bewertet.
+## 10-Minuten-Test (16.11.2026, 20:13)
+Aufzeichnung: [recordings/woodrower-2026-11-16-19-13-47-10min.json](recordings/woodrower-2026-11-16-19-13-47-10min.json)
+
+| | |
+|---|---|
+| Dauer | 618 s Verbindung, 608 s Gerätezeit |
+| Ergebnis | 1.689 m · 242 Schläge · 48 kcal · Widerstand 6–7 |
+| Leistung | locker 45–60 W, zügig 85–100 W, Spitze 178 W |
+| Schlagfrequenz | 20–30 spm |
+| Pakete | 2.474 Rower Data, **0 Fehler**, längste Lücke 716 ms, **kein Verbindungsabbruch** |
+| Effektive Datenrate | 1,4 Wertänderungen pro Sekunde |
+
+**Bewertung**
+- ✅ **Stabil:** 10 Minuten ohne Abbruch oder Lücke über 1 s.
+- ✅ **Schlagfrequenz plausibel:** Aus dem Schlagzähler ergeben sich 24,1 spm, die Konsole meldet Ø 23. Die 43–49 spm aus dem Kurztest waren echte schnelle Testschläge.
+- ✅ **Reaktionszeit:** Nach einem kräftigeren Schlag steigen Watt und Pace innerhalb von ~1–2 s (Beispiel: Sekunde 243 → 58 W, 244 → 91 W, 246 → 167 W). Watt und Pace werden **einmal pro Schlag** aktualisiert, in einem eigenen Paket nach dem Schlagzähler.
+- ✅ Die Intervalle sind in den Daten klar erkennbar (≈ 55 W locker ↔ 85–100 W zügig). Das Spiel kann darauf gut reagieren.
+- ℹ️ Watt schwanken von Schlag zu Schlag deutlich (ein einzelner harter Schlag = 167 W). Für Zielband-Bewertung und Spielgeschwindigkeit **glätten** (z. B. gleitender Mittelwert über 3–4 Schläge), für Effekte wie Gischt den Rohwert nutzen.
+- 🐞 PoC-Fehler behoben: Beim erneuten Verbinden sprangen die Zeitstempel zurück, und die Aufzeichnung enthielt beide Sessions. Die Datei oben enthält nur die 10-Minuten-Session.
+
+## Noch offen
 - **Widerstand setzen** (Target Resistance per Control Point) wird laut Features unterstützt. Das ist für später interessant (Flutwelle = schwereres Wasser), aber noch nicht getestet.
 
 ## Konsequenzen für Meilenstein 1

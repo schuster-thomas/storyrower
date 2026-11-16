@@ -139,6 +139,13 @@ Dein Zielgerät **Samsung Galaxy Tab S9 (SM-X710, Snapdragon 8 Gen 2)** ist leis
 - **Neu:** kleine Vorschau der nächsten Phase („In 0:30: Ausbruch! Ziel 180–220 W“). Damit kann man sich auf Intervalle einstellen.
 - Große Ziffern, hoher Kontrast – das Tablet steht ~1–1,5 m entfernt, man schwitzt, man bewegt sich.
 
+### 6.1 Diagnose-Ansicht (Pflicht im fertigen Tool)
+Wunsch nach dem BLE-PoC: Die Testansicht bleibt im fertigen Tool erhalten.
+- **Eigener Bildschirm „Gerät & Diagnose“** im Menü, nutzbar auch ohne Level: verbinden, alle Live-Werte als Kacheln, Update-Rate, Geräteinfos, Status-Events, Protokoll mit Rohdaten.
+- **Ein-/ausblendbares Overlay im Spiel** (z. B. Tipp auf ein Symbol in der Ecke): Rohwerte, geglättete Werte, Paketrate, Verbindungsstatus. Das Spiel läuft dahinter weiter.
+- **Aufzeichnen & Abspielen** wie im PoC: Jede Session lässt sich als JSON speichern und später im Simulator abspielen. Das ist auch die Grundlage für Fehlerberichte.
+- Technisch: Die Diagnose-Ansicht hängt am selben `RowerSource`-Interface wie das Spiel. Sie zeigt daher genau die Daten, die das Spiel bekommt.
+
 ---
 
 ## 7. Vor- und Nachteile des Gesamtkonzepts

@@ -11,7 +11,7 @@ Belohnt wird nicht Maximalleistung, sondern wie gut man die **Zielbereiche** fü
 ## Status
 | Meilenstein | Stand |
 |---|---|
-| 0 – BLE-PoC (Woodrower-Daten per Web Bluetooth) | ✅ Woodrower spricht FTMS – [Ergebnis](poc/ble/ERGEBNIS.md); lange Aufzeichnung offen |
+| 0 – BLE-PoC (Woodrower-Daten per Web Bluetooth) | ✅ abgeschlossen – Woodrower spricht FTMS, 10 min stabil ([Ergebnis](poc/ble/ERGEBNIS.md)) |
 | 1 – Daten-Layer + Simulator | – |
 | 2 – Graybox-Spiel | – |
 | 3 – Story-Engine | – |

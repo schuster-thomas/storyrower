@@ -205,7 +205,8 @@ async function connect(all) {
     server = await device.gatt.connect();
     setStatus(`verbunden: ${device.name ?? 'Gerät'}`, 'ok');
     log('GATT verbunden');
-    t0 = performance.now();
+    // t0 nicht zurücksetzen: Die Aufzeichnung läuft über Neuverbindungen weiter, Zeitstempel bleiben monoton.
+    recording.push({ t: Math.round(performance.now() - t0), event: 'connected', device: device.name ?? null });
     await explore();
     setConnectedUi(true);
     requestWakeLock();
