@@ -1,0 +1,7757 @@
+{
+ "app": "storyrower-ble-poc",
+ "version": 1,
+ "recordedAt": "2026-11-16T18:56:39.926Z",
+ "device": "Domyos-ROW-0254",
+ "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+ "packets": [
+  {
+   "t": 1496,
+   "uuid": "00002acc-0000-1000-8000-00805f9b34fb",
+   "hex": "a6 56 00 00 04 00 00 00",
+   "parsed": {
+    "read": {
+     "machine": [
+      "Cadence",
+      "Total Distance",
+      "Pace",
+      "Resistance Level",
+      "Expended Energy",
+      "Heart Rate",
+      "Elapsed Time",
+      "Power Measurement"
+     ],
+     "target": [
+      "Resistance Target"
+     ]
+    }
+   }
+  },
+  {
+   "t": 1765,
+   "uuid": "00002a24-0000-1000-8000-00805f9b34fb",
+   "hex": "38 36 30 34 34 33 35",
+   "parsed": {
+    "read": "8604435"
+   }
+  },
+  {
+   "t": 1782,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 1855,
+   "uuid": "00002a26-0000-1000-8000-00805f9b34fb",
+   "hex": "43 6f 6e 73 6f 6c 65 3a 20 32 2e 35 2e 30 0d 0a 42 6c 75 65 74 6f 6f 74 68 3a 20 32 2e 36 2e 30 0d 0a 42 38 30 35 3a 32 2e 35 2e 30",
+   "parsed": {
+    "read": "43 6f 6e 73 6f 6c 65 3a 20 32 2e 35 2e 30 0d 0a 42 6c 75 65 74 6f 6f 74 68 3a 20 32 2e 36 2e 30 0d 0a 42 38 30 35 3a 32 2e 35 2e 30"
+   }
+  },
+  {
+   "t": 1885,
+   "uuid": "00002a27-0000-1000-8000-00805f9b34fb",
+   "hex": "31 2e 30 2e 30",
+   "parsed": {
+    "read": "1.0.0"
+   }
+  },
+  {
+   "t": 1915,
+   "uuid": "00002a28-0000-1000-8000-00805f9b34fb",
+   "hex": "43 6f 6e 73 6f 6c 65 20 42 6f 6f 74 6c 6f 61 64 65 72 3a 20 31 2e 33 2e 30 0d 0a 42 6c 75 65 74 6f 6f 74 68 20 42 6f 6f 74 6c 6f 61 64 65 72 3a 20 31 2e 30 2e 30 0d 0a 42 38 30 35 20 42 6f 6f 74 6c 6f 61 64 65 72 3a 31 2e 31 2e 30",
+   "parsed": {
+    "read": "43 6f 6e 73 6f 6c 65 20 42 6f 6f 74 6c 6f 61 64 65 72 3a 20 31 2e 33 2e 30 0d 0a 42 6c 75 65 74 6f 6f 74 68 20 42 6f 6f 74 6c 6f 61 64 65 72 3a 20 31 2e 30 2e 30 0d 0a 42 38 30 35 20 42 6f 6f 74 6c 6f 61 64 65 72 3a 31 2e 31 2e 30"
+   }
+  },
+  {
+   "t": 1944,
+   "uuid": "00002a29-0000-1000-8000-00805f9b34fb",
+   "hex": "44 45 43 41 54 48 4c 4f 4e",
+   "parsed": {
+    "read": "DECATHLON"
+   }
+  },
+  {
+   "t": 2058,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 2262,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 2502,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 2759,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 3014,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 3308,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 3507,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 3567,
+   "uuid": "00002ada-0000-1000-8000-00805f9b34fb",
+   "hex": "04",
+   "parsed": null
+  },
+  {
+   "t": 3639,
+   "uuid": "00002ad3-0000-1000-8000-00805f9b34fb",
+   "hex": "01 0d",
+   "parsed": null
+  },
+  {
+   "t": 3809,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 4016,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 4317,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 4537,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 0
+   }
+  },
+  {
+   "t": 4780,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 01 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 1
+   }
+  },
+  {
+   "t": 5016,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 01 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 1
+   }
+  },
+  {
+   "t": 5276,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 01 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 1
+   }
+  },
+  {
+   "t": 5559,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 01 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 1
+   }
+  },
+  {
+   "t": 5813,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 6012,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 6129,
+   "uuid": "00002ada-0000-1000-8000-00805f9b34fb",
+   "hex": "02 02",
+   "parsed": null
+  },
+  {
+   "t": 6254,
+   "uuid": "00002ad3-0000-1000-8000-00805f9b34fb",
+   "hex": "01 01",
+   "parsed": null
+  },
+  {
+   "t": 6385,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 6684,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 6823,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 7017,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 7265,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 7508,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 7780,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 8063,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 8262,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 8512,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 0,
+    "avgStrokeRate": 0,
+    "totalDistance": 0,
+    "pace": 0,
+    "power": 0,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 8575,
+   "uuid": "00002ada-0000-1000-8000-00805f9b34fb",
+   "hex": "04",
+   "parsed": null
+  },
+  {
+   "t": 8588,
+   "uuid": "00002ad3-0000-1000-8000-00805f9b34fb",
+   "hex": "01 0d",
+   "parsed": null
+  },
+  {
+   "t": 8754,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 00 00 5a 00 00 00 b8 00 37 00 01 00 00 00 02 01 04 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 0,
+    "avgStrokeRate": 45,
+    "totalDistance": 0,
+    "pace": 184,
+    "power": 55,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 258,
+    "energyPerMinute": 4,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 9054,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 00 00 5a 00 00 00 b8 00 37 00 01 00 00 00 02 01 04 00 02 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 0,
+    "avgStrokeRate": 45,
+    "totalDistance": 0,
+    "pace": 184,
+    "power": 55,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 258,
+    "energyPerMinute": 4,
+    "heartRate": 0,
+    "elapsedTime": 2
+   }
+  },
+  {
+   "t": 9353,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 00 00 5a 02 00 00 b8 00 37 00 01 00 00 00 02 01 04 00 03 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 0,
+    "avgStrokeRate": 45,
+    "totalDistance": 2,
+    "pace": 184,
+    "power": 55,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 258,
+    "energyPerMinute": 4,
+    "heartRate": 0,
+    "elapsedTime": 3
+   }
+  },
+  {
+   "t": 9504,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 00 00 5a 02 00 00 b8 00 37 00 01 00 00 00 02 01 04 00 03 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 0,
+    "avgStrokeRate": 45,
+    "totalDistance": 2,
+    "pace": 184,
+    "power": 55,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 258,
+    "energyPerMinute": 4,
+    "heartRate": 0,
+    "elapsedTime": 3
+   }
+  },
+  {
+   "t": 9774,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 00 00 5a 02 00 00 b8 00 37 00 01 00 00 00 02 01 04 00 03 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 0,
+    "avgStrokeRate": 45,
+    "totalDistance": 2,
+    "pace": 184,
+    "power": 55,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 258,
+    "energyPerMinute": 4,
+    "heartRate": 0,
+    "elapsedTime": 3
+   }
+  },
+  {
+   "t": 10028,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 00 00 5a 02 00 00 b8 00 37 00 01 00 00 00 02 01 04 00 03 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 0,
+    "avgStrokeRate": 45,
+    "totalDistance": 2,
+    "pace": 184,
+    "power": 55,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 258,
+    "energyPerMinute": 4,
+    "heartRate": 0,
+    "elapsedTime": 3
+   }
+  },
+  {
+   "t": 10376,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 46 00 00 50 05 00 00 20 01 0e 00 01 00 00 00 41 00 01 00 04 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 35,
+    "strokeCount": 0,
+    "avgStrokeRate": 40,
+    "totalDistance": 5,
+    "pace": 288,
+    "power": 14,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 65,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 4
+   }
+  },
+  {
+   "t": 10595,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 46 00 00 50 05 00 00 20 01 0e 00 01 00 00 00 41 00 01 00 04 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 35,
+    "strokeCount": 0,
+    "avgStrokeRate": 40,
+    "totalDistance": 5,
+    "pace": 288,
+    "power": 14,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 65,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 4
+   }
+  },
+  {
+   "t": 10769,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 46 01 00 50 05 00 00 20 01 0e 00 01 00 00 00 41 00 01 00 04 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 35,
+    "strokeCount": 1,
+    "avgStrokeRate": 40,
+    "totalDistance": 5,
+    "pace": 288,
+    "power": 14,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 65,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 4
+   }
+  },
+  {
+   "t": 11018,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 46 01 00 50 05 00 00 20 01 0e 00 01 00 00 00 41 00 01 00 04 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 35,
+    "strokeCount": 1,
+    "avgStrokeRate": 40,
+    "totalDistance": 5,
+    "pace": 288,
+    "power": 14,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 65,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 4
+   }
+  },
+  {
+   "t": 11334,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 46 01 00 50 07 00 00 20 01 0e 00 01 00 00 00 41 00 01 00 05 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 35,
+    "strokeCount": 1,
+    "avgStrokeRate": 40,
+    "totalDistance": 7,
+    "pace": 288,
+    "power": 14,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 65,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 5
+   }
+  },
+  {
+   "t": 11518,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 46 01 00 50 07 00 00 20 01 0e 00 01 00 00 00 41 00 01 00 05 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 35,
+    "strokeCount": 1,
+    "avgStrokeRate": 40,
+    "totalDistance": 7,
+    "pace": 288,
+    "power": 14,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 65,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 5
+   }
+  },
+  {
+   "t": 11783,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 01 00 52 07 00 00 08 01 12 00 01 00 00 00 54 00 01 00 05 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 1,
+    "avgStrokeRate": 41,
+    "totalDistance": 7,
+    "pace": 264,
+    "power": 18,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 5
+   }
+  },
+  {
+   "t": 12068,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 01 00 52 07 00 00 08 01 12 00 01 00 00 00 54 00 01 00 05 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 1,
+    "avgStrokeRate": 41,
+    "totalDistance": 7,
+    "pace": 264,
+    "power": 18,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 5
+   }
+  },
+  {
+   "t": 12266,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 09 00 00 08 01 12 00 01 00 00 00 54 00 01 00 06 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 9,
+    "pace": 264,
+    "power": 18,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 6
+   }
+  },
+  {
+   "t": 12521,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 09 00 00 08 01 12 00 01 00 00 00 54 00 01 00 06 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 9,
+    "pace": 264,
+    "power": 18,
+    "resistance": 1,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 6
+   }
+  },
+  {
+   "t": 12564,
+   "uuid": "00002ada-0000-1000-8000-00805f9b34fb",
+   "hex": "07 1e",
+   "parsed": null
+  },
+  {
+   "t": 12764,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 09 00 00 08 01 12 00 03 00 00 00 54 00 01 00 06 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 9,
+    "pace": 264,
+    "power": 18,
+    "resistance": 3,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 6
+   }
+  },
+  {
+   "t": 13016,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 09 00 00 08 01 12 00 03 00 00 00 54 00 01 00 06 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 9,
+    "pace": 264,
+    "power": 18,
+    "resistance": 3,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 6
+   }
+  },
+  {
+   "t": 13090,
+   "uuid": "00002ada-0000-1000-8000-00805f9b34fb",
+   "hex": "07 32",
+   "parsed": null
+  },
+  {
+   "t": 13258,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0a 00 00 08 01 12 00 05 00 00 00 54 00 01 00 07 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 10,
+    "pace": 264,
+    "power": 18,
+    "resistance": 5,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 7
+   }
+  },
+  {
+   "t": 13525,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0a 00 00 08 01 12 00 05 00 00 00 54 00 01 00 07 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 10,
+    "pace": 264,
+    "power": 18,
+    "resistance": 5,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 7
+   }
+  },
+  {
+   "t": 13569,
+   "uuid": "00002ada-0000-1000-8000-00805f9b34fb",
+   "hex": "07 3c",
+   "parsed": null
+  },
+  {
+   "t": 13781,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0a 00 00 08 01 12 00 06 00 00 00 54 00 01 00 07 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 10,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 7
+   }
+  },
+  {
+   "t": 14008,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0a 00 00 08 01 12 00 06 00 00 00 54 00 01 00 07 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 10,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 7
+   }
+  },
+  {
+   "t": 14273,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0c 00 00 08 01 12 00 06 00 00 00 54 00 01 00 08 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 12,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 8
+   }
+  },
+  {
+   "t": 14543,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0c 00 00 08 01 12 00 06 00 00 00 54 00 01 00 08 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 12,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 8
+   }
+  },
+  {
+   "t": 14759,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0c 00 00 08 01 12 00 06 00 00 00 54 00 01 00 08 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 12,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 8
+   }
+  },
+  {
+   "t": 15022,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0c 00 00 08 01 12 00 06 00 00 00 54 00 01 00 08 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 12,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 8
+   }
+  },
+  {
+   "t": 15279,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0e 00 00 08 01 12 00 06 00 00 00 54 00 01 00 09 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 14,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 9
+   }
+  },
+  {
+   "t": 15531,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0e 00 00 08 01 12 00 06 00 00 00 54 00 01 00 09 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 14,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 9
+   }
+  },
+  {
+   "t": 15772,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0e 00 00 08 01 12 00 06 00 00 00 54 00 01 00 09 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 14,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 9
+   }
+  },
+  {
+   "t": 16031,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 0e 00 00 08 01 12 00 06 00 00 00 54 00 01 00 09 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 14,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 9
+   }
+  },
+  {
+   "t": 16302,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 10 00 00 08 01 12 00 06 00 00 00 54 00 01 00 0a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 16,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 10
+   }
+  },
+  {
+   "t": 16573,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 10 00 00 08 01 12 00 06 00 00 00 54 00 01 00 0a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 16,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 10
+   }
+  },
+  {
+   "t": 16803,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 10 00 00 08 01 12 00 06 00 00 00 54 00 01 00 0a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 16,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 10
+   }
+  },
+  {
+   "t": 17008,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 02 00 52 10 00 00 08 01 12 00 06 00 00 00 54 00 01 00 0a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 2,
+    "avgStrokeRate": 41,
+    "totalDistance": 16,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 10
+   }
+  },
+  {
+   "t": 17306,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 02 00 42 12 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 2,
+    "avgStrokeRate": 33,
+    "totalDistance": 18,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 11
+   }
+  },
+  {
+   "t": 17501,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 02 00 42 12 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 2,
+    "avgStrokeRate": 33,
+    "totalDistance": 18,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 11
+   }
+  },
+  {
+   "t": 17767,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 03 00 42 12 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 3,
+    "avgStrokeRate": 33,
+    "totalDistance": 18,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 11
+   }
+  },
+  {
+   "t": 18024,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 03 00 42 12 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 3,
+    "avgStrokeRate": 33,
+    "totalDistance": 18,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 11
+   }
+  },
+  {
+   "t": 18262,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 03 00 42 13 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 3,
+    "avgStrokeRate": 33,
+    "totalDistance": 19,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 12
+   }
+  },
+  {
+   "t": 18518,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 03 00 42 13 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 3,
+    "avgStrokeRate": 33,
+    "totalDistance": 19,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 12
+   }
+  },
+  {
+   "t": 18775,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 03 00 42 13 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 3,
+    "avgStrokeRate": 33,
+    "totalDistance": 19,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 12
+   }
+  },
+  {
+   "t": 19031,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 03 00 42 13 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 3,
+    "avgStrokeRate": 33,
+    "totalDistance": 19,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 12
+   }
+  },
+  {
+   "t": 19268,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 03 00 42 15 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 3,
+    "avgStrokeRate": 33,
+    "totalDistance": 21,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 13
+   }
+  },
+  {
+   "t": 19585,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 16 03 00 42 15 00 00 3e 01 0a 00 06 00 00 00 2e 00 00 00 0d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 11,
+    "strokeCount": 3,
+    "avgStrokeRate": 33,
+    "totalDistance": 21,
+    "pace": 318,
+    "power": 10,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 46,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 13
+   }
+  },
+  {
+   "t": 19769,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2a 03 00 3e 15 00 00 ff 00 14 00 06 00 00 00 5d 00 01 00 0d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 21,
+    "strokeCount": 3,
+    "avgStrokeRate": 31,
+    "totalDistance": 21,
+    "pace": 255,
+    "power": 20,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 93,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 13
+   }
+  },
+  {
+   "t": 20021,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2a 03 00 3e 15 00 00 ff 00 14 00 06 00 00 00 5d 00 01 00 0d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 21,
+    "strokeCount": 3,
+    "avgStrokeRate": 31,
+    "totalDistance": 21,
+    "pace": 255,
+    "power": 20,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 93,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 13
+   }
+  },
+  {
+   "t": 20286,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2a 04 00 3e 17 00 00 ff 00 14 00 06 00 00 00 5d 00 01 00 0e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 21,
+    "strokeCount": 4,
+    "avgStrokeRate": 31,
+    "totalDistance": 23,
+    "pace": 255,
+    "power": 20,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 93,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 14
+   }
+  },
+  {
+   "t": 20588,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2a 04 00 3e 17 00 00 ff 00 14 00 06 00 00 00 5d 00 01 00 0e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 21,
+    "strokeCount": 4,
+    "avgStrokeRate": 31,
+    "totalDistance": 23,
+    "pace": 255,
+    "power": 20,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 93,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 14
+   }
+  },
+  {
+   "t": 20761,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2a 04 00 3e 17 00 00 ff 00 14 00 06 00 00 00 5d 00 01 00 0e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 21,
+    "strokeCount": 4,
+    "avgStrokeRate": 31,
+    "totalDistance": 23,
+    "pace": 255,
+    "power": 20,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 93,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 14
+   }
+  },
+  {
+   "t": 21086,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2a 04 00 3e 17 00 00 ff 00 14 00 06 00 00 00 5d 00 01 00 0e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 21,
+    "strokeCount": 4,
+    "avgStrokeRate": 31,
+    "totalDistance": 23,
+    "pace": 255,
+    "power": 20,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 93,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 14
+   }
+  },
+  {
+   "t": 21268,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 04 00 42 19 00 00 e4 00 1d 00 06 00 00 00 88 00 02 00 0f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 4,
+    "avgStrokeRate": 33,
+    "totalDistance": 25,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 15
+   }
+  },
+  {
+   "t": 21515,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 04 00 42 19 00 00 e4 00 1d 00 06 00 00 00 88 00 02 00 0f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 4,
+    "avgStrokeRate": 33,
+    "totalDistance": 25,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 15
+   }
+  },
+  {
+   "t": 21794,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 05 00 42 19 00 00 e4 00 1d 00 06 00 00 00 88 00 02 00 0f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 5,
+    "avgStrokeRate": 33,
+    "totalDistance": 25,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 15
+   }
+  },
+  {
+   "t": 22072,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 05 00 42 19 00 00 e4 00 1d 00 06 00 00 00 88 00 02 00 0f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 5,
+    "avgStrokeRate": 33,
+    "totalDistance": 25,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 15
+   }
+  },
+  {
+   "t": 22256,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 05 00 42 1b 00 00 e4 00 1d 00 06 00 00 00 88 00 02 00 10 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 5,
+    "avgStrokeRate": 33,
+    "totalDistance": 27,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 16
+   }
+  },
+  {
+   "t": 22522,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 05 00 42 1b 00 00 e4 00 1d 00 06 00 00 00 88 00 02 00 10 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 5,
+    "avgStrokeRate": 33,
+    "totalDistance": 27,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 16
+   }
+  },
+  {
+   "t": 22767,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 05 00 44 1b 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 10 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 5,
+    "avgStrokeRate": 34,
+    "totalDistance": 27,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 16
+   }
+  },
+  {
+   "t": 23020,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 05 00 44 1b 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 10 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 5,
+    "avgStrokeRate": 34,
+    "totalDistance": 27,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 16
+   }
+  },
+  {
+   "t": 23275,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 06 00 44 1d 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 11 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 6,
+    "avgStrokeRate": 34,
+    "totalDistance": 29,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 17
+   }
+  },
+  {
+   "t": 23506,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 06 00 44 1d 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 11 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 6,
+    "avgStrokeRate": 34,
+    "totalDistance": 29,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 17
+   }
+  },
+  {
+   "t": 23891,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 06 00 44 1d 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 11 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 6,
+    "avgStrokeRate": 34,
+    "totalDistance": 29,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 17
+   }
+  },
+  {
+   "t": 24031,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 06 00 44 1d 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 11 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 6,
+    "avgStrokeRate": 34,
+    "totalDistance": 29,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 17
+   }
+  },
+  {
+   "t": 24280,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 06 00 46 1f 00 00 f9 00 16 00 06 00 00 00 67 00 01 00 12 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 6,
+    "avgStrokeRate": 35,
+    "totalDistance": 31,
+    "pace": 249,
+    "power": 22,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 103,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 18
+   }
+  },
+  {
+   "t": 24518,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 06 00 46 1f 00 00 f9 00 16 00 06 00 00 00 67 00 01 00 12 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 6,
+    "avgStrokeRate": 35,
+    "totalDistance": 31,
+    "pace": 249,
+    "power": 22,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 103,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 18
+   }
+  },
+  {
+   "t": 24776,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 07 00 46 1f 00 00 f9 00 16 00 06 00 00 00 67 00 01 00 12 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 7,
+    "avgStrokeRate": 35,
+    "totalDistance": 31,
+    "pace": 249,
+    "power": 22,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 103,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 18
+   }
+  },
+  {
+   "t": 25031,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 07 00 46 1f 00 00 f9 00 16 00 06 00 00 00 67 00 01 00 12 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 7,
+    "avgStrokeRate": 35,
+    "totalDistance": 31,
+    "pace": 249,
+    "power": 22,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 103,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 18
+   }
+  },
+  {
+   "t": 25271,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 07 00 48 21 00 00 e1 00 1e 00 06 00 00 00 8c 00 02 00 13 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 7,
+    "avgStrokeRate": 36,
+    "totalDistance": 33,
+    "pace": 225,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 19
+   }
+  },
+  {
+   "t": 25527,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 07 00 48 21 00 00 e1 00 1e 00 06 00 00 00 8c 00 02 00 13 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 7,
+    "avgStrokeRate": 36,
+    "totalDistance": 33,
+    "pace": 225,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 19
+   }
+  },
+  {
+   "t": 25783,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 08 00 48 21 00 00 e1 00 1e 00 06 00 00 00 8c 00 02 00 13 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 8,
+    "avgStrokeRate": 36,
+    "totalDistance": 33,
+    "pace": 225,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 19
+   }
+  },
+  {
+   "t": 26007,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 08 00 48 21 00 00 e1 00 1e 00 06 00 00 00 8c 00 02 00 13 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 8,
+    "avgStrokeRate": 36,
+    "totalDistance": 33,
+    "pace": 225,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 19
+   }
+  },
+  {
+   "t": 26307,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 08 00 48 24 00 00 e1 00 1e 00 06 00 00 00 8c 00 02 00 14 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 8,
+    "avgStrokeRate": 36,
+    "totalDistance": 36,
+    "pace": 225,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 20
+   }
+  },
+  {
+   "t": 26507,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5a 08 00 48 24 00 00 e1 00 1e 00 06 00 00 00 8c 00 02 00 14 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 45,
+    "strokeCount": 8,
+    "avgStrokeRate": 36,
+    "totalDistance": 36,
+    "pace": 225,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 20
+   }
+  },
+  {
+   "t": 26802,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 08 00 48 24 00 00 f6 00 17 00 06 00 00 00 6c 00 01 00 14 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 8,
+    "avgStrokeRate": 36,
+    "totalDistance": 36,
+    "pace": 246,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 20
+   }
+  },
+  {
+   "t": 27058,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 08 00 48 24 00 00 f6 00 17 00 06 00 00 00 6c 00 01 00 14 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 8,
+    "avgStrokeRate": 36,
+    "totalDistance": 36,
+    "pace": 246,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 20
+   }
+  },
+  {
+   "t": 27295,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 09 00 48 26 00 00 f6 00 17 00 06 00 00 00 6c 00 01 00 15 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 9,
+    "avgStrokeRate": 36,
+    "totalDistance": 38,
+    "pace": 246,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 21
+   }
+  },
+  {
+   "t": 27521,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 09 00 48 26 00 00 f6 00 17 00 06 00 00 00 6c 00 01 00 15 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 9,
+    "avgStrokeRate": 36,
+    "totalDistance": 38,
+    "pace": 246,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 21
+   }
+  },
+  {
+   "t": 27773,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 09 00 48 26 00 00 f6 00 17 00 06 00 00 00 6c 00 01 00 15 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 9,
+    "avgStrokeRate": 36,
+    "totalDistance": 38,
+    "pace": 246,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 21
+   }
+  },
+  {
+   "t": 28061,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4e 09 00 48 26 00 00 f6 00 17 00 06 00 00 00 6c 00 01 00 15 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 39,
+    "strokeCount": 9,
+    "avgStrokeRate": 36,
+    "totalDistance": 38,
+    "pace": 246,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 21
+   }
+  },
+  {
+   "t": 28258,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 09 00 4a 28 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 16 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 9,
+    "avgStrokeRate": 37,
+    "totalDistance": 40,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 22
+   }
+  },
+  {
+   "t": 28524,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 09 00 4a 28 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 16 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 9,
+    "avgStrokeRate": 37,
+    "totalDistance": 40,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 22
+   }
+  },
+  {
+   "t": 28794,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 0a 00 4a 28 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 16 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 10,
+    "avgStrokeRate": 37,
+    "totalDistance": 40,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 22
+   }
+  },
+  {
+   "t": 29008,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 0a 00 4a 28 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 16 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 10,
+    "avgStrokeRate": 37,
+    "totalDistance": 40,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 22
+   }
+  },
+  {
+   "t": 29277,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 0a 00 4a 2a 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 17 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 10,
+    "avgStrokeRate": 37,
+    "totalDistance": 42,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 23
+   }
+  },
+  {
+   "t": 29514,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 0a 00 4a 2a 00 00 f0 00 19 00 06 00 00 00 75 00 01 00 17 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 10,
+    "avgStrokeRate": 37,
+    "totalDistance": 42,
+    "pace": 240,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 23
+   }
+  },
+  {
+   "t": 29771,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4a 0a 00 4a 2a 00 00 fc 00 15 00 06 00 00 00 62 00 01 00 17 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 37,
+    "strokeCount": 10,
+    "avgStrokeRate": 37,
+    "totalDistance": 42,
+    "pace": 252,
+    "power": 21,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 98,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 23
+   }
+  },
+  {
+   "t": 30040,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4a 0a 00 4a 2a 00 00 fc 00 15 00 06 00 00 00 62 00 01 00 17 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 37,
+    "strokeCount": 10,
+    "avgStrokeRate": 37,
+    "totalDistance": 42,
+    "pace": 252,
+    "power": 21,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 98,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 23
+   }
+  },
+  {
+   "t": 30269,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4a 0b 00 4a 2c 00 00 fc 00 15 00 06 00 00 00 62 00 01 00 18 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 37,
+    "strokeCount": 11,
+    "avgStrokeRate": 37,
+    "totalDistance": 44,
+    "pace": 252,
+    "power": 21,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 98,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 24
+   }
+  },
+  {
+   "t": 30564,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4a 0b 00 4a 2c 00 00 fc 00 15 00 06 00 00 00 62 00 01 00 18 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 37,
+    "strokeCount": 11,
+    "avgStrokeRate": 37,
+    "totalDistance": 44,
+    "pace": 252,
+    "power": 21,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 98,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 24
+   }
+  },
+  {
+   "t": 30837,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4a 0b 00 4a 2c 00 00 fc 00 15 00 06 00 00 00 62 00 01 00 18 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 37,
+    "strokeCount": 11,
+    "avgStrokeRate": 37,
+    "totalDistance": 44,
+    "pace": 252,
+    "power": 21,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 98,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 24
+   }
+  },
+  {
+   "t": 31019,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 4a 0b 00 4a 2c 00 00 fc 00 15 00 06 00 00 00 62 00 01 00 18 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 37,
+    "strokeCount": 11,
+    "avgStrokeRate": 37,
+    "totalDistance": 44,
+    "pace": 252,
+    "power": 21,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 98,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 24
+   }
+  },
+  {
+   "t": 31287,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 0b 00 4a 2e 00 00 f5 00 17 00 06 00 00 00 6c 00 01 00 19 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 11,
+    "avgStrokeRate": 37,
+    "totalDistance": 46,
+    "pace": 245,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 25
+   }
+  },
+  {
+   "t": 31570,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 0b 00 4a 2e 00 00 f5 00 17 00 06 00 00 00 6c 00 01 00 19 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 11,
+    "avgStrokeRate": 37,
+    "totalDistance": 46,
+    "pace": 245,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 25
+   }
+  },
+  {
+   "t": 31914,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 0c 00 4a 2e 00 00 f5 00 17 00 06 00 00 00 6c 00 01 00 19 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 12,
+    "avgStrokeRate": 37,
+    "totalDistance": 46,
+    "pace": 245,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 25
+   }
+  },
+  {
+   "t": 32068,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 0c 00 4a 2e 00 00 f5 00 17 00 06 00 00 00 6c 00 01 00 19 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 12,
+    "avgStrokeRate": 37,
+    "totalDistance": 46,
+    "pace": 245,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 25
+   }
+  },
+  {
+   "t": 32280,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 0c 00 4a 30 00 00 f5 00 17 00 06 00 00 00 6c 00 01 00 1a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 12,
+    "avgStrokeRate": 37,
+    "totalDistance": 48,
+    "pace": 245,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 26
+   }
+  },
+  {
+   "t": 32503,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 0c 00 4a 30 00 00 f5 00 17 00 06 00 00 00 6c 00 01 00 1a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 12,
+    "avgStrokeRate": 37,
+    "totalDistance": 48,
+    "pace": 245,
+    "power": 23,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 108,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 26
+   }
+  },
+  {
+   "t": 32770,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 48 0c 00 4a 30 00 00 08 01 12 00 06 00 00 00 54 00 01 00 1a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 36,
+    "strokeCount": 12,
+    "avgStrokeRate": 37,
+    "totalDistance": 48,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 26
+   }
+  },
+  {
+   "t": 33025,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 48 0c 00 4a 30 00 00 08 01 12 00 06 00 00 00 54 00 01 00 1a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 36,
+    "strokeCount": 12,
+    "avgStrokeRate": 37,
+    "totalDistance": 48,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 26
+   }
+  },
+  {
+   "t": 33372,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 48 0d 00 4a 32 00 00 08 01 12 00 06 00 00 00 54 00 01 00 1b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 36,
+    "strokeCount": 13,
+    "avgStrokeRate": 37,
+    "totalDistance": 50,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 27
+   }
+  },
+  {
+   "t": 33568,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 48 0d 00 4a 32 00 00 08 01 12 00 06 00 00 00 54 00 01 00 1b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 36,
+    "strokeCount": 13,
+    "avgStrokeRate": 37,
+    "totalDistance": 50,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 27
+   }
+  },
+  {
+   "t": 33779,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 48 0d 00 4a 32 00 00 08 01 12 00 06 00 00 00 54 00 01 00 1b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 36,
+    "strokeCount": 13,
+    "avgStrokeRate": 37,
+    "totalDistance": 50,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 27
+   }
+  },
+  {
+   "t": 34031,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 48 0d 00 4a 32 00 00 08 01 12 00 06 00 00 00 54 00 01 00 1b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 36,
+    "strokeCount": 13,
+    "avgStrokeRate": 37,
+    "totalDistance": 50,
+    "pace": 264,
+    "power": 18,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 84,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 27
+   }
+  },
+  {
+   "t": 34260,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5c 0d 00 4c 34 00 00 d3 00 24 00 06 00 00 00 a9 00 02 00 1c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 46,
+    "strokeCount": 13,
+    "avgStrokeRate": 38,
+    "totalDistance": 52,
+    "pace": 211,
+    "power": 36,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 169,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 28
+   }
+  },
+  {
+   "t": 34528,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5c 0d 00 4c 34 00 00 d3 00 24 00 06 00 00 00 a9 00 02 00 1c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 46,
+    "strokeCount": 13,
+    "avgStrokeRate": 38,
+    "totalDistance": 52,
+    "pace": 211,
+    "power": 36,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 169,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 28
+   }
+  },
+  {
+   "t": 34780,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5c 0e 00 4c 34 00 00 d3 00 24 00 06 00 00 00 a9 00 02 00 1c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 46,
+    "strokeCount": 14,
+    "avgStrokeRate": 38,
+    "totalDistance": 52,
+    "pace": 211,
+    "power": 36,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 169,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 28
+   }
+  },
+  {
+   "t": 35011,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5c 0e 00 4c 34 00 00 d3 00 24 00 06 00 00 00 a9 00 02 00 1c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 46,
+    "strokeCount": 14,
+    "avgStrokeRate": 38,
+    "totalDistance": 52,
+    "pace": 211,
+    "power": 36,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 169,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 28
+   }
+  },
+  {
+   "t": 35289,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 0e 00 4c 36 00 00 e5 00 1d 00 06 00 00 00 88 00 02 00 1d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 14,
+    "avgStrokeRate": 38,
+    "totalDistance": 54,
+    "pace": 229,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 29
+   }
+  },
+  {
+   "t": 35502,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 0e 00 4c 36 00 00 e5 00 1d 00 06 00 00 00 88 00 02 00 1d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 14,
+    "avgStrokeRate": 38,
+    "totalDistance": 54,
+    "pace": 229,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 29
+   }
+  },
+  {
+   "t": 35817,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 0f 00 4c 36 00 00 e5 00 1d 00 06 00 00 00 88 00 02 00 1d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 15,
+    "avgStrokeRate": 38,
+    "totalDistance": 54,
+    "pace": 229,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 29
+   }
+  },
+  {
+   "t": 36012,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 0f 00 4c 36 00 00 e5 00 1d 00 06 00 00 00 88 00 02 00 1d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 15,
+    "avgStrokeRate": 38,
+    "totalDistance": 54,
+    "pace": 229,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 29
+   }
+  },
+  {
+   "t": 36285,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 0f 00 4c 39 00 00 e5 00 1d 00 06 00 00 00 88 00 02 00 1e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 15,
+    "avgStrokeRate": 38,
+    "totalDistance": 57,
+    "pace": 229,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 30
+   }
+  },
+  {
+   "t": 36565,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 0f 00 4c 39 00 00 e5 00 1d 00 06 00 00 00 88 00 02 00 1e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 15,
+    "avgStrokeRate": 38,
+    "totalDistance": 57,
+    "pace": 229,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 30
+   }
+  },
+  {
+   "t": 36835,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 0f 00 4e 39 00 00 e0 00 1f 00 06 00 00 00 91 00 02 00 1e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 15,
+    "avgStrokeRate": 39,
+    "totalDistance": 57,
+    "pace": 224,
+    "power": 31,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 145,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 30
+   }
+  },
+  {
+   "t": 37022,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 0f 00 4e 39 00 00 e0 00 1f 00 06 00 00 00 91 00 02 00 1e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 15,
+    "avgStrokeRate": 39,
+    "totalDistance": 57,
+    "pace": 224,
+    "power": 31,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 145,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 30
+   }
+  },
+  {
+   "t": 37269,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 10 00 4e 3b 00 00 e0 00 1f 00 06 00 00 00 91 00 02 00 1f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 16,
+    "avgStrokeRate": 39,
+    "totalDistance": 59,
+    "pace": 224,
+    "power": 31,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 145,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 31
+   }
+  },
+  {
+   "t": 37530,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 10 00 4e 3b 00 00 e0 00 1f 00 06 00 00 00 91 00 02 00 1f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 16,
+    "avgStrokeRate": 39,
+    "totalDistance": 59,
+    "pace": 224,
+    "power": 31,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 145,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 31
+   }
+  },
+  {
+   "t": 37780,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 10 00 4e 3b 00 00 e3 00 1d 00 06 00 00 00 88 00 02 00 1f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 16,
+    "avgStrokeRate": 39,
+    "totalDistance": 59,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 31
+   }
+  },
+  {
+   "t": 38009,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 10 00 4e 3b 00 00 e3 00 1d 00 06 00 00 00 88 00 02 00 1f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 16,
+    "avgStrokeRate": 39,
+    "totalDistance": 59,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 31
+   }
+  },
+  {
+   "t": 38280,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 11 00 4e 3d 00 00 e3 00 1d 00 06 00 00 00 88 00 02 00 20 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 17,
+    "avgStrokeRate": 39,
+    "totalDistance": 61,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 32
+   }
+  },
+  {
+   "t": 38531,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 11 00 4e 3d 00 00 e3 00 1d 00 06 00 00 00 88 00 02 00 20 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 17,
+    "avgStrokeRate": 39,
+    "totalDistance": 61,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 32
+   }
+  },
+  {
+   "t": 38770,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 11 00 4e 3d 00 00 e3 00 1d 00 06 00 00 00 88 00 02 00 20 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 17,
+    "avgStrokeRate": 39,
+    "totalDistance": 61,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 32
+   }
+  },
+  {
+   "t": 39024,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 58 11 00 4e 3d 00 00 e3 00 1d 00 06 00 00 00 88 00 02 00 20 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 44,
+    "strokeCount": 17,
+    "avgStrokeRate": 39,
+    "totalDistance": 61,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 32
+   }
+  },
+  {
+   "t": 39406,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 64 11 00 4e 3f 00 00 e2 00 1d 00 06 00 00 00 88 00 02 00 21 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 50,
+    "strokeCount": 17,
+    "avgStrokeRate": 39,
+    "totalDistance": 63,
+    "pace": 226,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 33
+   }
+  },
+  {
+   "t": 39508,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 64 11 00 4e 3f 00 00 e2 00 1d 00 06 00 00 00 88 00 02 00 21 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 50,
+    "strokeCount": 17,
+    "avgStrokeRate": 39,
+    "totalDistance": 63,
+    "pace": 226,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 33
+   }
+  },
+  {
+   "t": 39778,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 64 12 00 4e 3f 00 00 e2 00 1d 00 06 00 00 00 88 00 02 00 21 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 50,
+    "strokeCount": 18,
+    "avgStrokeRate": 39,
+    "totalDistance": 63,
+    "pace": 226,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 33
+   }
+  },
+  {
+   "t": 40030,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 64 12 00 4e 3f 00 00 e2 00 1d 00 06 00 00 00 88 00 02 00 21 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 50,
+    "strokeCount": 18,
+    "avgStrokeRate": 39,
+    "totalDistance": 63,
+    "pace": 226,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 0,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 33
+   }
+  },
+  {
+   "t": 40278,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 64 12 00 4e 41 00 00 e2 00 1d 00 06 00 01 00 88 00 02 00 22 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 50,
+    "strokeCount": 18,
+    "avgStrokeRate": 39,
+    "totalDistance": 65,
+    "pace": 226,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 34
+   }
+  },
+  {
+   "t": 40524,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 64 12 00 4e 41 00 00 e2 00 1d 00 06 00 01 00 88 00 02 00 22 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 50,
+    "strokeCount": 18,
+    "avgStrokeRate": 39,
+    "totalDistance": 65,
+    "pace": 226,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 34
+   }
+  },
+  {
+   "t": 40782,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 12 00 50 41 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 22 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 18,
+    "avgStrokeRate": 40,
+    "totalDistance": 65,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 34
+   }
+  },
+  {
+   "t": 41047,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 12 00 50 41 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 22 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 18,
+    "avgStrokeRate": 40,
+    "totalDistance": 65,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 34
+   }
+  },
+  {
+   "t": 41260,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 13 00 50 44 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 23 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 19,
+    "avgStrokeRate": 40,
+    "totalDistance": 68,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 35
+   }
+  },
+  {
+   "t": 41516,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 56 13 00 50 44 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 23 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 43,
+    "strokeCount": 19,
+    "avgStrokeRate": 40,
+    "totalDistance": 68,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 35
+   }
+  },
+  {
+   "t": 41845,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 13 00 50 44 00 00 e4 00 1d 00 06 00 01 00 88 00 02 00 23 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 19,
+    "avgStrokeRate": 40,
+    "totalDistance": 68,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 35
+   }
+  },
+  {
+   "t": 42013,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 13 00 50 44 00 00 e4 00 1d 00 06 00 01 00 88 00 02 00 23 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 19,
+    "avgStrokeRate": 40,
+    "totalDistance": 68,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 35
+   }
+  },
+  {
+   "t": 42283,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 14 00 50 46 00 00 e4 00 1d 00 06 00 01 00 88 00 02 00 24 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 20,
+    "avgStrokeRate": 40,
+    "totalDistance": 70,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 36
+   }
+  },
+  {
+   "t": 42519,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 14 00 50 46 00 00 e4 00 1d 00 06 00 01 00 88 00 02 00 24 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 20,
+    "avgStrokeRate": 40,
+    "totalDistance": 70,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 36
+   }
+  },
+  {
+   "t": 42776,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 14 00 50 46 00 00 e4 00 1d 00 06 00 01 00 88 00 02 00 24 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 20,
+    "avgStrokeRate": 40,
+    "totalDistance": 70,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 36
+   }
+  },
+  {
+   "t": 43029,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 14 00 50 46 00 00 e4 00 1d 00 06 00 01 00 88 00 02 00 24 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 20,
+    "avgStrokeRate": 40,
+    "totalDistance": 70,
+    "pace": 228,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 36
+   }
+  },
+  {
+   "t": 43272,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 54 14 00 50 48 00 00 f1 00 18 00 06 00 01 00 70 00 01 00 25 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 42,
+    "strokeCount": 20,
+    "avgStrokeRate": 40,
+    "totalDistance": 72,
+    "pace": 241,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 37
+   }
+  },
+  {
+   "t": 43529,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 54 14 00 50 48 00 00 f1 00 18 00 06 00 01 00 70 00 01 00 25 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 42,
+    "strokeCount": 20,
+    "avgStrokeRate": 40,
+    "totalDistance": 72,
+    "pace": 241,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 37
+   }
+  },
+  {
+   "t": 43782,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 54 15 00 50 48 00 00 f1 00 18 00 06 00 01 00 70 00 01 00 25 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 42,
+    "strokeCount": 21,
+    "avgStrokeRate": 40,
+    "totalDistance": 72,
+    "pace": 241,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 37
+   }
+  },
+  {
+   "t": 44018,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 54 15 00 50 48 00 00 f1 00 18 00 06 00 01 00 70 00 01 00 25 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 42,
+    "strokeCount": 21,
+    "avgStrokeRate": 40,
+    "totalDistance": 72,
+    "pace": 241,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 37
+   }
+  },
+  {
+   "t": 44274,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 15 00 50 4a 00 00 e0 00 1e 00 06 00 01 00 8c 00 02 00 26 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 21,
+    "avgStrokeRate": 40,
+    "totalDistance": 74,
+    "pace": 224,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 38
+   }
+  },
+  {
+   "t": 44527,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 15 00 50 4a 00 00 e0 00 1e 00 06 00 01 00 8c 00 02 00 26 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 21,
+    "avgStrokeRate": 40,
+    "totalDistance": 74,
+    "pace": 224,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 38
+   }
+  },
+  {
+   "t": 44772,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 16 00 50 4a 00 00 e0 00 1e 00 06 00 01 00 8c 00 02 00 26 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 22,
+    "avgStrokeRate": 40,
+    "totalDistance": 74,
+    "pace": 224,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 38
+   }
+  },
+  {
+   "t": 45085,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 16 00 50 4a 00 00 e0 00 1e 00 06 00 01 00 8c 00 02 00 26 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 22,
+    "avgStrokeRate": 40,
+    "totalDistance": 74,
+    "pace": 224,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 38
+   }
+  },
+  {
+   "t": 45273,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 16 00 50 4c 00 00 e0 00 1e 00 06 00 01 00 8c 00 02 00 27 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 22,
+    "avgStrokeRate": 40,
+    "totalDistance": 76,
+    "pace": 224,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 39
+   }
+  },
+  {
+   "t": 45520,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 16 00 50 4c 00 00 e0 00 1e 00 06 00 01 00 8c 00 02 00 27 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 22,
+    "avgStrokeRate": 40,
+    "totalDistance": 76,
+    "pace": 224,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 39
+   }
+  },
+  {
+   "t": 45914,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 52 16 00 50 4c 00 00 ef 00 19 00 06 00 01 00 75 00 01 00 27 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 41,
+    "strokeCount": 22,
+    "avgStrokeRate": 40,
+    "totalDistance": 76,
+    "pace": 239,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 39
+   }
+  },
+  {
+   "t": 46039,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 52 16 00 50 4c 00 00 ef 00 19 00 06 00 01 00 75 00 01 00 27 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 41,
+    "strokeCount": 22,
+    "avgStrokeRate": 40,
+    "totalDistance": 76,
+    "pace": 239,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 39
+   }
+  },
+  {
+   "t": 46409,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 52 17 00 50 4e 00 00 ef 00 19 00 06 00 01 00 75 00 01 00 28 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 41,
+    "strokeCount": 23,
+    "avgStrokeRate": 40,
+    "totalDistance": 78,
+    "pace": 239,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 40
+   }
+  },
+  {
+   "t": 46592,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 52 17 00 50 4e 00 00 ef 00 19 00 06 00 01 00 75 00 01 00 28 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 41,
+    "strokeCount": 23,
+    "avgStrokeRate": 40,
+    "totalDistance": 78,
+    "pace": 239,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 40
+   }
+  },
+  {
+   "t": 46771,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 17 00 52 4e 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 28 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 23,
+    "avgStrokeRate": 41,
+    "totalDistance": 78,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 40
+   }
+  },
+  {
+   "t": 47023,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 17 00 52 4e 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 28 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 23,
+    "avgStrokeRate": 41,
+    "totalDistance": 78,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 40
+   }
+  },
+  {
+   "t": 47279,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 50 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 29 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 80,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 41
+   }
+  },
+  {
+   "t": 47507,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 50 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 29 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 80,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 41
+   }
+  },
+  {
+   "t": 47878,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 50 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 29 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 80,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 41
+   }
+  },
+  {
+   "t": 48033,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 50 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 29 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 80,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 41
+   }
+  },
+  {
+   "t": 48282,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 53 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 2a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 83,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 42
+   }
+  },
+  {
+   "t": 48522,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 53 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 2a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 83,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 42
+   }
+  },
+  {
+   "t": 48778,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 53 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 2a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 83,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 42
+   }
+  },
+  {
+   "t": 49152,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 53 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 2a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 83,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 42
+   }
+  },
+  {
+   "t": 49306,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 55 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 2b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 85,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 43
+   }
+  },
+  {
+   "t": 49520,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 62 18 00 52 55 00 00 da 00 21 00 06 00 01 00 9b 00 02 00 2b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 49,
+    "strokeCount": 24,
+    "avgStrokeRate": 41,
+    "totalDistance": 85,
+    "pace": 218,
+    "power": 33,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 155,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 43
+   }
+  },
+  {
+   "t": 49783,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 18 00 50 55 00 00 ee 00 19 00 06 00 01 00 75 00 01 00 2b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 24,
+    "avgStrokeRate": 40,
+    "totalDistance": 85,
+    "pace": 238,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 43
+   }
+  },
+  {
+   "t": 50054,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 18 00 50 55 00 00 ee 00 19 00 06 00 01 00 75 00 01 00 2b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 24,
+    "avgStrokeRate": 40,
+    "totalDistance": 85,
+    "pace": 238,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 43
+   }
+  },
+  {
+   "t": 50307,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 19 00 50 57 00 00 ee 00 19 00 06 00 01 00 75 00 01 00 2c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 25,
+    "avgStrokeRate": 40,
+    "totalDistance": 87,
+    "pace": 238,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 44
+   }
+  },
+  {
+   "t": 50520,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 19 00 50 57 00 00 ee 00 19 00 06 00 01 00 75 00 01 00 2c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 25,
+    "avgStrokeRate": 40,
+    "totalDistance": 87,
+    "pace": 238,
+    "power": 25,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 117,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 44
+   }
+  },
+  {
+   "t": 50776,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 19 00 50 57 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 2c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 25,
+    "avgStrokeRate": 40,
+    "totalDistance": 87,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 44
+   }
+  },
+  {
+   "t": 51058,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 19 00 50 57 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 2c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 25,
+    "avgStrokeRate": 40,
+    "totalDistance": 87,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 44
+   }
+  },
+  {
+   "t": 51300,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1a 00 50 59 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 2d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 26,
+    "avgStrokeRate": 40,
+    "totalDistance": 89,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 45
+   }
+  },
+  {
+   "t": 51526,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1a 00 50 59 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 2d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 26,
+    "avgStrokeRate": 40,
+    "totalDistance": 89,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 45
+   }
+  },
+  {
+   "t": 51783,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1a 00 50 59 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 2d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 26,
+    "avgStrokeRate": 40,
+    "totalDistance": 89,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 45
+   }
+  },
+  {
+   "t": 52036,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1a 00 50 59 00 00 ea 00 1b 00 06 00 01 00 7e 00 02 00 2d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 26,
+    "avgStrokeRate": 40,
+    "totalDistance": 89,
+    "pace": 234,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 45
+   }
+  },
+  {
+   "t": 52275,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1a 00 50 5b 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 2e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 26,
+    "avgStrokeRate": 40,
+    "totalDistance": 91,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 46
+   }
+  },
+  {
+   "t": 52524,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1a 00 50 5b 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 2e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 26,
+    "avgStrokeRate": 40,
+    "totalDistance": 91,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 46
+   }
+  },
+  {
+   "t": 52783,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1b 00 50 5b 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 2e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 91,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 46
+   }
+  },
+  {
+   "t": 53024,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1b 00 50 5b 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 2e 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 91,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 46
+   }
+  },
+  {
+   "t": 53279,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1b 00 50 5e 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 2f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 94,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 47
+   }
+  },
+  {
+   "t": 53519,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1b 00 50 5e 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 2f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 94,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 47
+   }
+  },
+  {
+   "t": 53862,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1b 00 50 5e 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 2f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 94,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 47
+   }
+  },
+  {
+   "t": 54030,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1b 00 50 5e 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 2f 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 94,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 47
+   }
+  },
+  {
+   "t": 54287,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1b 00 50 60 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 30 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 96,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 48
+   }
+  },
+  {
+   "t": 54524,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 60 1b 00 50 60 00 00 e2 00 1e 00 06 00 01 00 8c 00 02 00 30 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 48,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 96,
+    "pace": 226,
+    "power": 30,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 140,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 48
+   }
+  },
+  {
+   "t": 54782,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 1b 00 50 60 00 00 f2 00 18 00 06 00 01 00 70 00 01 00 30 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 96,
+    "pace": 242,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 48
+   }
+  },
+  {
+   "t": 55061,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 1b 00 50 60 00 00 f2 00 18 00 06 00 01 00 70 00 01 00 30 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 27,
+    "avgStrokeRate": 40,
+    "totalDistance": 96,
+    "pace": 242,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 48
+   }
+  },
+  {
+   "t": 55319,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 1c 00 50 62 00 00 f2 00 18 00 06 00 01 00 70 00 01 00 31 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 28,
+    "avgStrokeRate": 40,
+    "totalDistance": 98,
+    "pace": 242,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 49
+   }
+  },
+  {
+   "t": 55529,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 1c 00 50 62 00 00 f2 00 18 00 06 00 01 00 70 00 01 00 31 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 28,
+    "avgStrokeRate": 40,
+    "totalDistance": 98,
+    "pace": 242,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 49
+   }
+  },
+  {
+   "t": 55781,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 1c 00 50 62 00 00 f2 00 18 00 06 00 01 00 70 00 01 00 31 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 28,
+    "avgStrokeRate": 40,
+    "totalDistance": 98,
+    "pace": 242,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 49
+   }
+  },
+  {
+   "t": 56055,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 2c 1c 00 50 62 00 00 f2 00 18 00 06 00 01 00 70 00 01 00 31 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 22,
+    "strokeCount": 28,
+    "avgStrokeRate": 40,
+    "totalDistance": 98,
+    "pace": 242,
+    "power": 24,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 112,
+    "energyPerMinute": 1,
+    "heartRate": 0,
+    "elapsedTime": 49
+   }
+  },
+  {
+   "t": 56338,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1c 00 50 64 00 00 e3 00 1d 00 06 00 01 00 88 00 02 00 32 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 28,
+    "avgStrokeRate": 40,
+    "totalDistance": 100,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 50
+   }
+  },
+  {
+   "t": 56625,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1c 00 50 64 00 00 e3 00 1d 00 06 00 01 00 88 00 02 00 32 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 28,
+    "avgStrokeRate": 40,
+    "totalDistance": 100,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 50
+   }
+  },
+  {
+   "t": 56792,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1d 00 50 64 00 00 e3 00 1d 00 06 00 01 00 88 00 02 00 32 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 29,
+    "avgStrokeRate": 40,
+    "totalDistance": 100,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 50
+   }
+  },
+  {
+   "t": 57027,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1d 00 50 64 00 00 e3 00 1d 00 06 00 01 00 88 00 02 00 32 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 29,
+    "avgStrokeRate": 40,
+    "totalDistance": 100,
+    "pace": 227,
+    "power": 29,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 136,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 50
+   }
+  },
+  {
+   "t": 57281,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1d 00 50 66 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 33 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 29,
+    "avgStrokeRate": 40,
+    "totalDistance": 102,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 51
+   }
+  },
+  {
+   "t": 57524,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1d 00 50 66 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 33 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 29,
+    "avgStrokeRate": 40,
+    "totalDistance": 102,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 51
+   }
+  },
+  {
+   "t": 57777,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 66 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 33 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 102,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 51
+   }
+  },
+  {
+   "t": 58027,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 66 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 33 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 102,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 51
+   }
+  },
+  {
+   "t": 58274,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 68 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 34 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 104,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 52
+   }
+  },
+  {
+   "t": 58530,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 68 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 34 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 104,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 52
+   }
+  },
+  {
+   "t": 58783,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 68 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 34 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 104,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 52
+   }
+  },
+  {
+   "t": 59027,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 68 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 34 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 104,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 52
+   }
+  },
+  {
+   "t": 59278,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6b 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 35 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 107,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 53
+   }
+  },
+  {
+   "t": 59515,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6b 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 35 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 107,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 53
+   }
+  },
+  {
+   "t": 59820,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6b 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 35 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 107,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 53
+   }
+  },
+  {
+   "t": 60018,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6b 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 35 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 107,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 53
+   }
+  },
+  {
+   "t": 60284,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6d 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 36 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 109,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 54
+   }
+  },
+  {
+   "t": 60516,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6d 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 36 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 109,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 54
+   }
+  },
+  {
+   "t": 60783,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6d 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 36 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 109,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 54
+   }
+  },
+  {
+   "t": 61022,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6d 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 36 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 109,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 54
+   }
+  },
+  {
+   "t": 61276,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6f 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 37 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 111,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 55
+   }
+  },
+  {
+   "t": 61531,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6f 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 37 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 111,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 55
+   }
+  },
+  {
+   "t": 61784,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6f 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 37 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 111,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 55
+   }
+  },
+  {
+   "t": 62022,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 6f 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 37 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 111,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 55
+   }
+  },
+  {
+   "t": 62277,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 71 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 38 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 113,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 56
+   }
+  },
+  {
+   "t": 62517,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 71 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 38 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 113,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 56
+   }
+  },
+  {
+   "t": 62769,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 71 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 38 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 113,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 56
+   }
+  },
+  {
+   "t": 63029,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 71 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 38 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 113,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 56
+   }
+  },
+  {
+   "t": 63281,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 73 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 39 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 115,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 57
+   }
+  },
+  {
+   "t": 63521,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 73 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 39 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 115,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 57
+   }
+  },
+  {
+   "t": 63780,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 73 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 39 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 115,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 57
+   }
+  },
+  {
+   "t": 64029,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 73 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 39 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 115,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 57
+   }
+  },
+  {
+   "t": 64273,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 75 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 117,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 58
+   }
+  },
+  {
+   "t": 64620,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 75 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 117,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 58
+   }
+  },
+  {
+   "t": 64816,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 75 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 117,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 58
+   }
+  },
+  {
+   "t": 65011,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 75 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3a 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 117,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 58
+   }
+  },
+  {
+   "t": 65279,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 78 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 120,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 59
+   }
+  },
+  {
+   "t": 65515,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 78 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 120,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 59
+   }
+  },
+  {
+   "t": 65770,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 78 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 120,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 59
+   }
+  },
+  {
+   "t": 66030,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 78 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3b 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 120,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 59
+   }
+  },
+  {
+   "t": 66284,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 7a 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 122,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 60
+   }
+  },
+  {
+   "t": 66526,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 7a 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 122,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 60
+   }
+  },
+  {
+   "t": 66776,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 7a 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 122,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 60
+   }
+  },
+  {
+   "t": 67023,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 7a 00 00 e8 00 1b 00 06 00 01 00 7e 00 02 00 3c 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 122,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 1,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 60
+   }
+  },
+  {
+   "t": 67272,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 7c 00 00 e8 00 1b 00 06 00 02 00 7e 00 02 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 67529,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 5e 1e 00 50 7c 00 00 e8 00 1b 00 06 00 02 00 7e 00 02 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 47,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 232,
+    "power": 27,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 126,
+    "energyPerMinute": 2,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 67603,
+   "uuid": "00002ada-0000-1000-8000-00805f9b34fb",
+   "hex": "02 02",
+   "parsed": null
+  },
+  {
+   "t": 67615,
+   "uuid": "00002ad3-0000-1000-8000-00805f9b34fb",
+   "hex": "01 01",
+   "parsed": null
+  },
+  {
+   "t": 67757,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 68025,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 68278,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 68519,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 68773,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 69011,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 69286,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 69524,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 69779,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 70029,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 70269,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 70541,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 70770,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 71014,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 71276,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 71505,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 71767,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 72025,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 72280,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 72522,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 72777,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 73031,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 73258,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 73527,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 73767,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 74020,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 74306,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 74520,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 74776,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 75031,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 75286,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 75523,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 75807,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 76081,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 76332,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 76515,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 76777,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 77028,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 77278,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 77517,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 77821,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 78120,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 78273,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 78528,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 78778,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 79038,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 79285,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 79531,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 79790,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 80017,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 80266,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 80518,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 80863,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 81046,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 81297,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 81524,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 81779,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 82064,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 82262,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 82530,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 82891,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 83102,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 83368,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 83507,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 83775,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 84059,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 84418,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 84513,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 84775,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 85005,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 85330,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 85646,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 85870,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 86008,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 86278,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 86518,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 86769,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 87024,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 87268,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 87518,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 87792,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 88035,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 88271,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 88530,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 88766,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 89024,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 89336,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 89505,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 89774,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 90029,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 90342,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 90644,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 90812,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 91096,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 91261,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 91532,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 91786,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 92020,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 92298,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 92610,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 92832,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 93042,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 93313,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 93512,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 93824,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 94049,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 94321,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 94521,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 94785,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 95055,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 95268,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 95519,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 95774,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 96029,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 96268,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 96524,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  },
+  {
+   "t": 96775,
+   "uuid": "00002ad1-0000-1000-8000-00805f9b34fb",
+   "hex": "ae 0b 00 1e 00 50 7c 00 00 00 00 00 00 06 00 02 00 00 00 00 00 3d 00",
+   "parsed": {
+    "flags": 2990,
+    "strokeRate": 0,
+    "strokeCount": 30,
+    "avgStrokeRate": 40,
+    "totalDistance": 124,
+    "pace": 0,
+    "power": 0,
+    "resistance": 6,
+    "totalEnergy": 2,
+    "energyPerHour": 0,
+    "energyPerMinute": 0,
+    "heartRate": 0,
+    "elapsedTime": 61
+   }
+  }
+ ]
+}

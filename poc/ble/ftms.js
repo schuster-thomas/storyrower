@@ -136,5 +136,30 @@ export function parseControlPointResponse(dv) {
   return { opcode: CP_OPCODES[op] ?? `0x${op.toString(16)}`, result: CP_RESULTS[res] ?? `0x${res.toString(16)}` };
 }
 
+// Fitness Machine Status (0x2ADA) – Ereignisse wie Start/Pause oder geänderter Widerstand
+const STATUS_OPCODES = {
+  0x01: 'Reset', 0x02: 'Gestoppt/Pausiert', 0x03: 'Gestoppt (Sicherheitsschlüssel)', 0x04: 'Gestartet/Fortgesetzt',
+  0x05: 'Zielgeschwindigkeit geändert', 0x06: 'Zielsteigung geändert', 0x07: 'Widerstand geändert',
+  0x08: 'Zielleistung geändert', 0x09: 'Zielpuls geändert', 0xff: 'Control Permission verloren',
+};
+export function parseMachineStatus(dv) {
+  const op = dv.getUint8(0);
+  const r = { event: STATUS_OPCODES[op] ?? `0x${op.toString(16)}` };
+  if (op === 0x02 && dv.byteLength > 1) r.by = dv.getUint8(1) === 0x01 ? 'Stop' : 'Pause';
+  if (op === 0x07 && dv.byteLength > 1) r.resistance = dv.getUint8(1) / 10; // Auflösung 0.1
+  return r;
+}
+
+// Training Status (0x2AD3)
+const TRAINING_STATUS = {
+  0x00: 'Sonstiges', 0x01: 'Leerlauf', 0x02: 'Warm-up', 0x03: 'Intervall niedrig', 0x04: 'Intervall hoch',
+  0x05: 'Erholung', 0x06: 'Isometrisch', 0x07: 'Pulsprogramm', 0x08: 'Fitnesstest', 0x09: 'Geschwindigkeit zu niedrig',
+  0x0a: 'Geschwindigkeit zu hoch', 0x0b: 'Cool-down', 0x0c: 'Watt-Programm', 0x0d: 'Manuell (Quick Start)', 0x0e: 'Pre-Workout', 0x0f: 'Post-Workout',
+};
+export function parseTrainingStatus(dv) {
+  const s = dv.byteLength > 1 ? dv.getUint8(1) : null;
+  return { status: s == null ? '?' : TRAINING_STATUS[s] ?? `0x${s.toString(16)}` };
+}
+
 export const formatPace = (s) => (s == null || s === 0 || s >= 0xffff ? '–' : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
 export const formatTime = (s) => (s == null ? '–' : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);

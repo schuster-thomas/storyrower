@@ -153,7 +153,7 @@ Dein Zielgerät **Samsung Galaxy Tab S9 (SM-X710, Snapdragon 8 Gen 2)** ist leis
 ### Nachteile / Risiken
 | Risiko | Schwere | Gegenmaßnahme |
 |---|---|---|
-| Woodrower spricht kein (vollständiges) FTMS | hoch | PoC zuerst, bevor irgendwas anderes gebaut wird |
+| ~~Woodrower spricht kein (vollständiges) FTMS~~ | ✅ erledigt | PoC am 16.11.2026: Standard-FTMS, siehe [poc/ble/ERGEBNIS.md](poc/ble/ERGEBNIS.md) |
 | iPad ohne Web Bluetooth | mittel | Capacitor-Hülle später; Datenquelle abstrahiert |
 | Asset-/Grafikaufwand unterschätzt | **hoch** | Stil bewusst einfach halten, Billboards, CC0-Assets, *ein* Level richtig gut statt drei halb |
 | Watt-Werte am Woodrower ungenau/geschätzt | mittel | Zielbänder alternativ über SPM + Pace; Kalibrierfaktor in den Einstellungen |

@@ -106,7 +106,7 @@
 <script type="module">
 import {
   UUID, EXPLORER_SERVICES, nameOf, toHex, fromHex,
-  parseRowerData, parseFeature, parseControlPointResponse, formatPace, formatTime,
+  parseRowerData, parseFeature, parseControlPointResponse, parseMachineStatus, parseTrainingStatus, formatPace, formatTime,
 } from './ftms.js';
 
 const $ = (id) => document.getElementById(id);
@@ -186,6 +186,8 @@ function handleHeartRate(dv) {
 function handleGeneric(uuid, dv) {
   let parsed = null;
   if (uuid === UUID.CONTROL_POINT) parsed = parseControlPointResponse(dv);
+  else if (uuid === UUID.MACHINE_STATUS) parsed = parseMachineStatus(dv);
+  else if (uuid === UUID.TRAINING_STATUS) parsed = parseTrainingStatus(dv);
   record(uuid, dv, parsed);
   log(`${nameOf(uuid)}  [${toHex(dv)}]${parsed ? '  → ' + JSON.stringify(parsed) : ''}`, uuid === UUID.CONTROL_POINT ? '' : 'data');
 }
@@ -275,7 +277,7 @@ async function readChar(ch, info) {
     let val = toHex(dv);
     if (ch.uuid === UUID.FEATURE) val = parseFeature(dv);
     else if (ch.uuid === '00002a19-0000-1000-8000-00805f9b34fb') val = `${dv.getUint8(0)} %`;
-    else if (dv.byteLength && [...new Uint8Array(dv.buffer)].every((c) => c >= 32 && c < 127)) val = new TextDecoder().decode(dv);
+    else if (dv.byteLength && [...new Uint8Array(dv.buffer)].every((c) => (c >= 32 && c < 127) || c === 10 || c === 13)) val = new TextDecoder().decode(dv).replace(/\r\n/g, ' | ');
     info[nameOf(ch.uuid)] = val;
     record(ch.uuid, dv, { read: val });
     log(`gelesen ${nameOf(ch.uuid)}: ${typeof val === 'string' ? val : JSON.stringify(val)}`);
