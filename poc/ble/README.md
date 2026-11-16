@@ -32,7 +32,9 @@ npx --yes http-server@14.1.1 poc/ble -p 8080 -c-1
 Dann in Chrome `http://localhost:8080` öffnen → **Mit Rudergerät verbinden**.
 
 ## Schritt 3 – Testseite auf dem Samsung-Tablet
-Web Bluetooth läuft nur über `https://` oder `localhost`. Bis das GitHub-Repo mit GitHub Pages steht, gibt es zwei Wege:
+**Einfach in Chrome öffnen: <https://schuster-thomas.github.io/storyrower/poc/ble/>** (GitHub Pages, wird bei jedem Push auf `main` aktualisiert).
+
+Web Bluetooth läuft nur über `https://` oder `localhost`. Für lokale Änderungen, die noch nicht gepusht sind, gibt es zwei Wege:
 
 **a) Chrome-Flag (ohne Kabel, einfachster Weg)**
 1. Am PC den Server wie in Schritt 2 starten (Windows-Firewall: Zugriff im *privaten* Netzwerk erlauben).
@@ -43,8 +45,6 @@ Web Bluetooth läuft nur über `https://` oder `localhost`. Bis das GitHub-Repo 
 **b) USB-Portweiterleitung** (Entwickleroptionen + USB-Debugging am Tablet)
 1. Tablet per USB anschließen, am PC in Chrome `chrome://inspect/#devices` → *Port forwarding* → `8080` → `localhost:8080`.
 2. Auf dem Tablet `http://localhost:8080` öffnen.
-
-**c) Später:** GitHub Pages → einfach die https-URL öffnen.
 
 ## Was die Seite tut
 - **Mit Rudergerät verbinden:** zeigt nur Geräte mit FTMS. Taucht der Woodrower nicht auf → **Alle Geräte…** probieren.
