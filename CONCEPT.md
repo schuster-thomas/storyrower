@@ -2,7 +2,7 @@
 
 > Rowing as a story you live through: live data from the **Domyos Woodrower** drives a boat through a level with a dramatic arc – idyllic start, escalation (volcano, kaiju, earthquake …), escape, calm cool-down.
 
-Last updated: 2026-11-16 · Status: milestone 1 done (data layer, simulator, diagnostics view)
+Last updated: 2026-11-16 · Status: milestone 2 done (greybox game playable)
 
 ---
 
@@ -172,7 +172,7 @@ Kept from the BLE PoC on purpose:
 |---|---|---|---|
 | 0 ✅ | BLE PoC | nRF Connect check + web page with live Woodrower values, JSON recording | 1–2 evenings |
 | 1 ✅ | Data layer + simulator | `RowerSession` with Bluetooth/replay/simulator sources, diagnostics view | 1–2 evenings |
-| 2 | Greybox game | Boat on an endless river, speed = pace, HUD with target bands, workout generator, **heart-rate source (Fitbit/strap, display only)** | 1–2 weekends |
+| 2 ✅ | Greybox game | Boat on an endless river, speed = pace, HUD with target bands, workout generator, **heart-rate source (Fitbit/strap, display only)** | 1–2 weekends |
 | 3 | Story engine | Beats, intensity levels, camera/light/weather react, **audio engine with music layers** | 1–2 weekends |
 | 4 | First polished level | "Iceland Volcano Run" with assets, effects, music and sounds | several weeks |
 | 5 | Results & PWA | Results screen, **local workout history (IndexedDB)**, JSON export, installable, offline | 1 weekend |

@@ -23,7 +23,7 @@ export class RowerSession {
   private unsub: (() => void)[] = [];
   private lastRowerHex: string | null = null;
   private data: RowerData = { flags: 0 };
-  private heartRateStrap: number | null = null;
+  private heartRateMonitor: number | null = null;
   private lastStrokeT: number | null = null;
   private lastStrokeCount: number | null = null;
   private powerHistory: { t: number; power: number }[] = [];
@@ -59,6 +59,23 @@ export class RowerSession {
 
   dispose() { this.stop(); this.unsub.forEach((u) => u()); this.unsub = []; }
 
+  /**
+   * Attach a secondary source, e.g. a heart-rate monitor. Its packets are put on this
+   * session's timeline (they get the time of the latest main packet) and recorded too.
+   * Returns a function that detaches it again.
+   */
+  attach(source: PacketSource): () => void {
+    const offs = [
+      source.on('packet', (p) => this.handlePacket({ ...p, t: this.lastT })),
+      source.on('log', (msg, level) => this.emit({ type: 'log', t: this.lastT, msg, level })),
+    ];
+    return () => {
+      offs.forEach((o) => o());
+      this.heartRateMonitor = null;
+      if (this._sample) this.emitSample(this.lastT);
+    };
+  }
+
   async sendControl(bytes: number[]) {
     if (!this.source.sendControl) throw new Error('This source cannot send commands');
     await this.source.sendControl(bytes);
@@ -92,8 +109,9 @@ export class RowerSession {
         return;
       }
       case UUID.HEART_RATE_MEASUREMENT: {
-        this.heartRateStrap = parseHeartRate(p.data);
-        this.emit({ type: 'raw', packet: p, decoded: this.heartRateStrap, duplicate: false });
+        this.heartRateMonitor = parseHeartRate(p.data);
+        this.emit({ type: 'raw', packet: p, decoded: this.heartRateMonitor, duplicate: false });
+        if (this._sample) this.emitSample(p.t);
         return;
       }
       case UUID.CONTROL_POINT: {
@@ -200,7 +218,9 @@ export class RowerSession {
   private emitSample(t: number) {
     const d = this.data;
     const powerSmoothed = this.rowing ? this.smoothedPower(t) : 0;
-    const hr = this.heartRateStrap ?? (d.heartRate ? d.heartRate : null);
+    // A separate monitor wins over a strap paired with the console
+    const hr = this.heartRateMonitor ?? (d.heartRate ? d.heartRate : null);
+    const heartRateSource = this.heartRateMonitor != null ? 'monitor' : d.heartRate ? 'console' : null;
     const sample: RowerSample = {
       t,
       strokeRate: d.strokeRate ?? 0,
@@ -214,6 +234,7 @@ export class RowerSession {
       resistance: d.resistance ?? null,
       energy: d.totalEnergy ?? null,
       heartRate: hr,
+      heartRateSource,
       elapsedTime: d.elapsedTime ?? null,
       rowing: this.rowing,
     };

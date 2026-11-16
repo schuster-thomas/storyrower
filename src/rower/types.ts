@@ -52,6 +52,7 @@ export interface RowerSample {
   resistance: number | null;
   energy: number | null;     // kcal
   heartRate: number | null;  // bpm, null when no heart-rate source
+  heartRateSource: 'monitor' | 'console' | null;
   elapsedTime: number | null;// s, device clock
   rowing: boolean;           // false = paused
 }

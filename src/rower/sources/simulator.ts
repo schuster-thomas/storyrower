@@ -21,6 +21,8 @@ export interface SimulatorOptions {
   seed?: number;
   /** Packet interval in ms (Woodrower: ~250). */
   packetIntervalMs?: number;
+  /** Simulate a heart-rate strap paired with the console (default: off, like the real device). */
+  heartRate?: boolean;
 }
 
 /**
@@ -52,6 +54,8 @@ export class SimulatorSource implements PacketSource {
   private powerUpdateAt: number | null = null;
   private lastStrokeAt: number | null = null;
   private pauseSent = true;
+  private hr = 72;
+  private readonly simulateHr: boolean;
 
   constructor(opts: SimulatorOptions = {}) {
     this.targetPower = opts.power ?? 0;
@@ -59,6 +63,7 @@ export class SimulatorSource implements PacketSource {
     this.resistance = opts.resistance ?? 6;
     this.random = rng(opts.seed ?? 42);
     this.interval = opts.packetIntervalMs ?? 250;
+    this.simulateHr = opts.heartRate ?? false;
   }
 
   on<K extends keyof PacketSourceEvents>(event: K, fn: PacketSourceEvents[K]) { return this.emitter.on(event, fn); }
@@ -107,8 +112,8 @@ export class SimulatorSource implements PacketSource {
         this.packet(UUID.MACHINE_STATUS, encodeMachineStatus({ kind: 'started' }), 'notify');
         this.packet(UUID.TRAINING_STATUS, new DataView(new Uint8Array([0x01, 0x0d]).buffer), 'notify');
       }
-      // Stroke rate rises with power (roughly like the real device: 55 W ≈ 23 spm, 100 W ≈ 28 spm)
-      const spmTarget = Math.min(36, 17 + target / 9);
+      // Stroke rate rises with power (like the real recordings: 55 W ≈ 23 spm, 100 W ≈ 29 spm)
+      const spmTarget = Math.min(36, 15 + target * 0.14);
       this.nextStrokeAt ??= this.t + 300;
       if (this.t >= this.nextStrokeAt) {
         const jitter = 1 + (this.random() - 0.5) * 0.12;
@@ -141,6 +146,10 @@ export class SimulatorSource implements PacketSource {
       }
     }
 
+    // Heart rate follows power with a ~15 s lag
+    const hrTarget = rowing ? 78 + target * 0.55 : 70;
+    this.hr += (hrTarget - this.hr) * Math.min(1, dt / 15000);
+
     const pace = this.power > 0 ? Math.round(paceFromPower(this.power)) : 0;
     this.packet(UUID.ROWER_DATA, encodeWoodrowerData({
       strokeRate: this.strokeRate,
@@ -153,7 +162,7 @@ export class SimulatorSource implements PacketSource {
       totalEnergy: Math.floor(this.energy),
       energyPerHour: this.power > 0 ? 4 * this.power * 0.8604 + 300 : 0,
       energyPerMinute: this.power > 0 ? (4 * this.power * 0.8604 + 300) / 60 : 0,
-      heartRate: 0,
+      heartRate: this.simulateHr ? this.hr : 0,
       elapsedTime: Math.floor(this.elapsedMs / 1000),
     }), 'notify');
   }

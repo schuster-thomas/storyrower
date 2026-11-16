@@ -4,7 +4,7 @@ Rowing as a story you live through: live data from a rowing machine (starting wi
 
 What counts is not maximum effort but how well you stay inside the **target bands** for watts, stroke rate and 500 m split.
 
-**Live:** <https://schuster-thomas.github.io/storyrower/> · Device & diagnostics: <https://schuster-thomas.github.io/storyrower/#/diagnose>
+**Live:** <https://schuster-thomas.github.io/storyrower/> · Play: <https://schuster-thomas.github.io/storyrower/#/play> · Device & diagnostics: <https://schuster-thomas.github.io/storyrower/#/diagnose>
 
 - 📄 [Concept](CONCEPT.md)
 - 🖼️ [First UI mock-up](screenshots/)
@@ -15,7 +15,7 @@ What counts is not maximum effort but how well you stay inside the **target band
 |---|---|
 | 0 – BLE PoC (Woodrower data via Web Bluetooth) | ✅ Woodrower speaks FTMS, stable for 10 min ([results](poc/ble/RESULTS.md)) |
 | 1 – Data layer + simulator + diagnostics view | ✅ |
-| 2 – Greybox game (incl. heart rate display) | – |
+| 2 – Greybox game (incl. heart rate display) | ✅ playable with rower or simulator |
 | 3 – Story engine + audio | – |
 | 4 – Level "Iceland Volcano Run" | – |
 
@@ -30,6 +30,15 @@ npm run build    # typecheck + build to dist/
 ```
 
 Every push to `main` is tested, built and published to GitHub Pages by GitHub Actions.
+
+Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout). The "Simulator (autopilot)" source rows by itself and follows the targets.
+
+### Game (`src/game/`, `src/workout/`)
+- `workout/workout.ts` – turns the settings (min/max watts and stroke rate, duration) into the training curve and its five story phases
+- `workout/scoring.ts` – target-band zones, time in band, coins, stars and the distance to the tidal wave (no game over)
+- `game/scene/RiverScene.ts` – Three.js greybox world: endless river, boat with stroke-synced oars, volcano, tidal wave, camera
+- `game/hud/Hud.ts` – HUD with phase progress and band bars
+- `app/connection.ts` – one shared rower session plus optional heart-rate monitor for setup, game and diagnostics
 
 ### Data layer (`src/rower/`)
 ```

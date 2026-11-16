@@ -1,0 +1,63 @@
+import { Emitter } from '../rower/emitter';
+import { RowerSession } from '../rower/session';
+import { HeartRateSource } from '../rower/sources/heartRate';
+import type { ConnectionState, PacketSource } from '../rower/types';
+
+export interface HeartRateStatus { state: ConnectionState; detail?: string; name: string | null }
+
+/**
+ * App-wide connection: one rower session and an optional heart-rate monitor, shared by
+ * the setup screen, the game and the diagnostics view. Connecting once is enough –
+ * switching screens keeps the Bluetooth connection alive.
+ */
+class Connection {
+  private emitter = new Emitter<{ change: () => void }>();
+  private _session: RowerSession | null = null;
+  private hr: HeartRateSource | null = null;
+  private detachHr: (() => void) | null = null;
+  private _hrStatus: HeartRateStatus = { state: 'idle', name: null };
+
+  get session() { return this._session; }
+  get heartRate() { return this._hrStatus; }
+
+  /** Fires when the session is replaced or the heart-rate monitor changes state. */
+  onChange(fn: () => void) { return this.emitter.on('change', fn); }
+
+  /** Replace the rower source. The old session is closed, a connected HR monitor moves over. */
+  async use(source: PacketSource): Promise<RowerSession> {
+    this.detachHr?.();
+    this.detachHr = null;
+    this._session?.dispose();
+    const session = new RowerSession(source);
+    this._session = session;
+    if (this.hr && this._hrStatus.state === 'connected') this.detachHr = session.attach(this.hr);
+    this.emitter.emit('change');
+    try { await session.start(); } catch { /* reported via session events */ }
+    return session;
+  }
+
+  close() {
+    this.detachHr?.();
+    this.detachHr = null;
+    this._session?.dispose();
+    this._session = null;
+    this.emitter.emit('change');
+  }
+
+  async connectHeartRate(): Promise<void> {
+    if (!this.hr) {
+      this.hr = new HeartRateSource();
+      this.hr.on('state', (state, detail) => {
+        this._hrStatus = { state, detail, name: this.hr?.deviceName ?? null };
+        if (state === 'connected' && this._session && !this.detachHr) this.detachHr = this._session.attach(this.hr!);
+        if (state === 'disconnected' || state === 'error') { this.detachHr?.(); this.detachHr = null; }
+        this.emitter.emit('change');
+      });
+    }
+    try { await this.hr.start(); } catch { /* reported via state */ }
+  }
+
+  disconnectHeartRate() { this.hr?.stop(); }
+}
+
+export const connection = new Connection();

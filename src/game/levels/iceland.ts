@@ -1,0 +1,52 @@
+import type { PhaseId } from '../../workout/workout';
+
+/** Look of the world for one story phase (greybox palette, refined in milestone 4). */
+export interface Environment {
+  sky: number;
+  fog: number;
+  fogNear: number;
+  fogFar: number;
+  sun: number;
+  sunIntensity: number;
+  ground: number;
+  water: number;
+  /** 0–1: lava glow on the volcano */
+  lava: number;
+  /** 0–1: ash/smoke amount */
+  smoke: number;
+  /** 0–1: how far the tidal wave is shown behind the boat */
+  wave: number;
+  /** 0–1: water roughness */
+  swell: number;
+}
+
+export interface LevelPhase { id: PhaseId; name: string; env: Environment }
+
+export interface Level { id: string; title: string; phases: Record<PhaseId, LevelPhase> }
+
+export const ICELAND: Level = {
+  id: 'iceland-volcano-run',
+  title: 'Iceland Volcano Run',
+  phases: {
+    idyll: {
+      id: 'idyll', name: 'Fjord Morning',
+      env: { sky: 0x9fd4ef, fog: 0xbfe2f2, fogNear: 60, fogFar: 420, sun: 0xfff3d6, sunIntensity: 2.2, ground: 0x5f9e4f, water: 0x2a7fb8, lava: 0, smoke: 0, wave: 0, swell: 0.1 },
+    },
+    omens: {
+      id: 'omens', name: 'Rumbling Earth',
+      env: { sky: 0xb7c1c4, fog: 0xc4c4bb, fogNear: 50, fogFar: 340, sun: 0xffe2b0, sunIntensity: 1.7, ground: 0x6b8a4c, water: 0x2f7298, lava: 0.25, smoke: 0.35, wave: 0, swell: 0.3 },
+    },
+    escalation: {
+      id: 'escalation', name: 'Eruption',
+      env: { sky: 0xd98a5f, fog: 0xb8775a, fogNear: 40, fogFar: 280, sun: 0xffb27a, sunIntensity: 1.6, ground: 0x5d6b45, water: 0x2b5f7e, lava: 0.8, smoke: 0.75, wave: 0.6, swell: 0.65 },
+    },
+    finale: {
+      id: 'finale', name: 'Wave Chase',
+      env: { sky: 0x8e4a3a, fog: 0x7a4638, fogNear: 30, fogFar: 230, sun: 0xff8a5c, sunIntensity: 1.4, ground: 0x4c5040, water: 0x24506a, lava: 1, smoke: 1, wave: 1, swell: 1 },
+    },
+    winddown: {
+      id: 'winddown', name: 'Safe Waters',
+      env: { sky: 0xf3b27f, fog: 0xf6c9a0, fogNear: 60, fogFar: 420, sun: 0xffc48a, sunIntensity: 1.9, ground: 0x6c8f52, water: 0x3a7fa8, lava: 0.15, smoke: 0.25, wave: 0, swell: 0.15 },
+    },
+  },
+};

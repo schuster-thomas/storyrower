@@ -1,5 +1,6 @@
 import { CONTROL, formatDuration, formatPace, nameOf } from '../rower/ftms';
-import { RowerSession } from '../rower/session';
+import { connection } from '../app/connection';
+import type { RowerSession } from '../rower/session';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { ReplaySource } from '../rower/sources/replay';
 import { SimulatorSource } from '../rower/sources/simulator';
@@ -45,6 +46,10 @@ export function mountDiagnostics(root: HTMLElement): () => void {
           <input type="file" data-id="file" accept="application/json,.json">
           <button data-id="stopBtn" disabled>Stop</button>
           <button data-id="reconnectBtn" hidden>Reconnect</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button data-id="hrBtn">Connect heart-rate monitor</button>
+          <span class="muted" data-id="hrState">Fitbit: start a workout and enable "Heart rate on equipment" first. Chest straps work too.</span>
         </div>
         <div class="row" data-id="simControls" hidden style="margin-top:12px">
           <span class="muted">Target power</span>
@@ -150,13 +155,24 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     if (atBottom) logEl.scrollTop = logEl.scrollHeight;
   }
 
-  // ---------- Switching sources ----------
+  // ---------- Switching sources (shared app-wide connection) ----------
   async function useSource(s: RowerSession['source']) {
-    endSession();
+    await connection.use(s);
+  }
+
+  /** Follow the shared session: subscribe to its events and set up source-specific controls. */
+  function bind(next: RowerSession | null) {
+    if (next === session) return;
+    unbind();
+    session = next;
     chart.clear();
     packetTimes = []; changeTimes = [];
-    session = new RowerSession(s);
+    if (!session) { $('state').textContent = 'no source'; $('state').className = 'pill'; return; }
+    const s = session.source;
     unsubscribe = session.on(onEvent);
+    onEvent({ type: 'state', state: session.state });
+    if (session.sample) renderSample(session.sample);
+    if (Object.keys(session.info).length) onEvent({ type: 'deviceInfo', info: session.info });
     $('simControls').hidden = !(s instanceof SimulatorSource);
     $('replayControls').hidden = !(s instanceof ReplaySource);
     if (s instanceof SimulatorSource) syncSimUi();
@@ -166,17 +182,24 @@ export function mountDiagnostics(root: HTMLElement): () => void {
         $('replayPos').textContent = `${formatDuration(s.positionMs / 1000)} / ${formatDuration(s.durationMs / 1000)}`;
       }, 500);
     }
-    ($('stopBtn') as HTMLButtonElement).disabled = false;
-    try { await session.start(); } catch { /* errors are already in the log */ }
   }
 
-  function endSession() {
+  /** Stop listening – the connection itself stays open for the game. */
+  function unbind() {
     if (replayTimer) clearInterval(replayTimer);
     replayTimer = null;
     unsubscribe?.();
-    session?.dispose();
-    session = null;
+    unsubscribe = null;
   }
+
+  function renderHeartRate() {
+    const hr = connection.heartRate;
+    const btn = $<HTMLButtonElement>('hrBtn');
+    btn.textContent = hr.state === 'connected' ? 'Disconnect heart-rate monitor' : 'Connect heart-rate monitor';
+    btn.disabled = !isWebBluetoothAvailable() || hr.state === 'connecting';
+    if (hr.state !== 'idle') $('hrState').textContent = `${hr.state}${hr.name ? ` · ${hr.name}` : ''}${hr.detail && hr.state !== 'connected' ? ` · ${hr.detail}` : ''}`;
+  }
+  const offConnection = connection.onChange(() => { bind(connection.session); renderHeartRate(); });
 
   // ---------- Session events ----------
   function onEvent(e: RowerEvent) {
@@ -236,7 +259,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     setTile('pace', formatPace(s.pace), `smoothed ${formatPace(s.paceSmoothed)}`);
     setTile('dist', s.distance, s.energy != null ? `${s.energy} kcal` : '');
     setTile('time', formatDuration(s.elapsedTime), `session ${formatDuration(s.t / 1000)}`);
-    setTile('hr', s.heartRate, s.heartRate == null ? 'no HR source' : '');
+    setTile('hr', s.heartRate, s.heartRateSource === 'monitor' ? (connection.heartRate.name ?? 'monitor') : s.heartRateSource === 'console' ? 'via console' : 'no HR source');
     setTile('status', s.rowing ? 'rowing' : 'paused', s.resistance != null ? `resistance ${s.resistance}` : '');
     tile('status').querySelector<HTMLElement>('.value')!.style.color = s.rowing ? 'var(--ok)' : 'var(--warn)';
   }
@@ -306,6 +329,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   $('reconnectBtn').onclick = () => session?.start().catch(() => {});
   $('simBtn').onclick = () => useSource(new SimulatorSource({ power: 80, seed: Date.now() }));
   $('stopBtn').onclick = () => session?.stop();
+  $('hrBtn').onclick = () => (connection.heartRate.state === 'connected' ? connection.disconnectHeartRate() : connection.connectHeartRate());
   $<HTMLSelectElement>('recSelect').onchange = async (ev) => {
     const sel = ev.target as HTMLSelectElement;
     const v = sel.value; sel.value = '';
@@ -347,8 +371,12 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     ? 'Ready. Turn on the rower, close e-Connected/Kinomap and tap "Connect rower" – or pick the simulator or a recording.'
     : 'No Web Bluetooth – pick the simulator or a recording.');
 
+  bind(connection.session);
+  renderHeartRate();
+
   return () => {
-    endSession();
+    unbind();
+    offConnection();
     clearInterval(rateTimer);
     chart.dispose();
     window.removeEventListener('keydown', onKey);
