@@ -2,7 +2,7 @@ import { Emitter } from '../emitter';
 import { UUID, encodeMachineStatus, encodeWoodrowerData, paceFromPower, uuid16 } from '../ftms';
 import type { PacketSource, PacketSourceEvents, RawPacket } from '../types';
 
-/** Deterministischer Zufall (Mulberry32), damit Tests reproduzierbar sind. */
+/** Deterministic random numbers (Mulberry32) so tests are reproducible. */
 function rng(seed: number) {
   return () => {
     seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
@@ -13,20 +13,20 @@ function rng(seed: number) {
 }
 
 export interface SimulatorOptions {
-  /** Start-Zielleistung in W (0 = Pause). */
+  /** Initial target power in W (0 = paused). */
   power?: number;
-  /** Optional: Zielleistung über die Zeit (s → W). Überschreibt `power`, solange gesetzt. */
+  /** Optional: target power over time (s → W). Overrides `power` while set. */
   profile?: ((seconds: number) => number) | null;
   resistance?: number;
   seed?: number;
-  /** Paketabstand in ms (Woodrower: ~250). */
+  /** Packet interval in ms (Woodrower: ~250). */
   packetIntervalMs?: number;
 }
 
 /**
- * Simuliert einen Woodrower und erzeugt Pakete im exakt gleichen Format (Flags 0x0BAE, ~4 Hz,
- * doppelte Pakete, Watt einmal pro Schlag, Pause-Event nach Ruderstopp).
- * Steuerung über `targetPower` (z. B. per Tastatur) oder ein Leistungsprofil.
+ * Simulates a Woodrower and produces packets in exactly the same format (flags 0x0BAE, ~4 Hz,
+ * duplicate packets, watts once per stroke, pause event after you stop rowing).
+ * Controlled via `targetPower` (e.g. keyboard) or a power profile.
  */
 export class SimulatorSource implements PacketSource {
   readonly info = { kind: 'simulator' as const, label: 'Simulator' };
@@ -39,7 +39,7 @@ export class SimulatorSource implements PacketSource {
   profile: ((seconds: number) => number) | null;
   resistance: number;
 
-  // Simulationszustand
+  // Simulation state
   private t = 0;
   private strokeCount = 0;
   private distance = 0;
@@ -67,7 +67,7 @@ export class SimulatorSource implements PacketSource {
 
   async start() {
     this.emitter.emit('state', 'connected', 'Simulator');
-    this.emitter.emit('log', 'Simulator gestartet (↑/↓ = Leistung, Leertaste = Pause)', 'info');
+    this.emitter.emit('log', 'Simulator started (↑/↓ = power, space = pause)', 'info');
     this.emitInitialReads();
     this.timer ??= setInterval(() => this.step(this.interval), this.interval);
   }
@@ -75,7 +75,7 @@ export class SimulatorSource implements PacketSource {
   stop() {
     if (this.timer != null) clearInterval(this.timer);
     this.timer = null;
-    this.emitter.emit('state', 'disconnected', 'Simulator gestoppt');
+    this.emitter.emit('state', 'disconnected', 'simulator stopped');
   }
 
   async sendControl(bytes: number[]) {
@@ -95,7 +95,7 @@ export class SimulatorSource implements PacketSource {
     this.packet(UUID.TRAINING_STATUS, new DataView(new Uint8Array([0x01, 0x01]).buffer), 'notify');
   }
 
-  /** Simulation um dt ms weiterschalten und ein Rower-Data-Paket senden. Öffentlich für Tests. */
+  /** Advance the simulation by dt ms and send a Rower Data packet. Public for tests. */
   step(dt: number) {
     this.t += dt;
     const target = this.currentTarget;
@@ -107,7 +107,7 @@ export class SimulatorSource implements PacketSource {
         this.packet(UUID.MACHINE_STATUS, encodeMachineStatus({ kind: 'started' }), 'notify');
         this.packet(UUID.TRAINING_STATUS, new DataView(new Uint8Array([0x01, 0x0d]).buffer), 'notify');
       }
-      // Schlagfrequenz steigt mit der Leistung (grob wie am echten Gerät: 55 W ≈ 23 spm, 100 W ≈ 28 spm)
+      // Stroke rate rises with power (roughly like the real device: 55 W ≈ 23 spm, 100 W ≈ 28 spm)
       const spmTarget = Math.min(36, 17 + target / 9);
       this.nextStrokeAt ??= this.t + 300;
       if (this.t >= this.nextStrokeAt) {
@@ -118,7 +118,7 @@ export class SimulatorSource implements PacketSource {
         this.strokeCount++;
         this.avgStrokeSum += this.strokeRate;
         this.nextStrokeAt = this.t + intervalMs;
-        this.powerUpdateAt = this.t + this.interval; // Watt kommen ein Paket nach dem Schlag
+        this.powerUpdateAt = this.t + this.interval; // watts arrive one packet after the stroke
       }
       if (this.powerUpdateAt != null && this.t >= this.powerUpdateAt) {
         this.power = Math.max(5, Math.round(target * (1 + (this.random() - 0.5) * 0.3)));
@@ -132,7 +132,7 @@ export class SimulatorSource implements PacketSource {
     } else {
       this.nextStrokeAt = null;
       this.powerUpdateAt = null;
-      // nach dem letzten Schlag fallen die Werte auf 0, ~5 s später kommt das Pause-Event
+      // after the last stroke values drop to 0, ~5 s later the pause event follows
       if (this.lastStrokeAt != null && this.t - this.lastStrokeAt > 2500) { this.strokeRate = 0; this.power = 0; }
       if (!this.pauseSent && this.lastStrokeAt != null && this.t - this.lastStrokeAt > 6000) {
         this.pauseSent = true;

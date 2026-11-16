@@ -3,8 +3,8 @@ import { parseRecording } from '../recording';
 import type { PacketSource, PacketSourceEvents, RawPacket } from '../types';
 
 /**
- * Spielt eine Aufzeichnung in (wählbar beschleunigter) Echtzeit ab.
- * Die Pakete behalten ihre Original-Zeitstempel – für die Session sieht das aus wie das echte Gerät.
+ * Plays a recording back in (optionally accelerated) real time.
+ * Packets keep their original timestamps – to the session it looks like the real device.
  */
 export class ReplaySource implements PacketSource {
   readonly info: { kind: 'replay'; label: string };
@@ -13,11 +13,11 @@ export class ReplaySource implements PacketSource {
   private index = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private _speed = 1;
-  /** Wanduhr-Zeitpunkt, der dem Aufzeichnungs-Zeitpunkt `anchorT` entspricht */
+  /** Wall-clock time that corresponds to recording time `anchorT` */
   private anchorWall = 0;
   private anchorT = 0;
 
-  constructor(json: unknown, label = 'Aufzeichnung') {
+  constructor(json: unknown, label = 'Recording') {
     const { device, packets } = parseRecording(json);
     this.packets = packets;
     this.info = { kind: 'replay', label: device ? `${label} (${device})` : label };
@@ -31,7 +31,7 @@ export class ReplaySource implements PacketSource {
   get speed() { return this._speed; }
 
   set speed(v: number) {
-    // Anker neu setzen, damit die Wiedergabe ohne Sprung schneller/langsamer wird
+    // Re-anchor so playback changes speed without jumping
     if (this.timer != null) {
       const now = performance.now();
       this.anchorT += (now - this.anchorWall) * this._speed;
@@ -43,7 +43,7 @@ export class ReplaySource implements PacketSource {
 
   async start() {
     if (this.index >= this.packets.length) this.index = 0;
-    this.emitter.emit('log', `Wiedergabe: ${this.packets.length} Pakete, ${(this.durationMs / 60000).toFixed(1)} min`, 'info');
+    this.emitter.emit('log', `Replay: ${this.packets.length} packets, ${(this.durationMs / 60000).toFixed(1)} min`, 'info');
     this.emitter.emit('state', 'connected', this.info.label);
     this.anchorT = this.packets[this.index]?.t ?? 0;
     this.anchorWall = performance.now();
@@ -53,7 +53,7 @@ export class ReplaySource implements PacketSource {
   stop() {
     if (this.timer != null) clearTimeout(this.timer);
     this.timer = null;
-    this.emitter.emit('state', 'disconnected', 'Wiedergabe gestoppt');
+    this.emitter.emit('state', 'disconnected', 'replay stopped');
   }
 
   private schedule() {
@@ -61,8 +61,8 @@ export class ReplaySource implements PacketSource {
     this.timer = null;
     const next = this.packets[this.index];
     if (!next) {
-      this.emitter.emit('log', 'Wiedergabe beendet', 'info');
-      this.emitter.emit('state', 'disconnected', 'Wiedergabe beendet');
+      this.emitter.emit('log', 'Replay finished', 'info');
+      this.emitter.emit('state', 'disconnected', 'replay finished');
       return;
     }
     const due = this.anchorWall + (next.t - this.anchorT) / this._speed;
@@ -71,7 +71,7 @@ export class ReplaySource implements PacketSource {
 
   private tick() {
     const now = performance.now();
-    // alle fälligen Pakete ausgeben (bei hoher Geschwindigkeit mehrere pro Timer)
+    // emit all due packets (several per timer at high speed)
     while (this.index < this.packets.length && this.anchorWall + (this.packets[this.index].t - this.anchorT) / this._speed <= now + 1) {
       this.emitter.emit('packet', this.packets[this.index++]);
     }

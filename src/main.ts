@@ -9,13 +9,13 @@ function home(root: HTMLElement) {
     <div class="hero">
       <div>
         <h1>StoryRower</h1>
-        <p class="muted">Rudern als erlebte Geschichte. Deine Live-Daten vom Rudergerät treiben das Abenteuer an.</p>
+        <p class="muted">Rowing as a story you live through. Live data from your rowing machine drives the adventure.</p>
       </div>
       <div class="cards">
-        <a class="card disabled" href="#/"><b>🌋 Iceland Volcano Run</b><span class="muted">Kommt in Meilenstein 2–4</span></a>
-        <a class="card" href="#/diagnose"><b>🔌 Gerät &amp; Diagnose</b><span class="muted">Verbinden, Live-Werte, Aufzeichnen, Simulator</span></a>
+        <a class="card disabled" href="#/"><b>🌋 Iceland Volcano Run</b><span class="muted">Coming in milestones 2–4</span></a>
+        <a class="card" href="#/diagnose"><b>🔌 Device &amp; diagnostics</b><span class="muted">Connect, live values, recording, simulator</span></a>
       </div>
-      <p class="muted">Alte PoC-Testseite: <a href="poc/ble/">poc/ble</a></p>
+      <p class="muted">Original PoC test page: <a href="poc/ble/">poc/ble</a></p>
     </div>`;
   return () => {};
 }

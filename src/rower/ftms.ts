@@ -1,5 +1,5 @@
-// FTMS (Bluetooth Fitness Machine Service) – Konstanten, Decoder und Encoder.
-// Spezifikation: Bluetooth SIG "Fitness Machine Service 1.0".
+// FTMS (Bluetooth Fitness Machine Service) – constants, decoder and encoder.
+// Spec: Bluetooth SIG "Fitness Machine Service 1.0".
 
 export const uuid16 = (n: number): string => `0000${n.toString(16).padStart(4, '0')}-0000-1000-8000-00805f9b34fb`;
 
@@ -17,7 +17,7 @@ export const UUID = {
   BATTERY_LEVEL: uuid16(0x2a19),
 } as const;
 
-/** Services, die Web Bluetooth freigeben soll (es zeigt nur vorab genannte Services). */
+/** Services Web Bluetooth should expose (it only shows services listed up front). */
 export const OPTIONAL_SERVICES = [
   UUID.FTMS, UUID.HEART_RATE, UUID.DEVICE_INFO, UUID.BATTERY,
   uuid16(0x1816), uuid16(0x1818), uuid16(0xfff0), uuid16(0xffe0),
@@ -48,7 +48,7 @@ const NAMES: Record<string, string> = {
 };
 export const nameOf = (uuid: string): string => NAMES[uuid] ?? uuid;
 
-// ---------- Hex-Helfer ----------
+// ---------- Hex helpers ----------
 export function toHex(dv: DataView): string {
   const out: string[] = [];
   for (let i = 0; i < dv.byteLength; i++) out.push(dv.getUint8(i).toString(16).padStart(2, '0'));
@@ -62,7 +62,7 @@ export function fromHex(hex: string): DataView {
 // ---------- Rower Data (0x2AD1) ----------
 export interface RowerData {
   flags: number;
-  strokeRate?: number;      // spm (Auflösung 0,5)
+  strokeRate?: number;      // spm (resolution 0.5)
   strokeCount?: number;
   avgStrokeRate?: number;   // spm
   totalDistance?: number;   // m
@@ -88,7 +88,7 @@ export const ROWER_FLAG = {
   MET: 1 << 10, ELAPSED_TIME: 1 << 11, REMAINING_TIME: 1 << 12,
 } as const;
 
-/** Flags, die der Domyos Woodrower (Firmware 2.5.0) immer sendet. */
+/** Flags the Domyos Woodrower (firmware 2.5.0) always sends. */
 export const WOODROWER_FLAGS = 0x0bae;
 
 export function parseRowerData(dv: DataView): RowerData {
@@ -116,13 +116,13 @@ export function parseRowerData(dv: DataView): RowerData {
     if (has(ROWER_FLAG.ELAPSED_TIME)) r.elapsedTime = u16();
     if (has(ROWER_FLAG.REMAINING_TIME)) r.remainingTime = u16();
   } catch {
-    r.error = `Paket kürzer als laut Flags erwartet (${dv.byteLength} Bytes, gelesen bis ${o})`;
+    r.error = `Packet shorter than its flags announce (${dv.byteLength} bytes, read up to ${o})`;
   }
-  if (!r.error && o !== dv.byteLength) r.warning = `${dv.byteLength - o} Byte(s) übrig – Flags evtl. nicht spec-konform`;
+  if (!r.error && o !== dv.byteLength) r.warning = `${dv.byteLength - o} byte(s) left over – flags may not be spec-compliant`;
   return r;
 }
 
-/** Baut ein Rower-Data-Paket im Woodrower-Format (Flags 0x0BAE). Für Simulator und Tests. */
+/** Builds a Rower Data packet in the Woodrower format (flags 0x0BAE). For the simulator and tests. */
 export function encodeWoodrowerData(v: {
   strokeRate: number; strokeCount: number; avgStrokeRate: number; totalDistance: number; pace: number;
   power: number; resistance: number; totalEnergy: number; energyPerHour: number; energyPerMinute: number;
@@ -178,8 +178,8 @@ export type MachineStatus =
   | { kind: 'other'; opcode: number; label: string };
 
 const STATUS_LABELS: Record<number, string> = {
-  0x03: 'Gestoppt (Sicherheitsschlüssel)', 0x05: 'Zielgeschwindigkeit geändert', 0x06: 'Zielsteigung geändert',
-  0x08: 'Zielleistung geändert', 0x09: 'Zielpuls geändert', 0xff: 'Control Permission verloren',
+  0x03: 'Stopped (safety key)', 0x05: 'Target speed changed', 0x06: 'Target incline changed',
+  0x08: 'Target power changed', 0x09: 'Target heart rate changed', 0xff: 'Control permission lost',
 };
 export function parseMachineStatus(dv: DataView): MachineStatus {
   const op = dv.getUint8(0);
@@ -194,9 +194,9 @@ export function parseMachineStatus(dv: DataView): MachineStatus {
 export function describeMachineStatus(s: MachineStatus): string {
   switch (s.kind) {
     case 'reset': return 'Reset';
-    case 'stopped': return s.by === 'stop' ? 'Gestoppt' : 'Pausiert';
-    case 'started': return 'Gestartet/Fortgesetzt';
-    case 'resistance': return `Widerstand ${s.level}`;
+    case 'stopped': return s.by === 'stop' ? 'Stopped' : 'Paused';
+    case 'started': return 'Started/resumed';
+    case 'resistance': return `Resistance ${s.level}`;
     case 'other': return s.label;
   }
 }
@@ -212,9 +212,9 @@ export function encodeMachineStatus(s: MachineStatus): DataView {
 
 // ---------- Training Status (0x2AD3) ----------
 const TRAINING_STATUS: Record<number, string> = {
-  0x00: 'Sonstiges', 0x01: 'Leerlauf', 0x02: 'Warm-up', 0x03: 'Intervall niedrig', 0x04: 'Intervall hoch',
-  0x05: 'Erholung', 0x06: 'Isometrisch', 0x07: 'Pulsprogramm', 0x08: 'Fitnesstest', 0x09: 'Geschwindigkeit zu niedrig',
-  0x0a: 'Geschwindigkeit zu hoch', 0x0b: 'Cool-down', 0x0c: 'Watt-Programm', 0x0d: 'Manuell (Quick Start)',
+  0x00: 'Other', 0x01: 'Idle', 0x02: 'Warm-up', 0x03: 'Low-intensity interval', 0x04: 'High-intensity interval',
+  0x05: 'Recovery', 0x06: 'Isometric', 0x07: 'Heart rate control', 0x08: 'Fitness test', 0x09: 'Speed too low',
+  0x0a: 'Speed too high', 0x0b: 'Cool-down', 0x0c: 'Watt control', 0x0d: 'Manual mode (quick start)',
   0x0e: 'Pre-Workout', 0x0f: 'Post-Workout',
 };
 export function parseTrainingStatus(dv: DataView): string {
@@ -230,7 +230,7 @@ export const CONTROL = {
   START: [0x07],
   STOP: [0x08, 0x01],
   PAUSE: [0x08, 0x02],
-  /** Zielwiderstand in 0,1-Schritten (laut Feature-Bits vom Woodrower unterstützt, noch ungetestet). */
+  /** Target resistance in 0.1 steps (supported according to the Woodrower feature bits, untested). */
   setResistance: (level: number) => [0x04, Math.round(level * 10)],
 } as const;
 
@@ -247,8 +247,8 @@ export function parseHeartRate(dv: DataView): number {
   return dv.getUint8(0) & 1 ? dv.getUint16(1, true) : dv.getUint8(1);
 }
 
-// ---------- Umrechnungen ----------
-/** Concept2-Formel; der Woodrower rechnet Pace und Watt nachweislich genau so um. */
+// ---------- Conversions ----------
+/** Concept2 formula; the Woodrower converts pace and watts exactly like this. */
 export const paceFromPower = (watts: number): number => (watts > 0 ? 500 * Math.cbrt(2.8 / watts) : 0);
 export const powerFromPace = (pace: number): number => (pace > 0 ? 2.8 / (pace / 500) ** 3 : 0);
 

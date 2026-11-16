@@ -1,5 +1,5 @@
-// FTMS (Bluetooth Fitness Machine Service) – Konstanten und Parser.
-// Spezifikation: Bluetooth SIG "Fitness Machine Service 1.0", Rower Data 0x2AD1.
+// FTMS (Bluetooth Fitness Machine Service) – constants and parsers.
+// Spec: Bluetooth SIG "Fitness Machine Service 1.0", Rower Data 0x2AD1.
 
 const uuid16 = (n) => `0000${n.toString(16).padStart(4, '0')}-0000-1000-8000-00805f9b34fb`;
 
@@ -16,8 +16,8 @@ export const UUID = {
   BATTERY: uuid16(0x180f),
 };
 
-// Weitere Services, die Web Bluetooth freigeben soll, damit der Explorer sie sehen kann.
-// (Web Bluetooth zeigt nur Services, die hier vorab genannt werden.)
+// Additional services Web Bluetooth should expose so the explorer can see them.
+// (Web Bluetooth only shows services listed here up front.)
 export const EXPLORER_SERVICES = [
   UUID.FTMS,
   UUID.HEART_RATE,
@@ -25,9 +25,9 @@ export const EXPLORER_SERVICES = [
   UUID.BATTERY,
   uuid16(0x1816), // Cycling Speed & Cadence
   uuid16(0x1818), // Cycling Power
-  uuid16(0xfff0), // häufiger proprietärer Service
+  uuid16(0xfff0), // common proprietary service
   uuid16(0xffe0), // HM-10 / China-UART
-  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC/Microchip Transparent UART (ältere Domyos-Geräte)
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC/Microchip Transparent UART (older Domyos devices)
   '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
 ];
 
@@ -67,9 +67,9 @@ export function fromHex(hex) {
 }
 
 /**
- * Parst eine Rower-Data-Notification. Gibt nur die Felder zurück, die im Paket stecken.
- * Manche Geräte verteilen die Werte auf mehrere Pakete ("More Data") – der Aufrufer
- * sollte die Ergebnisse daher in einen laufenden Zustand mergen.
+ * Parses a Rower Data notification. Returns only the fields present in the packet.
+ * Some devices split values across several packets ("More Data") – the caller
+ * should merge the results into a running state.
  */
 export function parseRowerData(dv) {
   let o = 0;
@@ -83,7 +83,7 @@ export function parseRowerData(dv) {
   const r = { flags };
 
   try {
-    // Bit 0 "More Data" ist invertiert: 0 => Schlagfrequenz + Schlagzähler vorhanden
+    // Bit 0 "More Data" is inverted: 0 => stroke rate + stroke count present
     if (!has(0)) { r.strokeRate = u8() / 2; r.strokeCount = u16(); }
     if (has(1)) r.avgStrokeRate = u8() / 2;
     if (has(2)) r.totalDistance = u24();          // m
@@ -98,9 +98,9 @@ export function parseRowerData(dv) {
     if (has(11)) r.elapsedTime = u16();           // s
     if (has(12)) r.remainingTime = u16();         // s
   } catch (e) {
-    r.error = `Paket kürzer als laut Flags erwartet (${dv.byteLength} Bytes, gelesen bis ${o})`;
+    r.error = `Packet shorter than its flags announce (${dv.byteLength} bytes, read up to ${o})`;
   }
-  if (!r.error && o !== dv.byteLength) r.warning = `${dv.byteLength - o} Byte(s) übrig – Flags evtl. nicht spec-konform`;
+  if (!r.error && o !== dv.byteLength) r.warning = `${dv.byteLength - o} byte(s) left over – flags may not be spec-compliant`;
   return r;
 }
 
@@ -136,25 +136,25 @@ export function parseControlPointResponse(dv) {
   return { opcode: CP_OPCODES[op] ?? `0x${op.toString(16)}`, result: CP_RESULTS[res] ?? `0x${res.toString(16)}` };
 }
 
-// Fitness Machine Status (0x2ADA) – Ereignisse wie Start/Pause oder geänderter Widerstand
+// Fitness Machine Status (0x2ADA) – events such as start/pause or resistance changes
 const STATUS_OPCODES = {
-  0x01: 'Reset', 0x02: 'Gestoppt/Pausiert', 0x03: 'Gestoppt (Sicherheitsschlüssel)', 0x04: 'Gestartet/Fortgesetzt',
-  0x05: 'Zielgeschwindigkeit geändert', 0x06: 'Zielsteigung geändert', 0x07: 'Widerstand geändert',
-  0x08: 'Zielleistung geändert', 0x09: 'Zielpuls geändert', 0xff: 'Control Permission verloren',
+  0x01: 'Reset', 0x02: 'Stopped/paused', 0x03: 'Stopped (safety key)', 0x04: 'Started/resumed',
+  0x05: 'Target speed changed', 0x06: 'Target incline changed', 0x07: 'Resistance changed',
+  0x08: 'Target power changed', 0x09: 'Target heart rate changed', 0xff: 'Control permission lost',
 };
 export function parseMachineStatus(dv) {
   const op = dv.getUint8(0);
   const r = { event: STATUS_OPCODES[op] ?? `0x${op.toString(16)}` };
-  if (op === 0x02 && dv.byteLength > 1) r.by = dv.getUint8(1) === 0x01 ? 'Stop' : 'Pause';
-  if (op === 0x07 && dv.byteLength > 1) r.resistance = dv.getUint8(1) / 10; // Auflösung 0.1
+  if (op === 0x02 && dv.byteLength > 1) r.by = dv.getUint8(1) === 0x01 ? 'stop' : 'pause';
+  if (op === 0x07 && dv.byteLength > 1) r.resistance = dv.getUint8(1) / 10; // resolution 0.1
   return r;
 }
 
 // Training Status (0x2AD3)
 const TRAINING_STATUS = {
-  0x00: 'Sonstiges', 0x01: 'Leerlauf', 0x02: 'Warm-up', 0x03: 'Intervall niedrig', 0x04: 'Intervall hoch',
-  0x05: 'Erholung', 0x06: 'Isometrisch', 0x07: 'Pulsprogramm', 0x08: 'Fitnesstest', 0x09: 'Geschwindigkeit zu niedrig',
-  0x0a: 'Geschwindigkeit zu hoch', 0x0b: 'Cool-down', 0x0c: 'Watt-Programm', 0x0d: 'Manuell (Quick Start)', 0x0e: 'Pre-Workout', 0x0f: 'Post-Workout',
+  0x00: 'Other', 0x01: 'Idle', 0x02: 'Warm-up', 0x03: 'Low-intensity interval', 0x04: 'High-intensity interval',
+  0x05: 'Recovery', 0x06: 'Isometric', 0x07: 'Heart rate control', 0x08: 'Fitness test', 0x09: 'Speed too low',
+  0x0a: 'Speed too high', 0x0b: 'Cool-down', 0x0c: 'Watt control', 0x0d: 'Manual mode (quick start)', 0x0e: 'Pre-Workout', 0x0f: 'Post-Workout',
 };
 export function parseTrainingStatus(dv) {
   const s = dv.byteLength > 1 ? dv.getUint8(1) : null;

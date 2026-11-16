@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -45,60 +45,60 @@
 <body>
 <header>
   <h1>StoryRower · BLE-PoC</h1>
-  <span id="status" class="status">nicht verbunden</span>
-  <button id="btnConnect" class="primary">Mit Rudergerät verbinden</button>
-  <button id="btnConnectAll" title="Zeigt alle Bluetooth-Geräte, auch ohne FTMS">Alle Geräte…</button>
-  <button id="btnDisconnect" disabled>Trennen</button>
+  <span id="status" class="status">not connected</span>
+  <button id="btnConnect" class="primary">Connect to rower</button>
+  <button id="btnConnectAll" title="Shows all Bluetooth devices, including non-FTMS ones">All devices…</button>
+  <button id="btnDisconnect" disabled>Disconnect</button>
 </header>
 
 <main>
   <div id="noBt" class="notice" hidden>
-    Dieser Browser unterstützt kein Web Bluetooth. Bitte <b>Chrome</b> (Android, Windows, macOS) oder Edge verwenden.
-    Auf iPad/iPhone funktioniert es nur über die App „Bluefy“. Die Seite muss über <b>https://</b> oder <b>localhost</b> geöffnet sein.
-    Demo und Wiedergabe funktionieren trotzdem.
+    This browser doesn't support Web Bluetooth. Please use <b>Chrome</b> (Android, Windows, macOS) or Edge.
+    On iPad/iPhone it only works via the "Bluefy" app. The page must be opened via <b>https://</b> or <b>localhost</b>.
+    Demo and replay work anyway.
   </div>
 
   <div class="tiles">
-    <div class="tile" id="t-spm"><div class="label">Schlagfrequenz</div><span class="value">–</span><span class="unit">spm</span></div>
-    <div class="tile" id="t-power"><div class="label">Leistung</div><span class="value">–</span><span class="unit">W</span></div>
+    <div class="tile" id="t-spm"><div class="label">Stroke rate</div><span class="value">–</span><span class="unit">spm</span></div>
+    <div class="tile" id="t-power"><div class="label">Power</div><span class="value">–</span><span class="unit">W</span></div>
     <div class="tile" id="t-pace"><div class="label">Pace</div><span class="value">–</span><span class="unit">/500 m</span></div>
-    <div class="tile" id="t-dist"><div class="label">Distanz</div><span class="value">–</span><span class="unit">m</span></div>
-    <div class="tile" id="t-strokes"><div class="label">Schläge</div><span class="value">–</span></div>
-    <div class="tile" id="t-time"><div class="label">Zeit (Gerät)</div><span class="value">–</span></div>
-    <div class="tile" id="t-hr"><div class="label">Puls</div><span class="value">–</span><span class="unit">bpm</span></div>
-    <div class="tile" id="t-rate"><div class="label">Update-Rate</div><span class="value">–</span><span class="unit">Hz</span></div>
+    <div class="tile" id="t-dist"><div class="label">Distance</div><span class="value">–</span><span class="unit">m</span></div>
+    <div class="tile" id="t-strokes"><div class="label">Strokes</div><span class="value">–</span></div>
+    <div class="tile" id="t-time"><div class="label">Time (device)</div><span class="value">–</span></div>
+    <div class="tile" id="t-hr"><div class="label">Heart rate</div><span class="value">–</span><span class="unit">bpm</span></div>
+    <div class="tile" id="t-rate"><div class="label">Update rate</div><span class="value">–</span><span class="unit">Hz</span></div>
   </div>
 
   <div class="grid2">
     <section class="panel">
-      <h2>Steuerung & Aufzeichnung</h2>
+      <h2>Control & recording</h2>
       <div class="row">
-        <button id="btnRequestControl" disabled title="FTMS Control Point: Request Control (0x00)">Control anfordern</button>
-        <button id="btnStart" disabled title="FTMS Control Point: Start/Resume (0x07)">Start senden</button>
-        <button id="btnStop" disabled title="FTMS Control Point: Stop/Pause (0x08)">Stop senden</button>
+        <button id="btnRequestControl" disabled title="FTMS Control Point: Request Control (0x00)">Request control</button>
+        <button id="btnStart" disabled title="FTMS Control Point: Start/Resume (0x07)">Send start</button>
+        <button id="btnStop" disabled title="FTMS Control Point: Stop/Pause (0x08)">Send stop</button>
       </div>
       <p style="color:var(--muted);font-size:14px;margin:10px 0">
-        Aufzeichnung läuft automatisch ab Verbindung: <b id="recCount">0</b> Pakete.
+        Recording runs automatically once connected: <b id="recCount">0</b> packets.
       </p>
       <div class="row">
-        <button id="btnDownload">Aufzeichnung herunterladen</button>
-        <button id="btnClear">Zurücksetzen</button>
-        <label class="btn" for="fileReplay">Aufzeichnung abspielen…</label>
+        <button id="btnDownload">Download recording</button>
+        <button id="btnClear">Reset</button>
+        <label class="btn" for="fileReplay">Play recording…</label>
         <input type="file" id="fileReplay" accept="application/json,.json">
-        <button id="btnDemo" title="Erzeugt künstliche FTMS-Pakete, ohne Gerät">Demo-Daten</button>
+        <button id="btnDemo" title="Generates synthetic FTMS packets, no device needed">Demo data</button>
       </div>
-      <h2 style="margin-top:16px">Gerät</h2>
+      <h2 style="margin-top:16px">Device</h2>
       <pre id="deviceInfo">–</pre>
     </section>
 
     <section class="panel">
       <h2>Services & Characteristics</h2>
-      <div id="explorer" style="color:var(--muted);font-size:14px">Nach dem Verbinden erscheinen hier alle sichtbaren Services.</div>
+      <div id="explorer" style="color:var(--muted);font-size:14px">All visible services appear here after connecting.</div>
     </section>
   </div>
 
   <section class="panel">
-    <h2>Protokoll</h2>
+    <h2>Log</h2>
     <div class="log" id="log"></div>
   </section>
 </main>
@@ -113,7 +113,7 @@ const $ = (id) => document.getElementById(id);
 const hasBt = !!navigator.bluetooth;
 if (!hasBt) $('noBt').hidden = false;
 
-// ---------- Zustand ----------
+// ---------- State ----------
 let device = null, server = null, controlPoint = null;
 let state = {};
 let recording = [];
@@ -121,7 +121,7 @@ let t0 = performance.now();
 let rowerPacketTimes = [];
 let demoTimer = null, replayTimer = null, wakeLock = null;
 
-// ---------- UI-Helfer ----------
+// ---------- UI helpers ----------
 function log(msg, cls = '') {
   const el = $('log');
   const line = document.createElement('div');
@@ -162,7 +162,7 @@ function render() {
   }
 }
 
-// ---------- Datenverarbeitung ----------
+// ---------- Data handling ----------
 function handleRowerData(dv, { replay = false } = {}) {
   const p = parseRowerData(dv);
   rowerPacketTimes.push(performance.now());
@@ -192,34 +192,34 @@ function handleGeneric(uuid, dv) {
   log(`${nameOf(uuid)}  [${toHex(dv)}]${parsed ? '  → ' + JSON.stringify(parsed) : ''}`, uuid === UUID.CONTROL_POINT ? '' : 'data');
 }
 
-// ---------- Verbinden ----------
+// ---------- Connecting ----------
 async function connect(all) {
   try {
-    setStatus('Gerät wählen…', 'warn');
+    setStatus('choose a device…', 'warn');
     device = await navigator.bluetooth.requestDevice(all
       ? { acceptAllDevices: true, optionalServices: EXPLORER_SERVICES }
       : { filters: [{ services: [UUID.FTMS] }], optionalServices: EXPLORER_SERVICES });
     device.addEventListener('gattserverdisconnected', onDisconnected);
-    setStatus(`verbinde mit ${device.name ?? 'Gerät'}…`, 'warn');
-    log(`Gerät gewählt: ${device.name ?? '(ohne Namen)'}  id=${device.id}`);
+    setStatus(`connecting to ${device.name ?? 'device'}…`, 'warn');
+    log(`Device selected: ${device.name ?? '(unnamed)'}  id=${device.id}`);
     server = await device.gatt.connect();
-    setStatus(`verbunden: ${device.name ?? 'Gerät'}`, 'ok');
-    log('GATT verbunden');
-    // t0 nicht zurücksetzen: Die Aufzeichnung läuft über Neuverbindungen weiter, Zeitstempel bleiben monoton.
+    setStatus(`connected: ${device.name ?? 'device'}`, 'ok');
+    log('GATT connected');
+    // Don't reset t0: the recording continues across reconnects, timestamps stay monotonic.
     recording.push({ t: Math.round(performance.now() - t0), event: 'connected', device: device.name ?? null });
     await explore();
     setConnectedUi(true);
     requestWakeLock();
   } catch (e) {
-    setStatus('Fehler', 'err');
-    log(`Verbindungsfehler: ${e.name}: ${e.message}`, 'err');
-    if (e.name === 'NotFoundError') log('Kein Gerät gewählt – oder kein Gerät mit FTMS gefunden. Probier „Alle Geräte…“. Läuft noch e-Connected/Kinomap?', 'warn');
+    setStatus('error', 'err');
+    log(`Connection error: ${e.name}: ${e.message}`, 'err');
+    if (e.name === 'NotFoundError') log('No device selected – or no FTMS device found. Try "All devices…". Is e-Connected/Kinomap still running?', 'warn');
   }
 }
 
 function onDisconnected() {
-  setStatus('getrennt', 'err');
-  log('Verbindung getrennt', 'warn');
+  setStatus('disconnected', 'err');
+  log('Disconnected', 'warn');
   controlPoint = null;
   setConnectedUi(false);
 }
@@ -228,9 +228,9 @@ async function explore() {
   const box = $('explorer');
   box.innerHTML = '';
   const services = await server.getPrimaryServices();
-  log(`${services.length} Service(s) sichtbar`);
+  log(`${services.length} service(s) visible`);
   if (!services.some((s) => s.uuid === UUID.FTMS)) {
-    log('KEIN FTMS-Service gefunden. Der Woodrower nutzt dann vermutlich ein proprietäres Protokoll → in nRF Connect alle Service-UUIDs notieren.', 'err');
+    log('NO FTMS service found. The device probably uses a proprietary protocol → note all service UUIDs in nRF Connect.', 'err');
   }
   const info = {};
   for (const svc of services) {
@@ -239,7 +239,7 @@ async function explore() {
     sEl.innerHTML = `<b>${nameOf(svc.uuid)}</b><br><code style="font-size:12px;color:var(--muted)">${svc.uuid}</code>`;
     box.appendChild(sEl);
     let chars = [];
-    try { chars = await svc.getCharacteristics(); } catch (e) { log(`Characteristics von ${svc.uuid} nicht lesbar: ${e.message}`, 'err'); }
+    try { chars = await svc.getCharacteristics(); } catch (e) { log(`Could not read characteristics of ${svc.uuid}: ${e.message}`, 'err'); }
     for (const ch of chars) {
       const props = Object.entries({ read: ch.properties.read, write: ch.properties.write, writeNR: ch.properties.writeWithoutResponse, notify: ch.properties.notify, indicate: ch.properties.indicate })
         .filter(([, v]) => v).map(([k]) => k);
@@ -250,20 +250,20 @@ async function explore() {
 
       if (ch.properties.read) {
         const b = document.createElement('button');
-        b.textContent = 'lesen';
+        b.textContent = 'read';
         b.onclick = async () => readChar(ch, info);
         row.appendChild(b);
-        // Geräteinfos und Features gleich automatisch lesen
+        // Read device info and features right away
         if (svc.uuid === UUID.DEVICE_INFO || ch.uuid === UUID.FEATURE || svc.uuid === UUID.BATTERY) await readChar(ch, info);
       }
       if (ch.properties.notify || ch.properties.indicate) {
         const b = document.createElement('button');
-        b.textContent = 'abonnieren';
-        b.onclick = async () => { await subscribe(ch); b.disabled = true; b.textContent = 'abonniert'; };
+        b.textContent = 'subscribe';
+        b.onclick = async () => { await subscribe(ch); b.disabled = true; b.textContent = 'subscribed'; };
         row.appendChild(b);
-        // Wichtige FTMS-Characteristics automatisch abonnieren
+        // Subscribe to the important FTMS characteristics automatically
         if ([UUID.ROWER_DATA, UUID.MACHINE_STATUS, UUID.TRAINING_STATUS, UUID.CONTROL_POINT, UUID.HEART_RATE_MEASUREMENT].includes(ch.uuid)) {
-          await subscribe(ch); b.disabled = true; b.textContent = 'abonniert';
+          await subscribe(ch); b.disabled = true; b.textContent = 'subscribed';
         }
       }
       if (ch.uuid === UUID.CONTROL_POINT) controlPoint = ch;
@@ -281,9 +281,9 @@ async function readChar(ch, info) {
     else if (dv.byteLength && [...new Uint8Array(dv.buffer)].every((c) => (c >= 32 && c < 127) || c === 10 || c === 13)) val = new TextDecoder().decode(dv).replace(/\r\n/g, ' | ');
     info[nameOf(ch.uuid)] = val;
     record(ch.uuid, dv, { read: val });
-    log(`gelesen ${nameOf(ch.uuid)}: ${typeof val === 'string' ? val : JSON.stringify(val)}`);
+    log(`read ${nameOf(ch.uuid)}: ${typeof val === 'string' ? val : JSON.stringify(val)}`);
     $('deviceInfo').textContent = JSON.stringify({ name: device?.name, ...info }, null, 2);
-  } catch (e) { log(`Lesen ${nameOf(ch.uuid)} fehlgeschlagen: ${e.message}`, 'err'); }
+  } catch (e) { log(`Reading ${nameOf(ch.uuid)} failed: ${e.message}`, 'err'); }
 }
 
 async function subscribe(ch) {
@@ -295,8 +295,8 @@ async function subscribe(ch) {
       else handleGeneric(ch.uuid, dv);
     });
     await ch.startNotifications();
-    log(`abonniert: ${nameOf(ch.uuid)}`);
-  } catch (e) { log(`Abonnieren ${nameOf(ch.uuid)} fehlgeschlagen: ${e.message}`, 'err'); }
+    log(`subscribed: ${nameOf(ch.uuid)}`);
+  } catch (e) { log(`Subscribing to ${nameOf(ch.uuid)} failed: ${e.message}`, 'err'); }
 }
 
 async function sendControl(bytes, label) {
@@ -305,18 +305,18 @@ async function sendControl(bytes, label) {
     const dv = new DataView(new Uint8Array(bytes).buffer);
     record(UUID.CONTROL_POINT, dv, { sent: label });
     await controlPoint.writeValueWithResponse(new Uint8Array(bytes));
-    log(`gesendet: ${label} [${toHex(dv)}]`);
-  } catch (e) { log(`Senden ${label} fehlgeschlagen: ${e.message}`, 'err'); }
+    log(`sent: ${label} [${toHex(dv)}]`);
+  } catch (e) { log(`Sending ${label} failed: ${e.message}`, 'err'); }
 }
 
-// ---------- Wake Lock (Bildschirm bleibt an) ----------
+// ---------- Wake Lock (keep the screen on) ----------
 async function requestWakeLock() {
-  try { wakeLock = await navigator.wakeLock?.request('screen'); if (wakeLock) log('Bildschirm bleibt an (Wake Lock)'); }
-  catch (e) { log(`Wake Lock nicht verfügbar: ${e.message}`, 'warn'); }
+  try { wakeLock = await navigator.wakeLock?.request('screen'); if (wakeLock) log('Screen stays on (Wake Lock)'); }
+  catch (e) { log(`Wake Lock not available: ${e.message}`, 'warn'); }
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && device?.gatt.connected) requestWakeLock(); });
 
-// ---------- Aufzeichnung ----------
+// ---------- Recording ----------
 function download() {
   const blob = new Blob([JSON.stringify({
     app: 'storyrower-ble-poc', version: 1, recordedAt: new Date().toISOString(),
@@ -337,16 +337,16 @@ function clearAll() {
   render(); setTile('t-rate', null);
 }
 
-function stopTimers() { clearInterval(demoTimer); clearTimeout(replayTimer); demoTimer = replayTimer = null; $('btnDemo').textContent = 'Demo-Daten'; }
+function stopTimers() { clearInterval(demoTimer); clearTimeout(replayTimer); demoTimer = replayTimer = null; $('btnDemo').textContent = 'Demo data'; }
 
 async function replay(file) {
   stopTimers();
   const data = JSON.parse(await file.text());
   const packets = (data.packets ?? []).filter((p) => p.uuid === UUID.ROWER_DATA);
-  log(`Wiedergabe: ${packets.length} Rower-Data-Pakete aus ${file.name} (${data.device ?? '?'})`);
+  log(`Replay: ${packets.length} Rower Data packets from ${file.name} (${data.device ?? '?'})`);
   let i = 0;
   const step = () => {
-    if (i >= packets.length) { log('Wiedergabe beendet'); return; }
+    if (i >= packets.length) { log('Replay finished'); return; }
     handleRowerData(fromHex(packets[i].hex), { replay: true });
     const next = packets[i + 1];
     replayTimer = setTimeout(step, next ? Math.max(0, next.t - packets[i].t) : 0);
@@ -355,10 +355,10 @@ async function replay(file) {
   step();
 }
 
-// Demo: erzeugt spec-konforme Pakete (Flags 0x002C = SPM/Strokes, Distanz, Pace, Leistung) + Zeit
+// Demo: generates spec-compliant packets (flags = SPM/strokes, distance, pace, power, elapsed time)
 function demo() {
   if (demoTimer) { stopTimers(); return; }
-  $('btnDemo').textContent = 'Demo stoppen';
+  $('btnDemo').textContent = 'Stop demo';
   let strokes = 0, dist = 0, sec = 0;
   demoTimer = setInterval(() => {
     sec++;
@@ -391,7 +391,7 @@ $('btnClear').onclick = clearAll;
 $('btnDemo').onclick = demo;
 $('fileReplay').onchange = (e) => { if (e.target.files[0]) replay(e.target.files[0]); e.target.value = ''; };
 
-log(hasBt ? 'Web Bluetooth verfügbar. Rudergerät einschalten, e-Connected/Kinomap schließen, dann „Mit Rudergerät verbinden“.' : 'Kein Web Bluetooth in diesem Browser.', hasBt ? '' : 'warn');
+log(hasBt ? 'Web Bluetooth available. Turn on the rower, close e-Connected/Kinomap, then "Connect to rower".' : 'No Web Bluetooth in this browser.', hasBt ? '' : 'warn');
 </script>
 </body>
 </html>

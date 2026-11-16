@@ -1,67 +1,47 @@
-# Meilenstein 0: BLE-Proof-of-Concept
+# Milestone 0: BLE proof of concept (completed)
 
-Ziel: herausfinden, **ob und wie** der Domyos Woodrower seine Live-Daten per Bluetooth LE liefert, und eine echte Trainingsaufzeichnung als Grundlage für den Simulator gewinnen.
+Goal: find out **whether and how** the Domyos Woodrower delivers live data over Bluetooth LE, and capture a real workout recording as the basis for the simulator.
 
-| Datei | Zweck |
+**Result:** standard FTMS, stable over 10 minutes → [RESULTS.md](RESULTS.md).
+
+> This page is kept as a minimal, dependency-free reference. The maintained version lives in the app: **Device & diagnostics** (`src/diagnostics/`), live at <https://schuster-thomas.github.io/storyrower/#/diagnose>.
+
+| File | Purpose |
 |---|---|
-| `index.html` | Testseite: verbinden, Live-Werte, Service-Explorer, Protokoll, Aufzeichnung (JSON), Wiedergabe, Demo |
-| `ftms.js` | FTMS-Konstanten und Parser für *Rower Data* (`0x2AD1`), Feature, Control Point |
-| `ftms.test.mjs` | Parser-Tests: `node poc/ble/ftms.test.mjs` |
+| `index.html` | Test page: connect, live values, service explorer, log, recording (JSON), replay, demo |
+| `ftms.js` | FTMS constants and parsers for *Rower Data* (`0x2AD1`), Feature, Machine/Training Status, Control Point |
+| `ftms.test.mjs` | Parser tests: `node poc/ble/ftms.test.mjs` |
+| `recordings/` | Real Woodrower recordings (also used by the app's tests and replay) |
 
-Keine Abhängigkeiten, kein Build. Die Seite braucht nur einen statischen Webserver.
+No dependencies, no build. Live: <https://schuster-thomas.github.io/storyrower/poc/ble/>
 
----
+## Preparation
+- Turn on the Woodrower (wake the console with a few strokes).
+- **Close e-Connected, Kinomap etc. on all devices.** The rower usually accepts only one connection.
+- Browser: **Chrome** (Android/Windows) or Edge. Firefox and all iOS browsers have no Web Bluetooth.
 
-## Vorbereitung (gilt für alle Tests)
-- Woodrower einschalten (Konsole aufwecken – ein paar Schläge rudern).
-- **e-Connected, Kinomap & Co. auf allen Geräten schließen**, Handy-Bluetooth ggf. aus. Das Gerät nimmt meist nur eine Verbindung an.
-- Browser: **Chrome** (Android/Windows) oder Edge. Firefox und alle iOS-Browser können kein Web Bluetooth.
-
-## Schritt 1 – Schnellcheck ohne Code (nRF Connect)
-1. App **nRF Connect for Mobile** (Nordic Semiconductor) aus dem Play Store auf das Tablet.
-2. *Scan* → Woodrower suchen (Name vermutlich „Domyos…“ o. ä.) → *Connect*.
-3. Notieren / Screenshot:
-   - Gibt es den Service **Fitness Machine** (`0x1826`)?
-   - Darin **Rower Data** (`0x2AD1`)? → Pfeil-Symbol (Notify) antippen, rudern, kommen Werte?
-   - Falls *kein* FTMS: alle Service-UUIDs notieren (die langen Nummern).
-
-## Schritt 2 – Testseite am PC (falls der PC Bluetooth hat)
+## Running it locally
 ```bash
 npx --yes http-server@14.1.1 poc/ble -p 8080 -c-1
 ```
-Dann in Chrome `http://localhost:8080` öffnen → **Mit Rudergerät verbinden**.
+Open `http://localhost:8080` in Chrome → **Connect to rower**.
 
-## Schritt 3 – Testseite auf dem Samsung-Tablet
-**Einfach in Chrome öffnen: <https://schuster-thomas.github.io/storyrower/poc/ble/>** (GitHub Pages, wird bei jedem Push auf `main` aktualisiert).
+Web Bluetooth only works on `https://` or `localhost`. To test unpushed changes on the tablet:
 
-Web Bluetooth läuft nur über `https://` oder `localhost`. Für lokale Änderungen, die noch nicht gepusht sind, gibt es zwei Wege:
+**a) Chrome flag (no cable)**
+1. Start the server on the PC (Windows firewall: allow access on *private* networks).
+2. Find the PC's IP (`ipconfig` → IPv4 address, e.g. `192.168.178.20`).
+3. On the tablet in Chrome: `chrome://flags/#unsafely-treat-insecure-origin-as-secure` → add `http://192.168.178.20:8080` → *Enabled* → restart Chrome.
+4. Open `http://192.168.178.20:8080`.
 
-**a) Chrome-Flag (ohne Kabel, einfachster Weg)**
-1. Am PC den Server wie in Schritt 2 starten (Windows-Firewall: Zugriff im *privaten* Netzwerk erlauben).
-2. PC-IP herausfinden (`ipconfig` → IPv4-Adresse, z. B. `192.168.178.20`).
-3. Auf dem Tablet in Chrome: `chrome://flags/#unsafely-treat-insecure-origin-as-secure` → `http://192.168.178.20:8080` eintragen → *Enabled* → Chrome neu starten.
-4. `http://192.168.178.20:8080` öffnen.
+**b) USB port forwarding** (developer options + USB debugging on the tablet)
+1. Connect the tablet via USB, on the PC open `chrome://inspect/#devices` → *Port forwarding* → `8080` → `localhost:8080`.
+2. Open `http://localhost:8080` on the tablet.
 
-**b) USB-Portweiterleitung** (Entwickleroptionen + USB-Debugging am Tablet)
-1. Tablet per USB anschließen, am PC in Chrome `chrome://inspect/#devices` → *Port forwarding* → `8080` → `localhost:8080`.
-2. Auf dem Tablet `http://localhost:8080` öffnen.
-
-## Was die Seite tut
-- **Mit Rudergerät verbinden:** zeigt nur Geräte mit FTMS. Taucht der Woodrower nicht auf → **Alle Geräte…** probieren.
-- Liest Geräteinfo + FTMS-Features, abonniert automatisch Rower Data, Machine Status, Training Status, Control Point und Puls.
-- **Service-Explorer:** zeigt alle sichtbaren Services/Characteristics; *lesen* / *abonnieren* per Klick (Rohdaten als Hex im Protokoll).
-- **Control anfordern / Start senden:** Manche Geräte senden erst nach einem FTMS-*Start*. Nur nötig, wenn beim Rudern keine Daten kommen.
-- **Aufzeichnung:** Jedes Paket wird mit Zeitstempel mitgeschnitten → *Aufzeichnung herunterladen* (JSON). Bildschirm bleibt dabei an.
-- **Aufzeichnung abspielen / Demo-Daten:** zum Testen ohne Rudergerät.
-
-## Testprotokoll – bitte festhalten
-1. Taucht der Woodrower unter „Mit Rudergerät verbinden“ auf (= FTMS)? Gerätename?
-2. Welche Felder kommen? (SPM, Schläge, Distanz, Pace, Watt, Zeit, Puls?)
-3. **Update-Rate** (Kachel) – ~1 Hz oder schneller?
-4. Reagieren die Werte schnell auf Tempowechsel? (Gefühlte Verzögerung in Sekunden)
-5. Sind die Watt plausibel? (Locker ~80–120 W, zügig ~150–250 W)
-6. Kommen Daten nur nach *Start senden*?
-7. Bricht die Verbindung ab (z. B. bei Bildschirm-Aus)?
-8. **10 Minuten mit Tempowechseln rudern** (3 min locker, 4× 30 s zügig / 30 s locker, 3 min locker) und die JSON-Datei herunterladen → nach `poc/ble/recordings/` legen.
-
-Mit dieser Aufzeichnung baue ich in Meilenstein 1 den Simulator.
+## What the page does
+- **Connect to rower:** lists only FTMS devices. If the Woodrower doesn't show up → try **All devices…**.
+- Reads device info + FTMS features, subscribes to Rower Data, Machine Status, Training Status, Control Point and heart rate.
+- **Service explorer:** shows all visible services/characteristics; *read* / *subscribe* on click (raw hex in the log).
+- **Request control / Send start:** some devices only send data after an FTMS *start*. The Woodrower doesn't need it.
+- **Recording:** every packet is captured with a timestamp → *Download recording* (JSON). The screen stays on.
+- **Play recording / Demo data:** for testing without a rower.

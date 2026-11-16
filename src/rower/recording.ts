@@ -50,18 +50,18 @@ export class Recorder {
 interface PocPacket { t: number; uuid?: string; hex?: string; parsed?: { read?: unknown; sent?: unknown } | null; event?: string }
 
 /**
- * Liest Aufzeichnungen im neuen Format (v2) und im Format der PoC-Testseite (v1).
- * v1-Dateien können zurückspringende Zeitstempel enthalten (Neuverbindung) – diese werden
- * zu einer fortlaufenden Zeitachse zusammengesetzt.
+ * Reads recordings in the current format (v2) and in the PoC test page format (v1).
+ * v1 files may contain timestamps that jump back (reconnect) – these are stitched
+ * into one continuous timeline.
  */
 export function parseRecording(json: unknown): { device: string | null; packets: RawPacket[] } {
   const d = json as { version?: number; device?: string | null; packets?: unknown[] };
-  if (!d || !Array.isArray(d.packets)) throw new Error('Keine gültige Aufzeichnung (packets fehlt)');
+  if (!d || !Array.isArray(d.packets)) throw new Error('Not a valid recording (packets missing)');
 
   const packets: RawPacket[] = [];
   let offset = 0, last = -Infinity;
   for (const raw of d.packets as (RecordedPacket & PocPacket)[]) {
-    if (!raw.uuid || raw.hex == null) continue; // v1-Ereigniszeilen (z. B. "connected")
+    if (!raw.uuid || raw.hex == null) continue; // v1 event lines (e.g. "connected")
     let t = raw.t + offset;
     if (t < last) { offset += last - t + 1000; t = raw.t + offset; }
     last = t;

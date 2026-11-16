@@ -1,51 +1,51 @@
 # StoryRower
 
-Rudern als erlebte Geschichte: Die Live-Daten eines Rudergeräts (zuerst der **Domyos Woodrower**) treiben ein Boot durch ein Level mit Dramaturgie. Es beginnt idyllisch, dann eskaliert die Lage (Vulkanausbruch, Flutwelle …), man muss fliehen, und am Ende klingt das Training locker aus.
+Rowing as a story you live through: live data from a rowing machine (starting with the **Domyos Woodrower**) drives a boat through a level with a dramatic arc. It starts idyllic, then things escalate (volcanic eruption, tidal wave …), you have to escape, and the workout winds down gently at the end.
 
-Belohnt wird nicht Maximalleistung, sondern wie gut man die **Zielbereiche** für Watt, Schlagfrequenz und 500m-Zeit trifft.
+What counts is not maximum effort but how well you stay inside the **target bands** for watts, stroke rate and 500 m split.
 
-**Live:** <https://schuster-thomas.github.io/storyrower/> · Gerät & Diagnose: <https://schuster-thomas.github.io/storyrower/#/diagnose>
+**Live:** <https://schuster-thomas.github.io/storyrower/> · Device & diagnostics: <https://schuster-thomas.github.io/storyrower/#/diagnose>
 
-- 📄 [Konzept](KONZEPT.md)
-- 🖼️ [Erster Interface-Entwurf](screenshots/)
-- 🔌 [BLE-Proof-of-Concept und Ergebnis](poc/ble/ERGEBNIS.md)
+- 📄 [Concept](CONCEPT.md)
+- 🖼️ [First UI mock-up](screenshots/)
+- 🔌 [BLE proof of concept and results](poc/ble/RESULTS.md)
 
 ## Status
-| Meilenstein | Stand |
+| Milestone | State |
 |---|---|
-| 0 – BLE-PoC (Woodrower-Daten per Web Bluetooth) | ✅ Woodrower spricht FTMS, 10 min stabil ([Ergebnis](poc/ble/ERGEBNIS.md)) |
-| 1 – Daten-Layer + Simulator + Diagnose-Ansicht | ✅ |
-| 2 – Graybox-Spiel | – |
-| 3 – Story-Engine | – |
-| 4 – Level „Iceland Volcano Run“ | – |
+| 0 – BLE PoC (Woodrower data via Web Bluetooth) | ✅ Woodrower speaks FTMS, stable for 10 min ([results](poc/ble/RESULTS.md)) |
+| 1 – Data layer + simulator + diagnostics view | ✅ |
+| 2 – Greybox game (incl. heart rate display) | – |
+| 3 – Story engine + audio | – |
+| 4 – Level "Iceland Volcano Run" | – |
 
-## Entwicklung
-Voraussetzung: Node.js 24.
+## Development
+Requires Node.js 24.
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173 (im LAN auch per IP erreichbar)
-npm test         # Tests, u. a. mit den echten Woodrower-Aufzeichnungen
-npm run build    # Typecheck + Build nach dist/
+npm run dev      # http://localhost:5173 (also reachable via LAN IP)
+npm test         # tests, incl. the real Woodrower recordings
+npm run build    # typecheck + build to dist/
 ```
 
-Jeder Push auf `main` wird per GitHub Actions getestet, gebaut und auf GitHub Pages veröffentlicht.
+Every push to `main` is tested, built and published to GitHub Pages by GitHub Actions.
 
-### Aufbau der Daten-Schicht (`src/rower/`)
+### Data layer (`src/rower/`)
 ```
 PacketSource ── BluetoothSource   Web Bluetooth (Chrome: Android, Windows, macOS)
-             ├─ ReplaySource      spielt Aufzeichnungen ab (1×–64×)
-             └─ SimulatorSource   simuliert einen Woodrower (Tastatur/Leistungsprofil)
-        │  rohe FTMS-Pakete (uuid, Bytes, Zeit)
+             ├─ ReplaySource      replays recordings (1×–64×)
+             └─ SimulatorSource   simulates a Woodrower (keyboard / power profile)
+        │  raw FTMS packets (uuid, bytes, time)
         ▼
-RowerSession  dekodiert · filtert Duplikate · erkennt Schläge und Pausen
-              · glättet Watt/Pace (6 s) · zeichnet alles auf
+RowerSession  decodes · drops duplicates · detects strokes and pauses
+              · smooths watts/pace (6 s) · records everything
         │  RowerEvents: sample, stroke, paused/resumed, resistance, raw, …
         ▼
-Spiel  und  Diagnose-Ansicht (src/diagnostics/) – derselbe Datenweg
+Game  and  diagnostics view (src/diagnostics/) – same data path
 ```
 
-Alle drei Quellen liefern exakt das Paketformat des Woodrowers. Deshalb läuft am Schreibtisch derselbe Code wie am Rudergerät.
+All three sources produce exactly the Woodrower's packet format, so the same code runs at the desk and on the rower.
 
-## Plattform
-Web-App (PWA, TypeScript + Three.js) für Chrome auf Android-Tablets und PCs. iPad später über eine Capacitor-App, weil iOS-Browser kein Web Bluetooth können.
+## Platform
+Web app (PWA, TypeScript + Three.js) for Chrome on Android tablets and PCs. iPad later via a Capacitor app, because iOS browsers don't support Web Bluetooth.

@@ -7,15 +7,15 @@ import { Recorder } from './recording';
 import type { ConnectionState, PacketSource, RawPacket, RowerEvent, RowerSample } from './types';
 
 export interface SessionOptions {
-  /** Zeitfenster für geglättete Watt/Pace (ms). */
+  /** Time window for smoothed watts/pace (ms). */
   smoothingWindowMs?: number;
-  /** Ohne Schlag so lange → Pause, auch wenn das Gerät kein Pause-Event schickt (ms). */
+  /** No stroke for this long → paused, even if the device sends no pause event (ms). */
   idleTimeoutMs?: number;
 }
 
 /**
- * Macht aus rohen FTMS-Paketen einer beliebigen Quelle die Events, die Spiel und
- * Diagnose-Ansicht brauchen. Zeichnet alle Pakete auf.
+ * Turns raw FTMS packets from any source into the events the game and the
+ * diagnostics view need. Records every packet.
  */
 export class RowerSession {
   readonly recorder: Recorder;
@@ -60,7 +60,7 @@ export class RowerSession {
   dispose() { this.stop(); this.unsub.forEach((u) => u()); this.unsub = []; }
 
   async sendControl(bytes: number[]) {
-    if (!this.source.sendControl) throw new Error('Diese Quelle kann keine Befehle senden');
+    if (!this.source.sendControl) throw new Error('This source cannot send commands');
     await this.source.sendControl(bytes);
   }
 
@@ -68,13 +68,13 @@ export class RowerSession {
 
   private log(msg: string, level: 'info' | 'warn' | 'error' = 'info') { this.emit({ type: 'log', t: this.lastT, msg, level }); }
 
-  /** Öffentlich für Tests und Wiedergabe: ein einzelnes Paket verarbeiten. */
+  /** Public for tests and replay: process a single packet. */
   handlePacket(p: RawPacket) {
     this.lastT = p.t;
     this.recorder.add(p);
 
     if (p.kind === 'read') return this.handleRead(p);
-    if (p.kind === 'write') { this.emit({ type: 'raw', packet: p, decoded: 'gesendet', duplicate: false }); return; }
+    if (p.kind === 'write') { this.emit({ type: 'raw', packet: p, decoded: 'sent', duplicate: false }); return; }
 
     switch (p.uuid) {
       case UUID.ROWER_DATA: return this.handleRowerData(p);
@@ -137,7 +137,7 @@ export class RowerSession {
     const { flags: _flags, error: _e, warning: _w, ...values } = parsed;
     Object.assign(this.data, values);
 
-    // Schläge erkennen
+    // Detect strokes
     const count = this.data.strokeCount;
     if (count != null) {
       if (this.lastStrokeCount != null && count > this.lastStrokeCount) {
@@ -149,7 +149,7 @@ export class RowerSession {
         this.lastStrokeT = p.t;
         this.setRowing(true, p.t);
       } else if (this.lastStrokeCount != null && count < this.lastStrokeCount) {
-        this.log(`Schlagzähler zurückgesetzt (${this.lastStrokeCount} → ${count})`, 'warn');
+        this.log(`Stroke counter reset (${this.lastStrokeCount} → ${count})`, 'warn');
         this.lastStrokeT = null;
       }
       this.lastStrokeCount = count;
@@ -178,11 +178,11 @@ export class RowerSession {
   private pushPower(t: number, power: number) {
     this.powerHistory.push({ t, power });
     const cutoff = t - this.smoothingWindowMs;
-    // ein Element vor dem Fenster behalten – es gilt bis zum nächsten Messpunkt
+    // keep one point before the window – it holds until the next sample
     while (this.powerHistory.length > 2 && this.powerHistory[1].t <= cutoff) this.powerHistory.shift();
   }
 
-  /** Zeitgewichtetes Mittel der (stückweise konstanten) Leistung im Fenster. */
+  /** Time-weighted mean of the (piecewise constant) power within the window. */
   private smoothedPower(t: number): number {
     const h = this.powerHistory;
     if (h.length === 0) return 0;

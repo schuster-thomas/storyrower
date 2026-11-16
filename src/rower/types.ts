@@ -1,17 +1,17 @@
-// Gemeinsame Typen der Daten-Schicht.
+// Shared types of the data layer.
 //
-// Aufbau:  PacketSource (Bluetooth | Aufzeichnung | Simulator)
-//            └─ liefert rohe FTMS-Pakete (uuid + Bytes + Zeitstempel)
+// Structure: PacketSource (Bluetooth | recording | simulator)
+//            └─ delivers raw FTMS packets (uuid + bytes + timestamp)
 //          RowerSession
-//            └─ dekodiert, entfernt Duplikate, erkennt Schläge/Pausen, glättet, zeichnet auf
-//            └─ liefert RowerEvents an Spiel UND Diagnose-Ansicht (gleicher Datenweg)
+//            └─ decodes, drops duplicates, detects strokes/pauses, smooths, records
+//            └─ delivers RowerEvents to the game AND the diagnostics view (same data path)
 
 export interface RawPacket {
-  /** ms seit Start der Quelle */
+  /** ms since the source started */
   t: number;
   uuid: string;
   data: DataView;
-  /** 'notify' = laufende Daten, 'read' = einmal gelesener Wert, 'write' = an das Gerät gesendet */
+  /** 'notify' = streaming data, 'read' = value read once, 'write' = sent to the device */
   kind: 'notify' | 'read' | 'write';
 }
 
@@ -33,27 +33,27 @@ export interface PacketSource {
   start(): Promise<void>;
   stop(): void;
   on<K extends keyof PacketSourceEvents>(event: K, fn: PacketSourceEvents[K]): () => void;
-  /** Befehl an das Gerät senden (nur Bluetooth; Simulator ignoriert oder simuliert). */
+  /** Send a command to the device (Bluetooth; the simulator fakes a response). */
   sendControl?(bytes: number[]): Promise<void>;
 }
 
-/** Normalisierter Zustand, den das Spiel nutzt. */
+/** Normalised state used by the game. */
 export interface RowerSample {
-  /** ms seit Session-Start */
+  /** ms since session start */
   t: number;
-  strokeRate: number;        // spm, Rohwert vom Gerät
+  strokeRate: number;        // spm, raw value from the device
   strokeCount: number;
   distance: number;          // m
-  pace: number | null;       // s/500m, null wenn das Gerät 0 meldet
-  power: number;             // W, Rohwert (springt von Schlag zu Schlag)
-  powerSmoothed: number;     // W, Mittel der letzten Schläge
+  pace: number | null;       // s/500m, null when the device reports 0
+  power: number;             // W, raw value (jumps from stroke to stroke)
+  powerSmoothed: number;     // W, time-weighted mean over the last seconds
   paceSmoothed: number | null;
   avgStrokeRate: number | null;
   resistance: number | null;
   energy: number | null;     // kcal
-  heartRate: number | null;  // bpm, null wenn kein Gurt
-  elapsedTime: number | null;// s, Gerätezeit
-  rowing: boolean;           // false = Pause
+  heartRate: number | null;  // bpm, null when no heart-rate source
+  elapsedTime: number | null;// s, device clock
+  rowing: boolean;           // false = paused
 }
 
 export type RowerEvent =

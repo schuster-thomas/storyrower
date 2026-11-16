@@ -1,6 +1,6 @@
 import type { RowerSample } from '../rower/types';
 
-/** Kleines Canvas-Diagramm: Rohleistung, geglättete Leistung und Schlag-Markierungen. */
+/** Small canvas chart: raw power, smoothed power and stroke markers. */
 export class PowerChart {
   private points: { t: number; raw: number; smooth: number }[] = [];
   private strokes: number[] = [];
@@ -51,7 +51,7 @@ export class PowerChart {
     const x = (t: number) => pad.l + ((t - tStart) / this.windowMs) * pw;
     const y = (p: number) => pad.t + ph - (p / maxP) * ph;
 
-    // Raster
+    // Grid
     g.strokeStyle = color('--line'); g.fillStyle = color('--muted'); g.lineWidth = 1;
     g.font = '11px system-ui, sans-serif'; g.textAlign = 'right'; g.textBaseline = 'middle';
     const step = maxP > 300 ? 100 : 50;
@@ -61,15 +61,15 @@ export class PowerChart {
     }
     g.textAlign = 'left'; g.textBaseline = 'top';
     g.fillText('−2 min', pad.l, h - pad.b + 4);
-    g.textAlign = 'right'; g.fillText('jetzt', w - pad.r, h - pad.b + 4);
+    g.textAlign = 'right'; g.fillText('now', w - pad.r, h - pad.b + 4);
 
-    // Schläge
+    // Strokes
     g.strokeStyle = color('--muted'); g.globalAlpha = 0.35;
     for (const t of this.strokes) { if (t < tStart) continue; g.beginPath(); g.moveTo(Math.round(x(t)) + 0.5, pad.t + ph - 10); g.lineTo(Math.round(x(t)) + 0.5, pad.t + ph); g.stroke(); }
     g.globalAlpha = 1;
     if (this.points.length < 2) return;
 
-    // Rohwert als Treppe, geglättet als Linie
+    // Raw value as steps, smoothed as a line
     g.strokeStyle = color('--raw'); g.lineWidth = 1.5; g.beginPath();
     this.points.forEach((p, i) => {
       if (i === 0) g.moveTo(x(Math.max(p.t, tStart)), y(p.raw));

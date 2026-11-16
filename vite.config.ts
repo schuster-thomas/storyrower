@@ -1,12 +1,12 @@
 import { defineConfig } from 'vitest/config';
 
-// GitHub Pages liefert die Seite unter /storyrower/ aus.
+// GitHub Pages serves the site under /storyrower/.
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/storyrower/' : '/',
   server: { host: true, port: 5173 },
   build: {
     rollupOptions: {
-      // Die alte PoC-Testseite bleibt unter /poc/ble/ erreichbar
+      // The old PoC test page stays available at /poc/ble/
       input: { main: 'index.html', poc: 'poc/ble/index.html' },
     },
   },
