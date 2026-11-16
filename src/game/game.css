@@ -66,9 +66,27 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .results small { color: var(--muted); }
 .game-diag { position: absolute; left: 14px; top: 90px; margin: 0; padding: 10px 14px; font: 12px/1.5 ui-monospace, Consolas, monospace; white-space: pre; max-width: calc(100% - 28px); overflow: auto; }
 
+/* Phase dots get too cramped below ~900 px – the phase name is shown in the title anyway */
+@media (max-width: 900px) {
+  .hud-progress { visibility: hidden; }
+}
+
 @media (max-width: 760px) {
+  .hud-top { flex-wrap: wrap; }
+  .hud-title { flex: 1 1 auto; padding: 8px 12px; }
+  .hud-level { font-size: 17px; }
+  .hud-phase { font-size: 13px; }
   .hud-progress { display: none; }
-  .hud-side { top: auto; bottom: 170px; transform: none; }
-  .hud-bottom { flex-wrap: wrap; }
-  .hud-tile { flex: 1 1 30%; padding: 4px 8px; }
+  .hud-timer { padding: 8px 10px; font-size: 16px; }
+  .hud-btn { width: 44px; height: 44px; min-height: 44px; }
+  /* Coins / in band / wave as a compact row under the top bar instead of a side column */
+  .hud-side { order: 1; position: static; transform: none; align-self: flex-end; margin-top: 8px; grid-auto-flow: column; gap: 14px; padding: 6px 12px; min-width: 0; }
+  .hud-side span { font-size: 18px; }
+  .hud-side .threat { min-width: 56px; }
+  .hud-next { order: 2; font-size: 13px; }
+  .hud-message { order: 3; margin-top: 6vh; }
+  .hud-bottom { order: 4; flex-wrap: wrap; padding: 8px; gap: 4px 0; }
+  .hud-tile { flex: 1 1 30%; padding: 2px 8px; }
+  .hud-tile:nth-child(4) { border-left: 0; }
+  .hud-tile .val b { font-size: 24px; }
 }
