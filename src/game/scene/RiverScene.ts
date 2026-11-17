@@ -5,6 +5,7 @@ import { Backdrop } from './Backdrop';
 import { Effects } from './Effects';
 import { NatureKit } from './NatureKit';
 import { Post } from './Post';
+import { SectionTrack } from './Sections';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
 import { buildChunk, createTerrainMaterials, disposeChunk } from './Terrain';
@@ -49,6 +50,9 @@ export class RiverScene {
   private backdrop: Backdrop;
   private light = 1;
   private kit: NatureKit | null = null;
+  /** Authored sections from Blender; once loaded they replace the generated landscape */
+  private sections: SectionTrack;
+  private sectionTint = new THREE.Color();
   private post: Post;
   private tint = new THREE.Color(1, 1, 1);
 
@@ -118,6 +122,13 @@ export class RiverScene {
       this.wave.visible = false;
     };
     // Unified 3D props (CC0 model kit); the world is rebuilt once they are loaded
+    this.sections = new SectionTrack(NatureKit.load());
+    this.sections.setDensity(this.q.lupines / 40, this.sun.castShadow);
+    this.scene.add(this.sections.group);
+    this.sections.onReady = () => {
+      for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
+      this.chunks = [];
+    };
     NatureKit.load().then((kit) => {
       this.kit = kit;
       for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
@@ -145,6 +156,7 @@ export class RiverScene {
     this.effects.setParticleShare(this.q.particles);
     this.sun.castShadow = level !== 'low';
     this.post.setQuality(level);
+    this.sections.setDensity(this.q.lupines / 40, this.sun.castShadow);
     this.post.setSize(size.x, size.y);
     // rebuild the landscape with the new density
     for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
@@ -204,7 +216,11 @@ export class RiverScene {
     this.applyEnvironment(1 - Math.exp(-dt * 0.4));
     this.applyFlash(dt);
     this.light = 0.45 + 0.55 * Math.min(1, this.env.sunIntensity / 2.2) * (1 - this.env.smoke * 0.25) + this.flashLevel * 0.4;
-    this.updateChunks();
+    if (this.sections.ready) {
+      // phase tint for the baked light: ash greys it, the eruption warms it
+      this.sectionTint.setRGB(1, 1, 1).lerp(new THREE.Color(0x9a948a), this.env.smoke * 0.45).lerp(new THREE.Color(1.1, 0.8, 0.62), this.env.lava * 0.35);
+      this.sections.update({ time: this.time, boatZ: this.z, ahead: this.q.chunksAhead * CHUNK, light: Math.min(1.15, this.light * 1.05), tint: this.sectionTint });
+    } else this.updateChunks();
     this.updateBoat(dt);
     this.updateVolcano(dt);
     this.updateWave(dt, threat);
@@ -215,9 +231,13 @@ export class RiverScene {
     const current = Math.floor(-this.z / CHUNK);
     this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, lava: this.env.lava, smoke: this.env.smoke, wave: this.env.wave, threat }, current - CHUNKS_BEHIND, current + this.q.chunksAhead);
     // The visible sun sits ahead in the sky; the light comes from high left so the banks facing us are lit
-    this.sun.position.set(-70, 60 + this.env.sunHeight * 80, this.z + 25);
+    if (this.sections.ready) this.sun.position.copy(this.sections.sunDir).multiplyScalar(120).add(new THREE.Vector3(0, 0, this.z));
+    else this.sun.position.set(-70, 60 + this.env.sunHeight * 80, this.z + 25);
     this.sun.target.position.set(0, 0, this.z);
 
+    // count draw calls over all passes (post-processing would otherwise reset the counter per pass)
+    this.renderer.info.autoReset = false;
+    this.renderer.info.reset();
     const t0 = performance.now();
     // phase tint for the colour grade: warm at sunset, orange under the eruption, cool in the idyll
     this.tint.setRGB(1, 1, 1).lerp(new THREE.Color(1.08, 0.92, 0.82), this.env.lava * 0.6).lerp(new THREE.Color(1.06, 0.98, 0.9), Math.max(0, 0.3 - this.env.sunHeight) * 2);

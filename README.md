@@ -48,6 +48,15 @@ Everything is recorded automatically from the moment a rower (or simulator) is c
 - `game/scene/Water.ts`, `Sky.ts`, `Terrain.ts` – water shader (waves, foam, wake, sky reflection), gradient sky with sun, clouds and snow-capped mountains, rolling hills with basalt columns, lupines and waterfalls
 - `audio/AudioEngine.ts` – procedural placeholder soundtrack (Web Audio): music layers faded by intensity, splash per real stroke, ambience and story effects
 
+### Authored river sections (`scripts/blender/`, `src/assets/sections/`)
+The river is no longer generated at random once sections are loaded: each section is a composed 200 m stretch built by a Blender script from CC0 Poly Haven scans (cliffs, boulders, mossy stones) on a sculpted terrain with scanned grass/moss/rock textures, lit by a sky HDRI. The terrain lighting is **baked** into a texture (cheap on tablets, looks rich); the scans are lit live; waterfalls get an animated shader; grass, lupines and flowers are placed from a JSON exported by the script and drawn with the model kit.
+
+```bash
+npm run polyhaven:download   # CC0 scans/textures/HDRIs → assets/raw/polyhaven (≈130 MB, not committed)
+npm run section:fjord        # Blender (headless): build, bake, export, preview → compress into src/assets/sections
+```
+Sections repeat seamlessly (same bank profile at both ends). `src/game/scene/Sections.ts` lines them up along the river.
+
 ### 3D models (`scripts/models/`, `src/assets/models/`)
 All props (rocks, pebbles, grass, lupines, bushes, trees, boulder cliffs, icebergs) come from one CC0 kit – Quaternius' Stylized Nature MegaKit – so the look stays consistent. See [CREDITS.md](CREDITS.md).
 
