@@ -28,6 +28,9 @@ export class Hud {
   /** Target key (split and stroke-rate centre) currently shown; a change triggers the big announcement. */
   private targetKey: string | null = null;
   private announceTimer: ReturnType<typeof setTimeout> | null = null;
+  private captionTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Called whenever new targets are announced (e.g. to play a sound). */
+  onAnnounce: (() => void) | null = null;
 
   constructor(parent: HTMLElement) {
     this.el = document.createElement('div');
@@ -41,6 +44,7 @@ export class Hud {
         <div class="hud-progress glass" data-h="progress"></div>
         <div class="hud-right">
           <div class="hud-timer glass" data-h="timer"></div>
+          <button class="hud-btn" data-h="muteBtn" title="Sound on/off" aria-label="Sound on/off">🔊</button>
           <button class="hud-btn" data-h="diagBtn" title="Diagnostics" aria-label="Diagnostics">i</button>
           <button class="hud-btn" data-h="exitBtn" title="End workout" aria-label="End workout">✕</button>
         </div>
@@ -48,6 +52,7 @@ export class Hud {
       <div class="hud-next glass" data-h="next"></div>
       <div class="hud-message" data-h="message"></div>
       <div class="hud-target" data-h="target" aria-live="polite"></div>
+      <div class="hud-caption" data-h="caption" aria-live="polite"></div>
       <div class="hud-side glass">
         <div><span data-h="coins">0</span><small>coins</small></div>
         <div><span data-h="acc">–</span><small>in band</small></div>
@@ -65,6 +70,22 @@ export class Hud {
 
   onExit(fn: () => void) { this.q('exitBtn').onclick = fn; }
   onDiagnostics(fn: () => void) { this.q('diagBtn').onclick = fn; }
+  onMute(fn: () => boolean) {
+    const b = this.q('muteBtn');
+    b.onclick = () => { b.textContent = fn() ? '🔇' : '🔊'; };
+  }
+  setMuted(muted: boolean) { this.q('muteBtn').textContent = muted ? '🔇' : '🔊'; }
+
+  /** A story line, shown for a few seconds above the bottom bar. */
+  caption(text: string, seconds = 6) {
+    const el = this.q('caption');
+    el.textContent = text;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    if (this.captionTimer) clearTimeout(this.captionTimer);
+    this.captionTimer = setTimeout(() => el.classList.remove('show'), seconds * 1000);
+  }
 
   private buildProgress(w: Workout, level: Level) {
     const spans = phaseSpans(w);
@@ -87,6 +108,7 @@ export class Hud {
     el.classList.add('show');
     if (this.announceTimer) clearTimeout(this.announceTimer);
     this.announceTimer = setTimeout(() => el.classList.remove('show'), seconds * 1000);
+    this.onAnnounce?.();
   }
 
   get announcing() { return this.q('target').classList.contains('show'); }

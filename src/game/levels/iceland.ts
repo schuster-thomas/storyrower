@@ -1,3 +1,4 @@
+import type { BeatDef } from '../../story/story';
 import type { PhaseId } from '../../workout/workout';
 
 /** Look of the world for one story phase (greybox palette, refined in milestone 4). */
@@ -22,7 +23,7 @@ export interface Environment {
 
 export interface LevelPhase { id: PhaseId; name: string; env: Environment }
 
-export interface Level { id: string; title: string; phases: Record<PhaseId, LevelPhase> }
+export interface Level { id: string; title: string; phases: Record<PhaseId, LevelPhase>; beats: BeatDef[] }
 
 export const ICELAND: Level = {
   id: 'iceland-volcano-run',
@@ -49,4 +50,15 @@ export const ICELAND: Level = {
       env: { sky: 0xf3b27f, fog: 0xf6c9a0, fogNear: 60, fogFar: 420, sun: 0xffc48a, sunIntensity: 1.9, ground: 0x6c8f52, water: 0x3a7fa8, lava: 0.15, smoke: 0.25, wave: 0, swell: 0.15 },
     },
   },
+  // The story, laid onto any training curve by the story engine (src/story/story.ts)
+  beats: [
+    { id: 'calm', anchor: { at: 'phase-start', phase: 'idyll', offset: 3 }, effect: 'calm', caption: 'A calm morning on the fjord. Find your rhythm.' },
+    { id: 'birds', anchor: { at: 'phase-fraction', phase: 'idyll', fraction: 0.5 }, effect: 'birds', caption: 'Puffins circle above the waterfalls.' },
+    { id: 'tremor', anchor: { at: 'phase-start', phase: 'omens', offset: 0 }, effect: 'tremor', caption: 'The ground trembles…' },
+    { id: 'ash', anchor: { at: 'phase-fraction', phase: 'omens', fraction: 0.5 }, effect: 'ash', caption: 'Ash drifts down from the volcano.' },
+    { id: 'eruption', anchor: { at: 'first-section', kind: 'hard', offset: 0 }, effect: 'eruption', caption: 'ERUPTION! Row for your life!' },
+    { id: 'wave', anchor: { at: 'phase-start', phase: 'finale', offset: 0 }, effect: 'wave', caption: 'A tidal wave! Give it everything!' },
+    { id: 'escape', anchor: { at: 'phase-start', phase: 'winddown', offset: 0 }, effect: 'escape', caption: 'You outran the wave. Safe waters ahead.' },
+    { id: 'sunset', anchor: { at: 'phase-fraction', phase: 'winddown', fraction: 0.5 }, effect: 'sunset', caption: 'Ease off and let the boat glide into the sunset.' },
+  ],
 };

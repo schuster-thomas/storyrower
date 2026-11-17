@@ -1,5 +1,7 @@
 import { connection } from '../app/connection';
+import { AudioEngine, loadAudioSettings, saveAudioSettings } from '../audio/AudioEngine';
 import { formatDuration } from '../rower/ftms';
+import { scheduleBeats } from '../story/story';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { SimulatorSource } from '../rower/sources/simulator';
 import { DEFAULT_SETTINGS, generateWorkout, phaseSpans, type WorkoutSettings } from '../workout/workout';
@@ -21,9 +23,11 @@ export function mountPlay(root: HTMLElement): () => void {
   let cleanupGame: (() => void) | null = null;
   let cleanupSetup: (() => void) | null = null;
   let autopilot = true;
+  let audio: AudioEngine | null = null;
 
   const showSetup = () => {
     cleanupGame?.(); cleanupGame = null;
+    audio?.ctx.suspend().catch(() => {});
     cleanupSetup = mountSetup(root, (opts) => { autopilot = opts.autopilot; startGame(); });
   };
   const startGame = () => {
@@ -32,11 +36,15 @@ export function mountPlay(root: HTMLElement): () => void {
     const workout = generateWorkout(loadSettings());
     const dev = new URLSearchParams(location.hash.split('?')[1] ?? '');
     const speed = Number(dev.get('speed')) || 1;
-    const startAt = Number(dev.get('at')) || 0;
-    cleanupGame = mountGame(root, { level: ICELAND, workout, autopilot, onExit: showSetup, onRestart: startGame, timeScale: speed, startAt });
+    // ?beat=eruption starts 5 s before that story beat
+    const beat = dev.get('beat') ? scheduleBeats(ICELAND, workout).find((b) => b.id === dev.get('beat')) : null;
+    const startAt = beat ? Math.max(0, beat.t - 5) : Number(dev.get('at')) || 0;
+    // Runs inside the Start / Row again click, so the browser allows sound
+    try { audio ??= new AudioEngine(); audio.setSettings(loadAudioSettings()); audio.resume().catch(() => {}); } catch { audio = null; }
+    cleanupGame = mountGame(root, { level: ICELAND, workout, autopilot, onExit: showSetup, onRestart: startGame, timeScale: speed, startAt, audio });
   };
   showSetup();
-  return () => { cleanupGame?.(); cleanupSetup?.(); };
+  return () => { cleanupGame?.(); cleanupSetup?.(); audio?.dispose(); audio = null; };
 }
 
 function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => void): () => void {
@@ -70,6 +78,12 @@ function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => v
             <button data-id="simManual" title="Control the simulated power with ↑ ↓ and Space">Simulator (keyboard)</button>
           </div>
           <p class="muted" data-id="srcInfo"></p>
+          <h2 style="margin-top:16px">Sound</h2>
+          <div class="sound-row">
+            <label>Music <input type="range" min="0" max="100" step="5" data-a="music"></label>
+            <label>Effects <input type="range" min="0" max="100" step="5" data-a="effects"></label>
+            <label><input type="checkbox" data-a="muted"> Mute</label>
+          </div>
           <h2 style="margin-top:16px">Heart rate (optional)</h2>
           <div class="row">
             <button data-id="hrBtn">Connect heart-rate monitor</button>
@@ -85,6 +99,17 @@ function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => v
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>(`[data-id="${id}"]`)!;
   let autopilot = true;
+
+  // ---------- sound ----------
+  const snd = loadAudioSettings();
+  const music = root.querySelector<HTMLInputElement>('[data-a="music"]')!;
+  const effects = root.querySelector<HTMLInputElement>('[data-a="effects"]')!;
+  const muted = root.querySelector<HTMLInputElement>('[data-a="muted"]')!;
+  music.value = String(Math.round(snd.music * 100));
+  effects.value = String(Math.round(snd.effects * 100));
+  muted.checked = snd.muted;
+  const saveSound = () => saveAudioSettings({ music: Number(music.value) / 100, effects: Number(effects.value) / 100, muted: muted.checked });
+  music.oninput = effects.oninput = muted.onchange = saveSound;
 
   // ---------- settings ----------
   root.querySelectorAll<HTMLInputElement>('input[data-k]').forEach((input) => {

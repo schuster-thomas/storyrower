@@ -101,3 +101,12 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .game-diag pre { margin: 0 0 8px; font: inherit; white-space: pre; }
 .game-diag .row button { min-height: 40px; padding: 6px 12px; font-size: 14px; }
 .game-diag .muted { color: #b9c9d6; font-size: 12px; }
+
+/* Story captions */
+.hud-caption { position: absolute; left: 50%; bottom: 160px; transform: translate(-50%, 10px); max-width: min(760px, calc(100% - 28px)); text-align: center; font-size: clamp(18px, 2.4vw, 28px); font-weight: 700; font-style: italic; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, .7); opacity: 0; transition: opacity .6s, transform .6s; pointer-events: none; }
+.hud-caption.show { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 760px) { .hud-caption { bottom: 230px; } }
+
+/* Sound settings in setup */
+.sound-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.sound-row label { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }

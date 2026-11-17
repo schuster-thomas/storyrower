@@ -1,0 +1,64 @@
+import { describe, expect, it } from 'vitest';
+import { ICELAND } from '../game/levels/iceland';
+import { DEFAULT_SETTINGS, generateWorkout, phaseSpans, segmentAt } from '../workout/workout';
+import { environmentAt, scheduleBeats, storyStateAt } from './story';
+
+const ORDER = ['calm', 'birds', 'tremor', 'ash', 'eruption', 'wave', 'escape', 'sunset'];
+
+describe('story engine', () => {
+  for (const durationMin of [10, 20, 30, 45, 60, 90]) {
+    for (const minSegmentSec of [30, 60, 120]) {
+      it(`places every Iceland beat in order (${durationMin} min, sections ≥ ${minSegmentSec} s)`, () => {
+        const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin, minSegmentSec });
+        const beats = scheduleBeats(ICELAND, w);
+        const ids = beats.map((b) => b.id);
+        // every beat that has an anchor in this workout is placed, in story order
+        expect(ids).toEqual(ORDER.filter((id) => ids.includes(id)));
+        for (const b of beats) {
+          expect(b.t).toBeGreaterThanOrEqual(0);
+          expect(b.t).toBeLessThan(w.duration);
+        }
+        if (phaseSpans(w).some((p) => p.phase === 'escalation')) {
+          const eruption = beats.find((b) => b.id === 'eruption')!;
+          expect(segmentAt(w, eruption.t).kind).toBe('hard');
+        }
+      });
+    }
+  }
+
+  it('places the key beats at the right phase starts for the default workout', () => {
+    const w = generateWorkout(DEFAULT_SETTINGS);
+    const beats = scheduleBeats(ICELAND, w);
+    const at = (id: string) => beats.find((b) => b.id === id)!.t;
+    const spans = phaseSpans(w);
+    const start = (p: string) => spans.find((s) => s.phase === p)!.start;
+    expect(beats).toHaveLength(ORDER.length);
+    expect(at('tremor')).toBe(start('omens'));
+    expect(at('eruption')).toBe(start('escalation'));
+    expect(at('wave')).toBe(start('finale'));
+    expect(at('escape')).toBe(start('winddown'));
+  });
+
+  it('derives ongoing effects from the time only (robust to jumping around)', () => {
+    const w = generateWorkout(DEFAULT_SETTINGS);
+    const beats = scheduleBeats(ICELAND, w);
+    const at = (id: string) => beats.find((b) => b.id === id)!.t;
+    expect(storyStateAt(beats, w, 10)).toMatchObject({ birds: 1, lavaBombs: 0, ashfall: 0 });
+    expect(storyStateAt(beats, w, at('eruption') + 5).lavaBombs).toBeGreaterThan(0.5);
+    expect(storyStateAt(beats, w, at('wave') + 5).lavaBombs).toBe(1);
+    expect(storyStateAt(beats, w, at('ash') + 60).ashfall).toBe(1);
+    expect(storyStateAt(beats, w, at('escape') + 5).lavaBombs).toBe(0);
+    expect(storyStateAt(beats, w, w.duration - 1).ashfall).toBeLessThan(0.5);
+  });
+
+  it('blends the environment smoothly instead of jumping at phase borders', () => {
+    const w = generateWorkout(DEFAULT_SETTINGS);
+    const omens = phaseSpans(w).find((p) => p.phase === 'omens')!;
+    const before = environmentAt(ICELAND, w, omens.start - 1);
+    const after = environmentAt(ICELAND, w, omens.start + 1);
+    const idyll = environmentAt(ICELAND, w, 10);
+    // already partly on the way before the border, and the jump at the border is smaller than the full step
+    expect(before.smoke).toBeGreaterThan(idyll.smoke);
+    expect(Math.abs(after.smoke - before.smoke)).toBeLessThan(ICELAND.phases.omens.env.smoke - ICELAND.phases.idyll.env.smoke);
+  });
+});

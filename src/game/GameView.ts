@@ -1,10 +1,12 @@
 import { connection } from '../app/connection';
 import { downloadRecording } from '../app/download';
+import type { AudioEngine } from '../audio/AudioEngine';
+import { environmentAt, scheduleBeats, storyStateAt } from '../story/story';
 import { formatDuration, formatPace } from '../rower/ftms';
 import { SimulatorSource } from '../rower/sources/simulator';
 import type { RowerEvent, RowerSample } from '../rower/types';
 import { accuracy, isIn, isLow, newScore, stars, updateScore, type Zone } from '../workout/scoring';
-import { nextSegment, segmentAt, type PhaseId, type Segment, type Workout } from '../workout/workout';
+import { nextSegment, segmentAt, type Segment, type Workout } from '../workout/workout';
 import { Hud } from './hud/Hud';
 import type { Level } from './levels/iceland';
 import { RiverScene } from './scene/RiverScene';
@@ -20,6 +22,19 @@ export interface GameOptions {
   timeScale?: number;
   /** Development aid: start at this workout second (e.g. #/play?at=960 jumps to the finale). */
   startAt?: number;
+  /** Sound – created by the setup screen inside the Start click (browser autoplay rules). */
+  audio?: AudioEngine | null;
+}
+
+/** How "hot" the music should be in each phase / section. */
+function musicIntensity(seg: Segment): number {
+  switch (seg.phase) {
+    case 'idyll': return 0.05;
+    case 'omens': return 0.25 + seg.intensity * 0.3;
+    case 'escalation': return seg.kind === 'hard' ? 0.85 : 0.6;
+    case 'finale': return 1;
+    case 'winddown': return 0.1;
+  }
 }
 
 /**
@@ -60,7 +75,14 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   let zones: { power: Zone; spm: Zone } | null = null;
   let startDistance: number | null = null;
   let powerSum = 0;
-  let phase: PhaseId | null = null;
+  let envSet = false;
+  const audio = opts.audio ?? null;
+  const beats = scheduleBeats(level, workout);
+  let beatT = t; // beats at or before the start time are skipped (e.g. when jumping with ?at=)
+  if (audio) hud.setMuted(audio.currentSettings.muted);
+  hud.onMute(() => audio?.toggleMute() ?? false);
+  hud.onAnnounce = () => audio?.targetChange();
+  scene.onBombLanded = (d) => audio?.bombLanded(d);
   const score = newScore();
 
   // ---------- simulator helpers ----------
@@ -100,7 +122,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       sample = e.sample;
       if (!started && e.sample.rowing) { started = true; session.logEvent('game-rowing-started', { gameT: t }); }
       if (started && startDistance == null) startDistance = e.sample.distance;
-    } else if (e.type === 'stroke') scene.stroke(e.intervalMs);
+    } else if (e.type === 'stroke') { scene.stroke(e.intervalMs); audio?.stroke(); }
   });
 
   // ---------- layout ----------
@@ -174,7 +196,22 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     frames++; fpsTimer += dt;
     if (fpsTimer >= 1) { fps = frames / fpsTimer; frames = 0; fpsTimer = 0; }
 
-    if (seg.phase !== phase) { scene.setEnvironment(level.phases[seg.phase].env, phase == null); phase = seg.phase; }
+    // Story: smooth environment, ongoing effects and one-shot beats
+    const env = environmentAt(level, workout, t);
+    scene.setEnvironment(env, !envSet);
+    envSet = true;
+    const story = storyStateAt(beats, workout, t);
+    if (t > beatT) {
+      for (const b of beats) {
+        if (b.t > beatT && b.t <= t) {
+          scene.play(b.effect);
+          audio?.effect(b.effect);
+          hud.caption(b.caption);
+          session.logEvent('story-beat', { id: b.id, beatT: b.t, gameT: Math.round(t) });
+        }
+      }
+      beatT = t;
+    }
     if (active && sample) {
       zones = updateScore(score, gdt, seg, sample.powerSmoothed, sample.strokeRate);
       powerSum += sample.powerSmoothed * gdt;
@@ -182,7 +219,11 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     if (t >= workout.duration) finish(false);
 
     const speed = rowing && sample?.paceSmoothed ? 500 / sample.paceSmoothed : 0;
-    scene.update(dt, speed, score.threat, seg.intensity);
+    scene.update(dt, speed, score.threat, seg.intensity, story);
+    audio?.update({
+      dt, intensity: musicIntensity(seg), danger: env.wave * (1 - score.threat), speed,
+      smoke: env.smoke, birds: story.birds, active: active || finished,
+    });
 
     hud.update({
       level, workout, t, segment: seg, next: nextSegment(workout, t), sample, zones, score,
@@ -233,6 +274,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
 
   return () => {
     cancelAnimationFrame(frame);
+    scene.onBombLanded = null;
     off();
     ro.disconnect();
     window.removeEventListener('keydown', onKey);

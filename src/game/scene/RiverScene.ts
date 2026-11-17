@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import type { EffectId, StoryState } from '../../story/story';
 import type { Environment } from '../levels/iceland';
+import { Effects } from './Effects';
 
 const CHUNK = 40;          // length of one world chunk (m)
 const CHUNKS_AHEAD = 10;
@@ -63,6 +65,15 @@ export class RiverScene {
   private strokePhase = 1;    // 0 = catch, 0.35 = finish, 1 = ready for next catch
   private strokeCycle = 2.5;  // s
   private shake = 0;
+  private impulse = 0;        // extra camera shake from story events (tremor, eruption …)
+  private flashLevel = 0;
+  private flashColor = new THREE.Color();
+  private smokeBurst = 0;
+  private viewDir = 1;
+  private effects: Effects;
+  private story: StoryState = { lavaBombs: 0, ashfall: 0, birds: 0 };
+  /** Forwarded from the effects (for sound): a lava bomb hit the water at this distance. */
+  set onBombLanded(fn: ((distance: number) => void) | null) { this.effects.onBombLanded = fn; }
 
   constructor(canvas: HTMLCanvasElement, env: Environment) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -85,6 +96,7 @@ export class RiverScene {
     this.buildBoat();
     this.buildVolcano();
     this.wave = this.buildWave();
+    this.effects = new Effects(this.scene);
     this.applyEnvironment(1);
   }
 
@@ -95,6 +107,28 @@ export class RiverScene {
     this.envTarget = { ...env };
     if (immediate) this.applyEnvironment(1);
   }
+
+  /** Ongoing story effects (lava bombs, ash, birds) – derived from the workout time. */
+  setStory(state: StoryState) { this.story = state; }
+
+  /** Play a one-shot story effect. */
+  play(effect: EffectId) {
+    switch (effect) {
+      case 'tremor': this.impulse = Math.max(this.impulse, 1.1); break;
+      case 'eruption':
+        this.impulse = Math.max(this.impulse, 1.6);
+        this.flash(0xffa040, 1);
+        this.smokeBurst = 1;
+        this.effects.volley({ boatZ: this.z, viewDir: this.viewDir, threat: 0.6 }, 5);
+        break;
+      case 'wave': this.impulse = Math.max(this.impulse, 0.9); break;
+      case 'escape': this.flash(0xfff0c8, 0.45); break;
+      default: break;
+    }
+  }
+
+  /** Short light flash, e.g. for the eruption. */
+  flash(color: number, strength: number) { this.flashColor.set(color); this.flashLevel = Math.max(this.flashLevel, strength); }
 
   /** A real stroke happened. `intervalMs` = time since the previous one. */
   stroke(intervalMs: number | null) {
@@ -108,7 +142,8 @@ export class RiverScene {
    * @param threat 0 = wave on top of you, 1 = far away
    * @param intensity 0–1 from the workout segment (camera shake, swell)
    */
-  update(dt: number, metersPerSecond: number, threat: number, intensity: number) {
+  update(dt: number, metersPerSecond: number, threat: number, intensity: number, story?: StoryState) {
+    if (story) this.story = story;
     dt = Math.min(dt, 0.1);
     this.time += dt;
     // Speed eases towards the target; the drive adds a little surge
@@ -118,12 +153,14 @@ export class RiverScene {
     this.z -= this.speed * dt;
 
     this.applyEnvironment(1 - Math.exp(-dt * 0.4));
+    this.applyFlash(dt);
     this.updateChunks();
     this.updateWater();
     this.updateBoat(dt);
     this.updateVolcano(dt);
     this.updateWave(dt, threat);
     this.updateCamera(dt, threat, intensity);
+    this.effects.update({ dt, time: this.time, boatZ: this.z, speed: this.speed, viewDir: this.viewDir, threat, smoke: this.env.smoke, lava: this.env.lava, story: this.story });
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -142,6 +179,15 @@ export class RiverScene {
   }
 
   // ---------- environment ----------
+
+  private applyFlash(dt: number) {
+    if (this.flashLevel < 0.005) { this.flashLevel = 0; return; }
+    this.skyColor.lerp(this.flashColor, this.flashLevel * 0.85);
+    (this.scene.fog as THREE.Fog).color.lerp(this.flashColor, this.flashLevel * 0.6);
+    this.hemi.intensity = 1.2 + this.flashLevel * 2.5;
+    this.flashLevel *= Math.exp(-dt * 2.2);
+    if (this.flashLevel < 0.005) this.hemi.intensity = 1.2;
+  }
 
   private applyEnvironment(t: number) {
     const e = this.env, g = this.envTarget;
@@ -332,7 +378,8 @@ export class RiverScene {
   private updateVolcano(_dt: number) {
     // Stays on the horizon, slowly drifting closer as the story escalates
     this.volcano.position.z = this.z - 700 + this.env.lava * 180;
-    const s = this.env.smoke;
+    this.smokeBurst *= Math.exp(-_dt * 0.15);
+    const s = Math.min(1.6, this.env.smoke + this.smokeBurst * 0.8);
     this.smoke.forEach((puff, i) => {
       const life = (this.time * 0.05 + i / this.smoke.length) % 1;
       const size = (8 + life * 55) * s;
@@ -369,7 +416,8 @@ export class RiverScene {
 
   private updateCamera(dt: number, threat: number, intensity: number) {
     const danger = this.env.wave * (1 - threat);
-    this.shake = lerp(this.shake, 0.02 + intensity * 0.05 * this.env.swell + danger * 0.25, 1 - Math.exp(-dt * 2));
+    this.impulse *= Math.exp(-dt * 0.9);
+    this.shake = lerp(this.shake, 0.02 + intensity * 0.05 * this.env.swell + danger * 0.25 + this.impulse * 0.35, 1 - Math.exp(-dt * 4));
     const sx = (Math.sin(this.time * 23) + Math.sin(this.time * 17)) * 0.5 * this.shake;
     const sy = (Math.sin(this.time * 19) + Math.sin(this.time * 29)) * 0.5 * this.shake;
     // While the wave chases you, the camera swings around the boat: side view during the
@@ -377,6 +425,7 @@ export class RiverScene {
     const w = this.env.wave;
     const a = Math.PI * w * w * w; // eruption (0.6) ≈ 40° three-quarter view, finale (1) = 180°
     const f = a / Math.PI;
+    this.viewDir = Math.cos(a) >= 0 ? 1 : -1;
     const r = 8.5 + 3 * Math.sin(a) + 2.5 * f;
     this.camera.position.set(sx + Math.sin(a) * r + Math.sin(this.time * 0.3) * 0.3, 3.4 + 2.6 * f + sy, this.z + Math.cos(a) * r);
     this.camera.lookAt(-Math.sin(a) * 4, 1.2 - 0.7 * f, this.z - Math.cos(a) * (12 - 2 * f));
