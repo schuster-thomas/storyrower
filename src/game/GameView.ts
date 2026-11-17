@@ -9,6 +9,7 @@ import { accuracy, isIn, isLow, newScore, stars, updateScore, type Zone } from '
 import { nextSegment, segmentAt, type Segment, type Workout } from '../workout/workout';
 import { Hud } from './hud/Hud';
 import type { Level } from './levels/iceland';
+import { AutoQuality, loadGraphics } from './scene/quality';
 import { RiverScene } from './scene/RiverScene';
 
 export interface GameOptions {
@@ -54,7 +55,9 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     return () => {};
   }
 
-  const scene = new RiverScene(canvas, level.phases.idyll.env);
+  const graphics = loadGraphics();
+  const auto = graphics.quality === 'auto' ? new AutoQuality('medium') : null;
+  const scene = new RiverScene(canvas, level.phases.idyll.env, auto ? auto.level : graphics.quality === 'auto' ? 'medium' : graphics.quality);
   const hud = new Hud(wrap);
   const overlay = document.createElement('div');
   overlay.className = 'game-overlay';
@@ -108,7 +111,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   session.logEvent('game-start', {
     level: level.id, settings: workout.settings, duration: workout.duration, autopilot: opts.autopilot,
     timeScale: opts.timeScale ?? 1, startAt: opts.startAt ?? 0, source: session.source.info.label,
-    viewport: [innerWidth, innerHeight], dpr: devicePixelRatio,
+    viewport: [innerWidth, innerHeight], dpr: devicePixelRatio, graphics,
     segments: workout.segments.map((g) => ({ start: g.start, end: g.end, phase: g.phase, kind: g.kind, power: fmtBand(g.power), spm: fmtBand(g.spm), pace: fmtBand(g.pace) })),
   });
   const onVisibility = () => session.logEvent('visibility', { state: document.visibilityState });
@@ -171,6 +174,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
 
   hud.onExit(() => (finished || t < 1 ? opts.onExit() : finish(true)));
   hud.onDiagnostics(() => { diag.hidden = !diag.hidden; });
+  hud.showFps(graphics.showFps);
 
   // ---------- loop ----------
   let last = performance.now();
@@ -194,6 +198,10 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       session.logEvent('game-section', { index: workout.segments.indexOf(seg), gameT: Math.round(t), phase: seg.phase, kind: seg.kind, power: fmtBand(seg.power), spm: fmtBand(seg.spm), pace: fmtBand(seg.pace) });
     }
     frames++; fpsTimer += dt;
+    if (auto && started) {
+      const changed = auto.frame(dt);
+      if (changed) { scene.setQuality(changed); session.logEvent('quality-change', { to: changed, fps: Math.round(fps), gameT: Math.round(t) }); }
+    }
     if (fpsTimer >= 1) { fps = frames / fpsTimer; frames = 0; fpsTimer = 0; }
 
     // Story: smooth environment, ongoing effects and one-shot beats
@@ -236,12 +244,15 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     if (snapTimer >= 5) {
       snapTimer = 0;
       session.logEvent('game-snapshot', {
-        gameT: Math.round(t), active, rowing, fps: Math.round(fps), power: sample?.power ?? null, powerSmoothed: Math.round(sample?.powerSmoothed ?? 0),
+        gameT: Math.round(t), active, rowing, fps: Math.round(fps), quality: scene.quality,
+        frameMs: +scene.stats.frameMs.toFixed(1), frameP95: +scene.stats.frameP95.toFixed(1), renderMs: +scene.stats.renderMs.toFixed(1),
+        calls: scene.stats.calls, triangles: scene.stats.triangles, power: sample?.power ?? null, powerSmoothed: Math.round(sample?.powerSmoothed ?? 0),
         spm: sample?.strokeRate ?? null, pace: sample?.paceSmoothed ? Math.round(sample.paceSmoothed) : null, hr: sample?.heartRate ?? null,
         zones, threat: +score.threat.toFixed(2), accuracy: +accuracy(score).toFixed(3), coins: Math.floor(score.coins),
       });
     }
 
+    hud.setFps(fps, scene.quality);
     diagTimer += dt;
     if (!diag.hidden && diagTimer > 0.25) {
       diagTimer = 0;
@@ -253,7 +264,8 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
         `split      raw ${formatPace(sample?.pace)} · smoothed ${formatPace(sample?.paceSmoothed)} · ${speed.toFixed(2)} m/s`,
         `heart rate ${sample?.heartRate ?? '–'} (${sample?.heartRateSource ?? 'none'})`,
         `workout    ${formatDuration(t)} · ${seg.phase}/${seg.kind} · intensity ${seg.intensity.toFixed(2)} · threat ${score.threat.toFixed(2)}`,
-        `display    ${Math.round(fps)} fps · ${innerWidth}×${innerHeight} @${devicePixelRatio}x`,
+        `display    ${Math.round(fps)} fps · frame ${scene.stats.frameMs.toFixed(1)} ms (p95 ${scene.stats.frameP95.toFixed(1)}) · render ${scene.stats.renderMs.toFixed(1)} ms`,
+        `graphics   ${scene.quality}${auto ? ' (auto)' : ''} · ${scene.stats.calls} draw calls · ${Math.round(scene.stats.triangles / 1000)}k triangles · ${innerWidth}×${innerHeight} @${devicePixelRatio}x`,
       ].join('\n');
     }
     frame = requestAnimationFrame(loop);

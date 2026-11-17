@@ -1,5 +1,6 @@
 import { connection } from '../app/connection';
 import { AudioEngine, loadAudioSettings, saveAudioSettings } from '../audio/AudioEngine';
+import { loadGraphics, saveGraphics, type QualitySetting } from './scene/quality';
 import { formatDuration } from '../rower/ftms';
 import { scheduleBeats } from '../story/story';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
@@ -84,6 +85,18 @@ function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => v
             <label>Effects <input type="range" min="0" max="100" step="5" data-a="effects"></label>
             <label><input type="checkbox" data-a="muted"> Mute</label>
           </div>
+          <h2 style="margin-top:16px">Graphics</h2>
+          <div class="sound-row">
+            <label>Quality
+              <select data-a="quality">
+                <option value="auto">Auto (adapts to the frame rate)</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+            <label><input type="checkbox" data-a="showFps"> Show frame rate</label>
+          </div>
           <h2 style="margin-top:16px">Heart rate (optional)</h2>
           <div class="row">
             <button data-id="hrBtn">Connect heart-rate monitor</button>
@@ -110,6 +123,15 @@ function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => v
   muted.checked = snd.muted;
   const saveSound = () => saveAudioSettings({ music: Number(music.value) / 100, effects: Number(effects.value) / 100, muted: muted.checked });
   music.oninput = effects.oninput = muted.onchange = saveSound;
+
+  // ---------- graphics ----------
+  const gfx = loadGraphics();
+  const qualitySel = root.querySelector<HTMLSelectElement>('[data-a="quality"]')!;
+  const showFps = root.querySelector<HTMLInputElement>('[data-a="showFps"]')!;
+  qualitySel.value = gfx.quality;
+  showFps.checked = gfx.showFps;
+  const saveGfx = () => saveGraphics({ quality: qualitySel.value as QualitySetting, showFps: showFps.checked });
+  qualitySel.onchange = showFps.onchange = saveGfx;
 
   // ---------- settings ----------
   root.querySelectorAll<HTMLInputElement>('input[data-k]').forEach((input) => {

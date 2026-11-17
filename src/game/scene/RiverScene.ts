@@ -2,22 +2,18 @@ import * as THREE from 'three';
 import type { EffectId, StoryState } from '../../story/story';
 import type { Environment } from '../levels/iceland';
 import { Effects } from './Effects';
+import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
+import { Sky } from './Sky';
+import { buildChunk, createTerrainMaterials, disposeChunk } from './Terrain';
+import { Water } from './Water';
 
 const CHUNK = 40;          // length of one world chunk (m)
-const CHUNKS_AHEAD = 10;
 const CHUNKS_BEHIND = 2;
 const RIVER_HALF = 9;      // half river width
 /** World units per real metre. >1 makes the boat feel faster than the real split. */
 export const SPEED_SCALE = 2;
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const lerpColor = (c: THREE.Color, hex: number, t: number) => c.lerp(new THREE.Color(hex), t);
-
-/** Seeded random so the world looks the same for the same chunk index. */
-function rand(seed: number) {
-  let s = seed * 9301 + 49297;
-  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-}
 
 interface Chunk { index: number; group: THREE.Group }
 
@@ -35,20 +31,18 @@ export class RiverScene {
   private env: Environment;
   private envTarget: Environment;
   private skyColor = new THREE.Color();
-  private groundMat = new THREE.MeshStandardMaterial({ color: 0x5f9e4f, roughness: 1, flatShading: true });
-  private cliffMat = new THREE.MeshStandardMaterial({ color: 0x6f6a64, roughness: 1, flatShading: true });
-  private treeMat = new THREE.MeshStandardMaterial({ color: 0x2f6b3a, roughness: 1, flatShading: true });
-  private trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4a2f, roughness: 1 });
-  private rockMat = new THREE.MeshStandardMaterial({ color: 0x8a8580, roughness: 1, flatShading: true });
-  private fallMat = new THREE.MeshBasicMaterial({ color: 0xeaf6ff, transparent: true, opacity: 0.85 });
-  private waterMat = new THREE.MeshStandardMaterial({ color: 0x2a7fb8, roughness: 0.25, metalness: 0.1, flatShading: true });
-  private water: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
-  private waterBase: Float32Array;
-
+  private mats = createTerrainMaterials();
+  private water: Water;
+  private sky: Sky;
   private chunks: Chunk[] = [];
-  private treeGeo = new THREE.ConeGeometry(1.4, 4.5, 6);
-  private trunkGeo = new THREE.CylinderGeometry(0.25, 0.3, 1.2, 5);
-  private rockGeo = new THREE.DodecahedronGeometry(1, 0);
+  private q: QualityProfile;
+  private _quality: QualityLevel;
+  /** frame time, render time, draw calls and triangles – for the diagnostics overlay and recordings */
+  readonly stats = new FrameStats();
+  private topColor = new THREE.Color();
+  private horizonColor = new THREE.Color();
+  private sunColor = new THREE.Color();
+  private waterColor = new THREE.Color();
 
   private boat = new THREE.Group();
   private torso!: THREE.Group;
@@ -75,9 +69,11 @@ export class RiverScene {
   /** Forwarded from the effects (for sound): a lava bomb hit the water at this distance. */
   set onBombLanded(fn: ((distance: number) => void) | null) { this.effects.onBombLanded = fn; }
 
-  constructor(canvas: HTMLCanvasElement, env: Environment) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  constructor(canvas: HTMLCanvasElement, env: Environment, quality: QualityLevel = 'medium') {
+    this._quality = quality;
+    this.q = PROFILES[quality];
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: quality !== 'low', powerPreference: 'high-performance' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.env = { ...env };
     this.envTarget = { ...env };
@@ -86,21 +82,38 @@ export class RiverScene {
     this.sun.position.set(-40, 80, 30);
     this.scene.add(this.hemi, this.sun, this.sun.target);
 
-    // Water: a low-res plane that travels with the boat; vertices bob with the swell
-    const wg = new THREE.PlaneGeometry(RIVER_HALF * 2 + 6, 360, 16, 90);
-    wg.rotateX(-Math.PI / 2);
-    this.water = new THREE.Mesh(wg, this.waterMat);
-    this.waterBase = Float32Array.from(wg.attributes.position.array as Float32Array);
-    this.scene.add(this.water);
+    this.sky = new Sky(this.q.clouds);
+    this.scene.add(this.sky.group);
+    this.water = new Water(RIVER_HALF, this.q.waterSegments);
+    this.scene.add(this.water.mesh);
 
     this.buildBoat();
     this.buildVolcano();
     this.wave = this.buildWave();
     this.effects = new Effects(this.scene);
+    this.effects.setParticleShare(this.q.particles);
     this.applyEnvironment(1);
   }
 
   // ---------- public API ----------
+
+  get quality() { return this._quality; }
+
+  /** Switch the graphics level on the fly (resolution, water/terrain detail, particles, clouds). */
+  setQuality(level: QualityLevel) {
+    if (level === this._quality) return;
+    this._quality = level;
+    this.q = PROFILES[level];
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio));
+    const size = this.renderer.getSize(new THREE.Vector2());
+    this.renderer.setSize(size.x, size.y, false);
+    this.water.setSegments(this.q.waterSegments);
+    this.sky.setCloudCount(this.q.clouds);
+    this.effects.setParticleShare(this.q.particles);
+    // rebuild the landscape with the new density
+    for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
+    this.chunks = [];
+  }
 
   /** Blend the world towards another phase look (smoothly over a few seconds). */
   setEnvironment(env: Environment, immediate = false) {
@@ -155,13 +168,22 @@ export class RiverScene {
     this.applyEnvironment(1 - Math.exp(-dt * 0.4));
     this.applyFlash(dt);
     this.updateChunks();
-    this.updateWater();
     this.updateBoat(dt);
     this.updateVolcano(dt);
     this.updateWave(dt, threat);
     this.updateCamera(dt, threat, intensity);
     this.effects.update({ dt, time: this.time, boatZ: this.z, speed: this.speed, viewDir: this.viewDir, threat, smoke: this.env.smoke, lava: this.env.lava, story: this.story });
+    this.sky.update({ dt, time: this.time, camera: this.camera, boatZ: this.z, top: this.topColor, horizon: this.horizonColor, sunColor: this.sunColor, smoke: this.env.smoke, sunHeight: this.env.sunHeight });
+    this.water.update({ time: this.time, boatZ: this.z, speed: this.speed, swell: this.env.swell, water: this.waterColor, sky: this.horizonColor, sunColor: this.sunColor, sunDir: this.sky.sunDir, light: 0.45 + 0.55 * Math.min(1, this.env.sunIntensity / 2.2) * (1 - this.env.smoke * 0.25) + this.flashLevel * 0.4 });
+    this.sun.position.copy(this.sky.sunDir).multiplyScalar(120).add(new THREE.Vector3(0, 0, this.z));
+    this.sun.target.position.set(0, 0, this.z);
+
+    const t0 = performance.now();
     this.renderer.render(this.scene, this.camera);
+    const info = this.renderer.info.render;
+    this.stats.calls = info.calls;
+    this.stats.triangles = info.triangles;
+    this.stats.push(dt * 1000, performance.now() - t0);
   }
 
   resize(width: number, height: number) {
@@ -171,6 +193,9 @@ export class RiverScene {
   }
 
   dispose() {
+    for (const c of this.chunks) disposeChunk(c.group);
+    this.water.dispose();
+    this.sky.dispose();
     this.renderer.dispose();
     this.scene.traverse((o) => {
       const m = o as THREE.Mesh;
@@ -183,6 +208,8 @@ export class RiverScene {
   private applyFlash(dt: number) {
     if (this.flashLevel < 0.005) { this.flashLevel = 0; return; }
     this.skyColor.lerp(this.flashColor, this.flashLevel * 0.85);
+    this.topColor.lerp(this.flashColor, this.flashLevel * 0.7);
+    this.horizonColor.lerp(this.flashColor, this.flashLevel * 0.85);
     (this.scene.fog as THREE.Fog).color.lerp(this.flashColor, this.flashLevel * 0.6);
     this.hemi.intensity = 1.2 + this.flashLevel * 2.5;
     this.flashLevel *= Math.exp(-dt * 2.2);
@@ -191,7 +218,7 @@ export class RiverScene {
 
   private applyEnvironment(t: number) {
     const e = this.env, g = this.envTarget;
-    for (const k of ['fogNear', 'fogFar', 'sunIntensity', 'lava', 'smoke', 'wave', 'swell'] as const) e[k] = lerp(e[k], g[k], t);
+    for (const k of ['fogNear', 'fogFar', 'sunIntensity', 'lava', 'smoke', 'wave', 'swell', 'sunHeight'] as const) e[k] = lerp(e[k], g[k], t);
     for (const k of ['sky', 'fog', 'sun', 'ground', 'water'] as const) e[k] = new THREE.Color(e[k]).lerp(new THREE.Color(g[k]), t).getHex();
 
     this.skyColor.set(e.sky);
@@ -200,9 +227,16 @@ export class RiverScene {
     fog.color.set(e.fog); fog.near = e.fogNear; fog.far = e.fogFar;
     this.sun.color.set(e.sun); this.sun.intensity = e.sunIntensity;
     this.hemi.color.set(e.sky);
-    this.groundMat.color.set(e.ground);
-    lerpColor(this.treeMat.color.set(0x2f6b3a), 0x3a3d33, e.smoke * 0.6);
-    this.waterMat.color.set(e.water);
+    // sky: deeper colour overhead, the fog colour at the horizon so land and sky blend
+    this.topColor.set(e.sky).offsetHSL(0, 0.08, -0.12);
+    this.horizonColor.set(e.fog);
+    this.sunColor.set(e.sun);
+    this.waterColor.set(e.water);
+    // ash greys the landscape
+    const ash = new THREE.Color(0x77736c);
+    this.mats.ground.color.set(0xffffff).lerp(ash, e.smoke * 0.45).lerp(new THREE.Color(e.ground), 0.15);
+    this.mats.tree.color.set(0x2f6b3a).lerp(new THREE.Color(0x3a3d33), e.smoke * 0.6);
+    this.mats.lupine.color.set(0x8e66c4).lerp(ash, e.smoke * 0.5);
     this.lavaMat.emissiveIntensity = e.lava * 2.5;
   }
 
@@ -210,86 +244,22 @@ export class RiverScene {
 
   private updateChunks() {
     const current = Math.floor(-this.z / CHUNK);
-    const min = current - CHUNKS_BEHIND, max = current + CHUNKS_AHEAD;
+    const min = current - CHUNKS_BEHIND, max = current + this.q.chunksAhead;
     this.chunks = this.chunks.filter((c) => {
       if (c.index >= min && c.index <= max) return true;
       this.scene.remove(c.group);
-      const shared = new Set<THREE.BufferGeometry>([this.treeGeo, this.trunkGeo, this.rockGeo]);
-      c.group.traverse((o) => {
-        if ((o as THREE.InstancedMesh).isInstancedMesh) (o as THREE.InstancedMesh).dispose();
-        const g = (o as THREE.Mesh).geometry;
-        if (g && !shared.has(g)) g.dispose();
-      });
+      disposeChunk(c.group);
       return false;
     });
-    for (let i = min; i <= max; i++) if (!this.chunks.some((c) => c.index === i)) this.chunks.push(this.buildChunk(i));
-  }
-
-  private buildChunk(index: number): Chunk {
-    const r = rand(index + 1000);
-    const group = new THREE.Group();
-    group.position.z = -index * CHUNK - CHUNK / 2;
-
-    // Banks
-    const bankGeo = new THREE.BoxGeometry(60, 1.2, CHUNK + 0.1);
-    for (const side of [-1, 1]) {
-      const bank = new THREE.Mesh(bankGeo, this.groundMat);
-      bank.position.set(side * (RIVER_HALF + 30), 0.2, 0);
-      group.add(bank);
+    // after the first fill, build at most one new chunk per frame to avoid hitches
+    let built = 0;
+    for (let i = min; i <= max; i++) {
+      if (this.chunks.some((c) => c.index === i)) continue;
+      const group = buildChunk(i, CHUNK, RIVER_HALF, this.q, this.mats);
+      this.scene.add(group);
+      this.chunks.push({ index: i, group });
+      if (++built >= 1 && this.chunks.length > 4) break;
     }
-
-    // Trees and rocks as instanced meshes
-    const trees = 14, rocks = 6;
-    const treeMesh = new THREE.InstancedMesh(this.treeGeo, this.treeMat, trees);
-    const trunkMesh = new THREE.InstancedMesh(this.trunkGeo, this.trunkMat, trees);
-    const rockMesh = new THREE.InstancedMesh(this.rockGeo, this.rockMat, rocks);
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
-    for (let i = 0; i < trees; i++) {
-      const side = r() < 0.5 ? -1 : 1;
-      const x = side * (RIVER_HALF + 2 + r() * 22);
-      const z = (r() - 0.5) * CHUNK;
-      const h = 0.7 + r() * 0.8;
-      treeMesh.setMatrixAt(i, m.compose(p.set(x, 0.8 + 3.2 * h, z), q.identity(), s.set(h, h, h)));
-      trunkMesh.setMatrixAt(i, m.compose(p.set(x, 0.8 + 0.6 * h, z), q.identity(), s.set(h, h, h)));
-    }
-    for (let i = 0; i < rocks; i++) {
-      const side = r() < 0.5 ? -1 : 1;
-      const k = 0.6 + r() * 1.4;
-      rockMesh.setMatrixAt(i, m.compose(p.set(side * (RIVER_HALF + 0.5 + r() * 3), 0.4, (r() - 0.5) * CHUNK), q.setFromEuler(new THREE.Euler(r(), r(), r())), s.set(k, k * 0.7, k)));
-    }
-    group.add(treeMesh, trunkMesh, rockMesh);
-
-    // Cliffs further out, sometimes with a waterfall
-    for (const side of [-1, 1]) {
-      if (r() < 0.55) {
-        const h = 12 + r() * 22;
-        const cliff = new THREE.Mesh(new THREE.BoxGeometry(14 + r() * 10, h, CHUNK * (0.6 + r() * 0.5)), this.cliffMat);
-        cliff.position.set(side * (RIVER_HALF + 34 + r() * 10), h / 2, (r() - 0.5) * 10);
-        group.add(cliff);
-        if (r() < 0.45) {
-          const fall = new THREE.Mesh(new THREE.PlaneGeometry(3 + r() * 3, h), this.fallMat);
-          fall.position.set(cliff.position.x - side * ((cliff.geometry as THREE.BoxGeometry).parameters.width / 2 + 0.05), h / 2, cliff.position.z);
-          fall.rotation.y = side * Math.PI / 2;
-          group.add(fall);
-        }
-      }
-    }
-    this.scene.add(group);
-    return { index, group };
-  }
-
-  private updateWater() {
-    this.water.position.z = this.z - 140;
-    const pos = this.water.geometry.attributes.position;
-    const arr = pos.array as Float32Array;
-    const amp = 0.06 + this.env.swell * 0.45;
-    const t = this.time;
-    for (let i = 0; i < arr.length; i += 3) {
-      const x = this.waterBase[i], z = this.waterBase[i + 2] + this.water.position.z;
-      arr[i + 1] = Math.sin(x * 0.45 + t * 1.3) * Math.cos(z * 0.18 + t * 0.9) * amp + Math.sin(z * 0.07 - t * 0.6) * amp * 0.6;
-    }
-    pos.needsUpdate = true;
-    this.water.geometry.computeVertexNormals();
   }
 
   // ---------- boat ----------
@@ -429,8 +399,6 @@ export class RiverScene {
     const r = 8.5 + 3 * Math.sin(a) + 2.5 * f;
     this.camera.position.set(sx + Math.sin(a) * r + Math.sin(this.time * 0.3) * 0.3, 3.4 + 2.6 * f + sy, this.z + Math.cos(a) * r);
     this.camera.lookAt(-Math.sin(a) * 4, 1.2 - 0.7 * f, this.z - Math.cos(a) * (12 - 2 * f));
-    this.sun.position.set(-40, 80, this.z + 30);
-    this.sun.target.position.set(0, 0, this.z - 20);
   }
 }
 

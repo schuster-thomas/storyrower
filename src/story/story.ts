@@ -76,7 +76,7 @@ function lerpHex(a: number, b: number, t: number) {
 }
 export function lerpEnv(a: Environment, b: Environment, t: number): Environment {
   const out = { ...a };
-  for (const k of ['fogNear', 'fogFar', 'sunIntensity', 'lava', 'smoke', 'wave', 'swell'] as const) out[k] = lerp(a[k], b[k], t);
+  for (const k of ['fogNear', 'fogFar', 'sunIntensity', 'lava', 'smoke', 'wave', 'swell', 'sunHeight'] as const) out[k] = lerp(a[k], b[k], t);
   for (const k of ['sky', 'fog', 'sun', 'ground', 'water'] as const) out[k] = lerpHex(a[k], b[k], t);
   return out;
 }

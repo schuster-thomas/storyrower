@@ -43,6 +43,7 @@ export class Hud {
         </div>
         <div class="hud-progress glass" data-h="progress"></div>
         <div class="hud-right">
+          <div class="hud-fps glass" data-h="fps" hidden></div>
           <div class="hud-timer glass" data-h="timer"></div>
           <button class="hud-btn" data-h="muteBtn" title="Sound on/off" aria-label="Sound on/off">🔊</button>
           <button class="hud-btn" data-h="diagBtn" title="Diagnostics" aria-label="Diagnostics">i</button>
@@ -75,6 +76,18 @@ export class Hud {
     b.onclick = () => { b.textContent = fn() ? '🔇' : '🔊'; };
   }
   setMuted(muted: boolean) { this.q('muteBtn').textContent = muted ? '🔇' : '🔊'; }
+
+  showFps(on: boolean) { this.q('fps').hidden = !on; }
+  private fpsShown = -1;
+  setFps(fps: number, quality: string) {
+    const el = this.q('fps');
+    if (el.hidden) return;
+    const v = Math.round(fps);
+    if (v === this.fpsShown) return;
+    this.fpsShown = v;
+    el.textContent = `${v} fps · ${quality}`;
+    el.className = `hud-fps glass ${v < 40 ? 'bad' : v < 55 ? 'meh' : ''}`;
+  }
 
   /** A story line, shown for a few seconds above the bottom bar. */
   caption(text: string, seconds = 6) {

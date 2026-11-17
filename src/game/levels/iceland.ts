@@ -19,6 +19,8 @@ export interface Environment {
   wave: number;
   /** 0–1: water roughness */
   swell: number;
+  /** sun elevation (direction y component, ~0.1 = sunset, 0.5 = high) */
+  sunHeight: number;
 }
 
 export interface LevelPhase { id: PhaseId; name: string; env: Environment }
@@ -31,23 +33,23 @@ export const ICELAND: Level = {
   phases: {
     idyll: {
       id: 'idyll', name: 'Fjord Morning',
-      env: { sky: 0x9fd4ef, fog: 0xbfe2f2, fogNear: 60, fogFar: 420, sun: 0xfff3d6, sunIntensity: 2.2, ground: 0x5f9e4f, water: 0x2a7fb8, lava: 0, smoke: 0, wave: 0, swell: 0.1 },
+      env: { sky: 0x9fd4ef, fog: 0xbfe2f2, fogNear: 60, fogFar: 420, sun: 0xfff3d6, sunIntensity: 2.2, ground: 0x5f9e4f, water: 0x2a7fb8, lava: 0, smoke: 0, wave: 0, swell: 0.1, sunHeight: 0.42 },
     },
     omens: {
       id: 'omens', name: 'Rumbling Earth',
-      env: { sky: 0xb7c1c4, fog: 0xc4c4bb, fogNear: 50, fogFar: 340, sun: 0xffe2b0, sunIntensity: 1.7, ground: 0x6b8a4c, water: 0x2f7298, lava: 0.25, smoke: 0.35, wave: 0, swell: 0.3 },
+      env: { sky: 0xb7c1c4, fog: 0xc4c4bb, fogNear: 50, fogFar: 340, sun: 0xffe2b0, sunIntensity: 1.7, ground: 0x6b8a4c, water: 0x2f7298, lava: 0.25, smoke: 0.35, wave: 0, swell: 0.3, sunHeight: 0.36 },
     },
     escalation: {
       id: 'escalation', name: 'Eruption',
-      env: { sky: 0xd98a5f, fog: 0xb8775a, fogNear: 40, fogFar: 280, sun: 0xffb27a, sunIntensity: 1.6, ground: 0x5d6b45, water: 0x2b5f7e, lava: 0.8, smoke: 0.75, wave: 0.6, swell: 0.65 },
+      env: { sky: 0xd98a5f, fog: 0xb8775a, fogNear: 40, fogFar: 280, sun: 0xffb27a, sunIntensity: 1.6, ground: 0x5d6b45, water: 0x2b5f7e, lava: 0.8, smoke: 0.75, wave: 0.6, swell: 0.65, sunHeight: 0.28 },
     },
     finale: {
       id: 'finale', name: 'Wave Chase',
-      env: { sky: 0x8e4a3a, fog: 0x7a4638, fogNear: 30, fogFar: 230, sun: 0xff8a5c, sunIntensity: 1.4, ground: 0x4c5040, water: 0x24506a, lava: 1, smoke: 1, wave: 1, swell: 1 },
+      env: { sky: 0x8e4a3a, fog: 0x7a4638, fogNear: 30, fogFar: 230, sun: 0xff8a5c, sunIntensity: 1.4, ground: 0x4c5040, water: 0x24506a, lava: 1, smoke: 1, wave: 1, swell: 1, sunHeight: 0.22 },
     },
     winddown: {
       id: 'winddown', name: 'Safe Waters',
-      env: { sky: 0xf3b27f, fog: 0xf6c9a0, fogNear: 60, fogFar: 420, sun: 0xffc48a, sunIntensity: 1.9, ground: 0x6c8f52, water: 0x3a7fa8, lava: 0.15, smoke: 0.25, wave: 0, swell: 0.15 },
+      env: { sky: 0xf3b27f, fog: 0xf6c9a0, fogNear: 60, fogFar: 420, sun: 0xffc48a, sunIntensity: 1.9, ground: 0x6c8f52, water: 0x3a7fa8, lava: 0.15, smoke: 0.25, wave: 0, swell: 0.15, sunHeight: 0.1 },
     },
   },
   // The story, laid onto any training curve by the story engine (src/story/story.ts)

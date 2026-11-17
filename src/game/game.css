@@ -110,3 +110,9 @@ button.big { font-size: 18px; padding: 14px 22px; }
 /* Sound settings in setup */
 .sound-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
 .sound-row label { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
+
+/* Frame-rate badge */
+.hud-fps { padding: 10px 12px; font: 600 14px/1 ui-monospace, Consolas, monospace; color: #7cf5a3; }
+.hud-fps.meh { color: #ffd166; }
+.hud-fps.bad { color: #ff8a7a; }
+.sound-row select { min-height: 40px; padding: 6px 8px; }

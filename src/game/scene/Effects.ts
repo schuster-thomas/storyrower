@@ -138,6 +138,14 @@ export class Effects {
     scene.add(this.ash, this.embers, this.spray, this.birds);
   }
 
+  /** Draw only a share of the ash/ember/spray particles (graphics level). */
+  setParticleShare(share: number) {
+    for (const pts of [this.ash, this.embers, this.spray]) {
+      const n = (pts.geometry.attributes.position as THREE.BufferAttribute).count;
+      pts.geometry.setDrawRange(0, Math.max(1, Math.round(n * share)));
+    }
+  }
+
   update(c: EffectsContext) {
     this.updateAsh(c);
     this.updateEmbers(c);

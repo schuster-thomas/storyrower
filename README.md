@@ -17,7 +17,7 @@ What counts is not maximum effort but how well you stay inside the **target band
 | 1 – Data layer + simulator + diagnostics view | ✅ |
 | 2 – Greybox game (incl. heart rate display) | ✅ playable with rower or simulator |
 | 3 – Story engine + audio | ✅ story beats, reactive effects, placeholder soundtrack |
-| 4 – Level "Iceland Volcano Run" | – |
+| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain) · next: set pieces, boat, music, polish |
 
 ## Development
 Requires Node.js 24.
@@ -44,6 +44,8 @@ Everything is recorded automatically from the moment a rower (or simulator) is c
 - `app/connection.ts` – one shared rower session plus optional heart-rate monitor for setup, game and diagnostics
 - `story/story.ts` – story engine: places a level's beats on any training curve, derives ongoing effects (ash, lava bombs, birds) and a smoothly blended environment from the workout time
 - `game/scene/Effects.ts` – ash, embers, bow spray, lava bombs with splash rings, puffins
+- `game/scene/quality.ts` – graphics levels (low/medium/high/auto), auto-adjustment by frame rate, frame statistics
+- `game/scene/Water.ts`, `Sky.ts`, `Terrain.ts` – water shader (waves, foam, wake, sky reflection), gradient sky with sun, clouds and snow-capped mountains, rolling hills with basalt columns, lupines and waterfalls
 - `audio/AudioEngine.ts` – procedural placeholder soundtrack (Web Audio): music layers faded by intensity, splash per real stroke, ambience and story effects
 
 ### Data layer (`src/rower/`)
