@@ -65,6 +65,17 @@ describe('FTMS decoder', () => {
 });
 
 describe('Recordings', () => {
+  it('stores game events next to the packets and still replays the file', () => {
+    const session = new RowerSession(nullSource());
+    const { packets } = parseRecording(rec(LONG));
+    for (const p of packets.slice(0, 200)) session.handlePacket(p);
+    session.logEvent('game-section', { index: 3 });
+    const json = JSON.parse(JSON.stringify(session.recorder.toJSON()));
+    expect(json.events).toHaveLength(1);
+    expect(json.events[0]).toMatchObject({ type: 'game-section', data: { index: 3 }, t: packets[199].t });
+    expect(parseRecording(json).packets).toHaveLength(200);
+  });
+
   it('stitches PoC files with timestamps that jump back into one timeline', () => {
     const raw = rec(SHORT);
     const joined = { ...raw, packets: [...raw.packets, ...raw.packets] };

@@ -25,6 +25,9 @@ export class Hud {
   readonly el: HTMLElement;
   private q = <T extends HTMLElement = HTMLElement>(id: string) => this.el.querySelector<T>(`[data-h="${id}"]`)!;
   private builtFor: Workout | null = null;
+  /** Target key (split and stroke-rate centre) currently shown; a change triggers the big announcement. */
+  private targetKey: string | null = null;
+  private announceTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(parent: HTMLElement) {
     this.el = document.createElement('div');
@@ -44,6 +47,7 @@ export class Hud {
       </div>
       <div class="hud-next glass" data-h="next"></div>
       <div class="hud-message" data-h="message"></div>
+      <div class="hud-target" data-h="target" aria-live="polite"></div>
       <div class="hud-side glass">
         <div><span data-h="coins">0</span><small>coins</small></div>
         <div><span data-h="acc">–</span><small>in band</small></div>
@@ -71,8 +75,32 @@ export class Hud {
     this.builtFor = w;
   }
 
+  /** Big centre display of the new split and stroke-rate targets for a few seconds. */
+  announce(seg: Segment, headline: string, seconds = 5) {
+    const el = this.q('target');
+    el.innerHTML = `
+      <div class="tg-head">${headline}</div>
+      <div class="tg-pace">${formatPace(seg.pace.lo)}–${formatPace(seg.pace.hi)}<small>/500 m</small></div>
+      <div class="tg-spm">${seg.spm.lo}–${seg.spm.hi}<small>spm</small></div>`;
+    el.classList.remove('show');
+    void el.offsetWidth; // restart the animation
+    el.classList.add('show');
+    if (this.announceTimer) clearTimeout(this.announceTimer);
+    this.announceTimer = setTimeout(() => el.classList.remove('show'), seconds * 1000);
+  }
+
+  get announcing() { return this.q('target').classList.contains('show'); }
+
   update(s: HudState) {
     if (this.builtFor !== s.workout) this.buildProgress(s.workout, s.level);
+    // Announce when the target split (band centre) or stroke rate changes – also once at the start
+    const key = `${Math.round((s.segment.pace.lo + s.segment.pace.hi) / 2)}|${s.segment.spm.lo + s.segment.spm.hi}`;
+    if (key !== this.targetKey) {
+      const first = this.targetKey == null;
+      this.targetKey = key;
+      const phaseName = s.level.phases[s.segment.phase].name;
+      this.announce(s.segment, first ? `${phaseName} · first target` : `New target · ${KIND_LABEL[s.segment.kind]}`);
+    }
     const spans = phaseSpans(s.workout);
     const pi = spans.findIndex((p) => p.phase === s.segment.phase);
     this.q('level').textContent = s.level.title;
@@ -97,8 +125,9 @@ export class Hud {
     }
 
     const msg = this.q('message');
-    msg.textContent = s.message?.text ?? '';
-    msg.className = `hud-message ${s.message ? `show ${s.message.tone}` : ''}`;
+    const showMsg = s.message && !this.announcing;
+    msg.textContent = showMsg ? s.message!.text : '';
+    msg.className = `hud-message ${showMsg ? `show ${s.message!.tone}` : ''}`;
 
     const smp = s.sample;
     this.tile('dist', String(Math.round(s.distance)), '');

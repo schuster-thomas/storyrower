@@ -8,6 +8,15 @@ export interface RecordedPacket {
   hex: string;
 }
 
+/** Something the app did, on the same timeline as the packets (e.g. a game section change). */
+export interface RecordedEvent {
+  t: number;
+  /** wall-clock time (ISO) – helps matching with what you remember from the session */
+  at: string;
+  type: string;
+  data?: unknown;
+}
+
 export interface Recording {
   app: 'storyrower';
   version: 2;
@@ -16,10 +25,13 @@ export interface Recording {
   source: string;
   userAgent: string;
   packets: RecordedPacket[];
+  /** App/game events (optional, added in v2.1) */
+  events?: RecordedEvent[];
 }
 
 export class Recorder {
   private packets: RecordedPacket[] = [];
+  private events: RecordedEvent[] = [];
   private startedAt = new Date();
   private device: string | null = null;
 
@@ -31,14 +43,19 @@ export class Recorder {
     this.packets.push({ t: Math.round(p.t), uuid: p.uuid, kind: p.kind, hex: toHex(p.data) });
   }
 
-  get count() { return this.packets.length; }
+  addEvent(t: number, type: string, data?: unknown) {
+    this.events.push({ t: Math.round(t), at: new Date().toISOString(), type, data });
+  }
 
-  clear() { this.packets = []; this.startedAt = new Date(); }
+  get count() { return this.packets.length; }
+  get eventCount() { return this.events.length; }
+
+  clear() { this.packets = []; this.events = []; this.startedAt = new Date(); }
 
   toJSON(): Recording {
     return {
       app: 'storyrower', version: 2, recordedAt: this.startedAt.toISOString(), device: this.device,
-      source: this.source, userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'node', packets: this.packets,
+      source: this.source, userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'node', packets: this.packets, events: this.events,
     };
   }
 

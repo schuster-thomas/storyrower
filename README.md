@@ -33,6 +33,9 @@ Every push to `main` is tested, built and published to GitHub Pages by GitHub Ac
 
 Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout). The "Simulator (autopilot)" source rows by itself and follows the targets.
 
+### Recording a session
+Everything is recorded automatically from the moment a rower (or simulator) is connected: every Bluetooth packet with a timestamp, plus game events (`game-start` with settings and all sections, `game-section` on every target change, `game-snapshot` every 5 s with values, zones, wave distance and fps, `visibility`, `error`, `game-finish`). Download it from the results screen, the in-game "i" overlay or **Device & diagnostics**. The recording lives in memory only – reloading the page loses it. Recordings can be replayed in Device & diagnostics.
+
 ### Game (`src/game/`, `src/workout/`)
 - `workout/workout.ts` – turns the settings (min/max watts and stroke rate, duration) into the training curve and its five story phases
 - `workout/scoring.ts` – target-band zones, time in band, coins, stars and the distance to the tidal wave (no game over)

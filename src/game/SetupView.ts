@@ -56,6 +56,7 @@ function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => v
             <label>Lowest stroke rate<span><input type="number" data-k="minSpm" min="12" max="40"> spm</span></label>
             <label>Highest stroke rate<span><input type="number" data-k="maxSpm" min="12" max="45"> spm</span></label>
             <label>Duration<span><input type="number" data-k="durationMin" min="10" max="90" step="5"> min</span></label>
+            <label title="No target changes faster than this – higher values mean fewer, longer sections">Shortest section<span><input type="number" data-k="minSegmentSec" min="10" max="600" step="10"> s</span></label>
           </div>
           <div class="preview" data-id="preview"></div>
           <div class="legend" data-id="legend"></div>

@@ -7,6 +7,8 @@ export interface WorkoutSettings {
   minSpm: number;
   maxSpm: number;
   durationMin: number;
+  /** Shortest allowed section in seconds – fewer target changes with higher values. */
+  minSegmentSec: number;
 }
 
 export const DEFAULT_SETTINGS: WorkoutSettings = {
@@ -16,6 +18,7 @@ export const DEFAULT_SETTINGS: WorkoutSettings = {
   minSpm: 22,
   maxSpm: 30,
   durationMin: 20,
+  minSegmentSec: 30,
 };
 
 /** The five story phases every level maps its beats onto. */
@@ -76,11 +79,17 @@ export function generateWorkout(settings: WorkoutSettings): Workout {
   const winddown = r10(total * 0.15);
   let escalation = total - idyll - omens - finale - winddown;
 
-  // Intervals: 1 min hard / 1 min easy for longer workouts, 30 s / 30 s for short ones
-  const pair = escalation >= 8 * 60 ? 120 : 60;
-  const pairs = Math.max(1, Math.floor(escalation / pair));
-  const leftover = escalation - pairs * pair;
-  escalation = pairs * pair;
+  // Shortest section, in whole 10 s steps
+  const minSeg = Math.max(10, Math.min(600, Math.ceil((s.minSegmentSec || 30) / 10) * 10));
+  s.minSegmentSec = minSeg;
+
+  // Intervals: 1 min hard / 1 min easy for longer workouts, 30 s / 30 s for short ones,
+  // but never shorter than the minimum section length
+  const half = Math.max(escalation >= 8 * 60 ? 60 : 30, minSeg);
+  const pair = half * 2;
+  const pairs = Math.floor(escalation / pair);
+  const leftover = pairs > 0 ? escalation - pairs * pair : 0;
+  escalation = pairs > 0 ? pairs * pair : escalation;
 
   const segs: Segment[] = [];
   let t = 0;
@@ -91,17 +100,30 @@ export function generateWorkout(settings: WorkoutSettings): Workout {
   };
 
   add('idyll', idyll, 0.1, 'steady');
-  // build-up in two steps; leftover interval time goes here so the total stays exact
+  // build-up in two steps (one if too short); leftover interval time goes here so the total stays exact
   const omensTotal = omens + leftover;
-  add('omens', r10(omensTotal / 2), 0.3, 'ramp');
-  add('omens', omensTotal - r10(omensTotal / 2), 0.5, 'ramp');
+  const twoSteps = (len: number) => r10(len / 2) >= minSeg && len - r10(len / 2) >= minSeg;
+  if (twoSteps(omensTotal)) {
+    add('omens', r10(omensTotal / 2), 0.3, 'ramp');
+    add('omens', omensTotal - r10(omensTotal / 2), 0.5, 'ramp');
+  } else add('omens', omensTotal, 0.4, 'ramp');
+  if (pairs === 0) add('escalation', escalation, 0.7, 'hard');
   for (let i = 0; i < pairs; i++) {
-    add('escalation', pair / 2, 0.85, 'hard');
-    add('escalation', pair / 2, 0.35, 'easy');
+    add('escalation', half, 0.85, 'hard');
+    add('escalation', half, 0.35, 'easy');
   }
   add('finale', finale, 1, 'peak');
-  add('winddown', r10(winddown / 2), 0.15, 'steady');
-  add('winddown', winddown - r10(winddown / 2), 0, 'steady');
+  if (twoSteps(winddown)) {
+    add('winddown', r10(winddown / 2), 0.15, 'steady');
+    add('winddown', winddown - r10(winddown / 2), 0, 'steady');
+  } else add('winddown', winddown, 0, 'steady');
+
+  // Whole phases can still be shorter than the minimum (short workout, long minimum):
+  // merge them into the previous section so no section is shorter than asked for.
+  for (let i = segs.length - 1; i > 0; i--) {
+    if (segs[i].end - segs[i].start < minSeg) { segs[i - 1].end = segs[i].end; segs.splice(i, 1); }
+  }
+  if (segs.length > 1 && segs[0].end - segs[0].start < minSeg) { segs[1].start = 0; segs.shift(); }
 
   return { settings: s, duration: t, segments: segs };
 }

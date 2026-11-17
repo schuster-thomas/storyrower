@@ -1,9 +1,10 @@
 import { connection } from '../app/connection';
+import { downloadRecording } from '../app/download';
 import { formatDuration, formatPace } from '../rower/ftms';
 import { SimulatorSource } from '../rower/sources/simulator';
 import type { RowerEvent, RowerSample } from '../rower/types';
 import { accuracy, isIn, isLow, newScore, stars, updateScore, type Zone } from '../workout/scoring';
-import { nextSegment, segmentAt, type PhaseId, type Workout } from '../workout/workout';
+import { nextSegment, segmentAt, type PhaseId, type Segment, type Workout } from '../workout/workout';
 import { Hud } from './hud/Hud';
 import type { Level } from './levels/iceland';
 import { RiverScene } from './scene/RiverScene';
@@ -43,10 +44,13 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   const overlay = document.createElement('div');
   overlay.className = 'game-overlay';
   wrap.appendChild(overlay);
-  const diag = document.createElement('pre');
+  const diag = document.createElement('div');
   diag.className = 'game-diag glass';
   diag.hidden = true;
+  diag.innerHTML = `<pre></pre><div class="row"><button data-a="rec">Download recording</button><span class="muted" data-a="recInfo"></span></div>`;
   wrap.appendChild(diag);
+  const diagText = diag.querySelector('pre')!;
+  diag.querySelector<HTMLButtonElement>('[data-a="rec"]')!.onclick = () => downloadRecording(session);
 
   // ---------- state ----------
   let t = Math.max(0, Math.min(workout.duration - 1, opts.startAt ?? 0));
@@ -77,11 +81,24 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   };
   window.addEventListener('keydown', onKey);
 
+  // ---------- recording: game events go into the same file as the rower packets ----------
+  const fmtBand = (b: { lo: number; hi: number }) => [Math.round(b.lo), Math.round(b.hi)];
+  session.logEvent('game-start', {
+    level: level.id, settings: workout.settings, duration: workout.duration, autopilot: opts.autopilot,
+    timeScale: opts.timeScale ?? 1, startAt: opts.startAt ?? 0, source: session.source.info.label,
+    viewport: [innerWidth, innerHeight], dpr: devicePixelRatio,
+    segments: workout.segments.map((g) => ({ start: g.start, end: g.end, phase: g.phase, kind: g.kind, power: fmtBand(g.power), spm: fmtBand(g.spm), pace: fmtBand(g.pace) })),
+  });
+  const onVisibility = () => session.logEvent('visibility', { state: document.visibilityState });
+  document.addEventListener('visibilitychange', onVisibility);
+  const onError = (ev: ErrorEvent) => session.logEvent('error', { message: ev.message, source: ev.filename, line: ev.lineno });
+  window.addEventListener('error', onError);
+
   // ---------- session events ----------
   const off = session.on((e: RowerEvent) => {
     if (e.type === 'sample') {
       sample = e.sample;
-      if (!started && e.sample.rowing) started = true;
+      if (!started && e.sample.rowing) { started = true; session.logEvent('game-rowing-started', { gameT: t }); }
       if (started && startDistance == null) startDistance = e.sample.distance;
     } else if (e.type === 'stroke') scene.stroke(e.intervalMs);
   });
@@ -101,6 +118,10 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     if (sim && opts.autopilot) sim.profile = () => 0;
     const st = stars(score);
     const dist = sample && startDistance != null ? sample.distance - startDistance : 0;
+    session!.logEvent('game-finish', {
+      early, gameT: Math.round(t), stars: st, accuracy: +accuracy(score).toFixed(3), powerInS: Math.round(score.powerIn), spmInS: Math.round(score.spmIn),
+      distance: Math.round(dist), avgPower: t > 0 ? Math.round(powerSum / t) : 0, coins: Math.floor(score.coins),
+    });
     overlay.className = 'game-overlay show';
     overlay.innerHTML = `
       <div class="card-big">
@@ -117,9 +138,13 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
           <button class="primary" data-a="again">Row again</button>
           <button data-a="back">Back to setup</button>
         </div>
+        <div class="row" style="justify-content:center">
+          <button data-a="rec">Download recording</button>
+        </div>
       </div>`;
     overlay.querySelector<HTMLButtonElement>('[data-a="again"]')!.onclick = opts.onRestart;
     overlay.querySelector<HTMLButtonElement>('[data-a="back"]')!.onclick = opts.onExit;
+    overlay.querySelector<HTMLButtonElement>('[data-a="rec"]')!.onclick = () => downloadRecording(session!);
   }
 
   hud.onExit(() => (finished || t < 1 ? opts.onExit() : finish(true)));
@@ -129,6 +154,11 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   let last = performance.now();
   let frame = 0;
   let diagTimer = 0;
+  let snapTimer = 0;
+  let frames = 0;
+  let fps = 0;
+  let fpsTimer = 0;
+  let lastSeg: Segment | null = null;
   const loop = (now: number) => {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
@@ -137,6 +167,12 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     const gdt = dt * (opts.timeScale ?? 1); // game time step
     if (active) t = Math.min(workout.duration, t + gdt);
     const seg = segmentAt(workout, t);
+    if (seg !== lastSeg) {
+      lastSeg = seg;
+      session.logEvent('game-section', { index: workout.segments.indexOf(seg), gameT: Math.round(t), phase: seg.phase, kind: seg.kind, power: fmtBand(seg.power), spm: fmtBand(seg.spm), pace: fmtBand(seg.pace) });
+    }
+    frames++; fpsTimer += dt;
+    if (fpsTimer >= 1) { fps = frames / fpsTimer; frames = 0; fpsTimer = 0; }
 
     if (seg.phase !== phase) { scene.setEnvironment(level.phases[seg.phase].env, phase == null); phase = seg.phase; }
     if (active && sample) {
@@ -154,16 +190,29 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       message: finished ? null : messageFor(),
     });
 
+    // A compact game snapshot every 5 s: enough to replay what the player saw
+    snapTimer += dt;
+    if (snapTimer >= 5) {
+      snapTimer = 0;
+      session.logEvent('game-snapshot', {
+        gameT: Math.round(t), active, rowing, fps: Math.round(fps), power: sample?.power ?? null, powerSmoothed: Math.round(sample?.powerSmoothed ?? 0),
+        spm: sample?.strokeRate ?? null, pace: sample?.paceSmoothed ? Math.round(sample.paceSmoothed) : null, hr: sample?.heartRate ?? null,
+        zones, threat: +score.threat.toFixed(2), accuracy: +accuracy(score).toFixed(3), coins: Math.floor(score.coins),
+      });
+    }
+
     diagTimer += dt;
     if (!diag.hidden && diagTimer > 0.25) {
       diagTimer = 0;
-      diag.textContent = [
+      diag.querySelector('[data-a="recInfo"]')!.textContent = `${session.recorder.count} packets · ${session.recorder.eventCount} events`;
+      diagText.textContent = [
         `source     ${session.source.info.label} · ${session.state}${session.isRowing ? ' · rowing' : ' · paused'}`,
         `power      raw ${sample?.power ?? '–'} W · smoothed ${Math.round(sample?.powerSmoothed ?? 0)} W · band ${seg.power.lo}–${seg.power.hi} (${zones?.power ?? '–'})`,
         `stroke     ${sample?.strokeRate ?? '–'} spm · #${sample?.strokeCount ?? '–'} · band ${seg.spm.lo}–${seg.spm.hi} (${zones?.spm ?? '–'})`,
         `split      raw ${formatPace(sample?.pace)} · smoothed ${formatPace(sample?.paceSmoothed)} · ${speed.toFixed(2)} m/s`,
         `heart rate ${sample?.heartRate ?? '–'} (${sample?.heartRateSource ?? 'none'})`,
         `workout    ${formatDuration(t)} · ${seg.phase}/${seg.kind} · intensity ${seg.intensity.toFixed(2)} · threat ${score.threat.toFixed(2)}`,
+        `display    ${Math.round(fps)} fps · ${innerWidth}×${innerHeight} @${devicePixelRatio}x`,
       ].join('\n');
     }
     frame = requestAnimationFrame(loop);
@@ -187,6 +236,9 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     off();
     ro.disconnect();
     window.removeEventListener('keydown', onKey);
+    document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('error', onError);
+    if (!finished && started) session.logEvent('game-exit', { gameT: Math.round(t) });
     if (sim && opts.autopilot) sim.profile = null;
     wakeLock?.release().catch(() => {});
     scene.dispose();

@@ -1,5 +1,6 @@
 import { CONTROL, formatDuration, formatPace, nameOf } from '../rower/ftms';
 import { connection } from '../app/connection';
+import { downloadRecording } from '../app/download';
 import type { RowerSession } from '../rower/session';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { ReplaySource } from '../rower/sources/replay';
@@ -351,16 +352,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   $('simPlus').onclick = () => simSet((sim()?.targetPower ?? 0) + 10);
   $<HTMLInputElement>('simRange').oninput = (ev) => simSet(Number((ev.target as HTMLInputElement).value));
   $('simPause').onclick = simTogglePause;
-  $('downloadBtn').onclick = () => {
-    if (!session) return;
-    session.recorder.setDevice(deviceName());
-    const blob = new Blob([JSON.stringify(session.recorder.toJSON(), null, 1)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = session.recorder.fileName();
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  };
+  $('downloadBtn').onclick = () => { if (session) downloadRecording(session); };
   $('clearBtn').onclick = () => { logEl.innerHTML = ''; };
   const cp = (bytes: number[], label: string) => session?.sendControl(bytes).then(() => log(session!.sample?.t ?? 0, `sent: ${label}`)).catch((err) => log(0, `${label} failed: ${err.message}`, 'error'));
   $('cpRequest').onclick = () => cp([...CONTROL.REQUEST_CONTROL], 'Request control');

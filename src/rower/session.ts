@@ -76,6 +76,9 @@ export class RowerSession {
     };
   }
 
+  /** Record an app/game event on the session timeline (ends up in the downloaded recording). */
+  logEvent(type: string, data?: unknown) { this.recorder.addEvent(this.lastT, type, data); }
+
   async sendControl(bytes: number[]) {
     if (!this.source.sendControl) throw new Error('This source cannot send commands');
     await this.source.sendControl(bytes);

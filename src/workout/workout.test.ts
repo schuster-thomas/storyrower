@@ -36,6 +36,21 @@ describe('workout generator', () => {
     expect(b.pace.lo).toBeLessThan(b.pace.hi);
   });
 
+  for (const [durationMin, minSegmentSec] of [[20, 30], [20, 60], [30, 90], [45, 120], [10, 180], [60, 300]]) {
+    it(`keeps every section ≥ ${minSegmentSec} s in a ${durationMin} min workout`, () => {
+      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin, minSegmentSec });
+      expect(w.duration).toBe(durationMin * 60);
+      for (const s of w.segments) expect(s.end - s.start).toBeGreaterThanOrEqual(minSegmentSec);
+      for (let i = 1; i < w.segments.length; i++) expect(w.segments[i].start).toBe(w.segments[i - 1].end);
+    });
+  }
+
+  it('uses longer intervals when the minimum section is longer', () => {
+    const short = generateWorkout({ ...DEFAULT_SETTINGS, durationMin: 20, minSegmentSec: 30 });
+    const long = generateWorkout({ ...DEFAULT_SETTINGS, durationMin: 20, minSegmentSec: 90 });
+    expect(long.segments.length).toBeLessThan(short.segments.length);
+  });
+
   it('swaps min/max if entered the wrong way round', () => {
     const w = generateWorkout({ ...DEFAULT_SETTINGS, minPower: 120, maxPower: 60 });
     expect(w.settings.minPower).toBe(60);
