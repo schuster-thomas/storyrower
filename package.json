@@ -9,12 +9,18 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "backdrops:generate": "node scripts/backdrops/generate.mjs",
+    "backdrops:process": "node scripts/backdrops/process.mjs",
+    "backdrops:sheet": "node scripts/backdrops/sheet.mjs",
+    "models:build": "node scripts/models/build.mjs"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "@types/node": "^24.19.2",
     "@types/three": "^0.187.0",
     "@types/web-bluetooth": "^0.0.22",
+    "sharp": "^0.35.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0"

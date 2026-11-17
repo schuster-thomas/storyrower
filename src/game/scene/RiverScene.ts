@@ -1,7 +1,10 @@
 import * as THREE from 'three';
 import type { EffectId, StoryState } from '../../story/story';
 import type { Environment } from '../levels/iceland';
+import { Backdrop } from './Backdrop';
 import { Effects } from './Effects';
+import { NatureKit } from './NatureKit';
+import { Post } from './Post';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
 import { buildChunk, createTerrainMaterials, disposeChunk } from './Terrain';
@@ -25,7 +28,7 @@ export class RiverScene {
   readonly renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1200);
-  private hemi = new THREE.HemisphereLight(0xffffff, 0x445533, 1.2);
+  private hemi = new THREE.HemisphereLight(0xffffff, 0x6f7a5a, 1.7);
   private sun = new THREE.DirectionalLight(0xffffff, 2);
 
   private env: Environment;
@@ -43,6 +46,11 @@ export class RiverScene {
   private horizonColor = new THREE.Color();
   private sunColor = new THREE.Color();
   private waterColor = new THREE.Color();
+  private backdrop: Backdrop;
+  private light = 1;
+  private kit: NatureKit | null = null;
+  private post: Post;
+  private tint = new THREE.Color(1, 1, 1);
 
   private boat = new THREE.Group();
   private torso!: THREE.Group;
@@ -75,6 +83,15 @@ export class RiverScene {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: quality !== 'low', powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Soft sun shadows near the boat (off on "low")
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.sun.castShadow = quality !== 'low';
+    this.sun.shadow.mapSize.set(quality === 'high' ? 2048 : 1024, quality === 'high' ? 2048 : 1024);
+    const sc = this.sun.shadow.camera;
+    sc.left = -45; sc.right = 45; sc.top = 45; sc.bottom = -45; sc.near = 10; sc.far = 300;
+    this.sun.shadow.bias = -0.0005;
+    this.sun.shadow.normalBias = 0.04;
     this.env = { ...env };
     this.envTarget = { ...env };
     this.scene.fog = new THREE.Fog(env.fog, env.fogNear, env.fogFar);
@@ -92,6 +109,22 @@ export class RiverScene {
     this.wave = this.buildWave();
     this.effects = new Effects(this.scene);
     this.effects.setParticleShare(this.q.particles);
+    // Painted layers replace the greybox mountains, volcano, cliffs and wave once loaded
+    this.backdrop = new Backdrop(CHUNK, RIVER_HALF);
+    this.scene.add(this.backdrop.group);
+    this.backdrop.onReady = () => {
+      this.sky.setMountainsVisible(false);
+      this.volcano.visible = false;
+      this.wave.visible = false;
+    };
+    // Unified 3D props (CC0 model kit); the world is rebuilt once they are loaded
+    NatureKit.load().then((kit) => {
+      this.kit = kit;
+      for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
+      this.chunks = [];
+    }).catch((e) => console.warn('Model kit could not be loaded, keeping greybox props', e));
+    this.post = new Post(this.renderer, this.scene, this.camera);
+    this.post.setQuality(quality);
     this.applyEnvironment(1);
   }
 
@@ -110,6 +143,9 @@ export class RiverScene {
     this.water.setSegments(this.q.waterSegments);
     this.sky.setCloudCount(this.q.clouds);
     this.effects.setParticleShare(this.q.particles);
+    this.sun.castShadow = level !== 'low';
+    this.post.setQuality(level);
+    this.post.setSize(size.x, size.y);
     // rebuild the landscape with the new density
     for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
     this.chunks = [];
@@ -167,6 +203,7 @@ export class RiverScene {
 
     this.applyEnvironment(1 - Math.exp(-dt * 0.4));
     this.applyFlash(dt);
+    this.light = 0.45 + 0.55 * Math.min(1, this.env.sunIntensity / 2.2) * (1 - this.env.smoke * 0.25) + this.flashLevel * 0.4;
     this.updateChunks();
     this.updateBoat(dt);
     this.updateVolcano(dt);
@@ -174,12 +211,17 @@ export class RiverScene {
     this.updateCamera(dt, threat, intensity);
     this.effects.update({ dt, time: this.time, boatZ: this.z, speed: this.speed, viewDir: this.viewDir, threat, smoke: this.env.smoke, lava: this.env.lava, story: this.story });
     this.sky.update({ dt, time: this.time, camera: this.camera, boatZ: this.z, top: this.topColor, horizon: this.horizonColor, sunColor: this.sunColor, smoke: this.env.smoke, sunHeight: this.env.sunHeight });
-    this.water.update({ time: this.time, boatZ: this.z, speed: this.speed, swell: this.env.swell, water: this.waterColor, sky: this.horizonColor, sunColor: this.sunColor, sunDir: this.sky.sunDir, light: 0.45 + 0.55 * Math.min(1, this.env.sunIntensity / 2.2) * (1 - this.env.smoke * 0.25) + this.flashLevel * 0.4 });
-    this.sun.position.copy(this.sky.sunDir).multiplyScalar(120).add(new THREE.Vector3(0, 0, this.z));
+    this.water.update({ time: this.time, boatZ: this.z, speed: this.speed, swell: this.env.swell, water: this.waterColor, sky: this.horizonColor, sunColor: this.sunColor, sunDir: this.sky.sunDir, light: this.light });
+    const current = Math.floor(-this.z / CHUNK);
+    this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, lava: this.env.lava, smoke: this.env.smoke, wave: this.env.wave, threat }, current - CHUNKS_BEHIND, current + this.q.chunksAhead);
+    // The visible sun sits ahead in the sky; the light comes from high left so the banks facing us are lit
+    this.sun.position.set(-70, 60 + this.env.sunHeight * 80, this.z + 25);
     this.sun.target.position.set(0, 0, this.z);
 
     const t0 = performance.now();
-    this.renderer.render(this.scene, this.camera);
+    // phase tint for the colour grade: warm at sunset, orange under the eruption, cool in the idyll
+    this.tint.setRGB(1, 1, 1).lerp(new THREE.Color(1.08, 0.92, 0.82), this.env.lava * 0.6).lerp(new THREE.Color(1.06, 0.98, 0.9), Math.max(0, 0.3 - this.env.sunHeight) * 2);
+    this.post.render(this.scene, this.camera, this.tint, this.env.lava * 0.6 + this.flashLevel);
     const info = this.renderer.info.render;
     this.stats.calls = info.calls;
     this.stats.triangles = info.triangles;
@@ -188,12 +230,15 @@ export class RiverScene {
 
   resize(width: number, height: number) {
     this.renderer.setSize(width, height, false);
+    this.post.setSize(width, height);
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
   }
 
   dispose() {
     for (const c of this.chunks) disposeChunk(c.group);
+    this.post.dispose();
+    this.backdrop.dispose();
     this.water.dispose();
     this.sky.dispose();
     this.renderer.dispose();
@@ -211,9 +256,9 @@ export class RiverScene {
     this.topColor.lerp(this.flashColor, this.flashLevel * 0.7);
     this.horizonColor.lerp(this.flashColor, this.flashLevel * 0.85);
     (this.scene.fog as THREE.Fog).color.lerp(this.flashColor, this.flashLevel * 0.6);
-    this.hemi.intensity = 1.2 + this.flashLevel * 2.5;
+    this.hemi.intensity = 1.7 + this.flashLevel * 2.5;
     this.flashLevel *= Math.exp(-dt * 2.2);
-    if (this.flashLevel < 0.005) this.hemi.intensity = 1.2;
+    if (this.flashLevel < 0.005) this.hemi.intensity = 1.7;
   }
 
   private applyEnvironment(t: number) {
@@ -226,7 +271,7 @@ export class RiverScene {
     const fog = this.scene.fog as THREE.Fog;
     fog.color.set(e.fog); fog.near = e.fogNear; fog.far = e.fogFar;
     this.sun.color.set(e.sun); this.sun.intensity = e.sunIntensity;
-    this.hemi.color.set(e.sky);
+    this.hemi.color.set(e.sky).lerp(new THREE.Color(0xffffff), 0.4);
     // sky: deeper colour overhead, the fog colour at the horizon so land and sky blend
     this.topColor.set(e.sky).offsetHSL(0, 0.08, -0.12);
     this.horizonColor.set(e.fog);
@@ -235,7 +280,7 @@ export class RiverScene {
     // ash greys the landscape
     const ash = new THREE.Color(0x77736c);
     this.mats.ground.color.set(0xffffff).lerp(ash, e.smoke * 0.45).lerp(new THREE.Color(e.ground), 0.15);
-    this.mats.tree.color.set(0x2f6b3a).lerp(new THREE.Color(0x3a3d33), e.smoke * 0.6);
+    this.mats.tree.color.set(0x3f7d45).lerp(new THREE.Color(0x3a3d33), e.smoke * 0.6);
     this.mats.lupine.color.set(0x8e66c4).lerp(ash, e.smoke * 0.5);
     this.lavaMat.emissiveIntensity = e.lava * 2.5;
   }
@@ -255,7 +300,7 @@ export class RiverScene {
     let built = 0;
     for (let i = min; i <= max; i++) {
       if (this.chunks.some((c) => c.index === i)) continue;
-      const group = buildChunk(i, CHUNK, RIVER_HALF, this.q, this.mats);
+      const group = buildChunk(i, CHUNK, RIVER_HALF, this.q, this.mats, { kit: this.kit, shadows: this.sun.castShadow });
       this.scene.add(group);
       this.chunks.push({ index: i, group });
       if (++built >= 1 && this.chunks.length > 4) break;
@@ -303,6 +348,7 @@ export class RiverScene {
       this.boat.add(pivot);
       this.oars.push({ pivot, side });
     }
+    this.boat.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.castShadow = true; });
     this.scene.add(this.boat);
   }
 
@@ -372,7 +418,7 @@ export class RiverScene {
 
   private updateWave(_dt: number, threat: number) {
     const show = this.env.wave;
-    this.wave.visible = show > 0.02;
+    this.wave.visible = show > 0.02 && !this.backdrop.ready;
     if (!this.wave.visible) return;
     // threat 1 → far behind, threat 0 → right at the stern
     const dist = 12 + threat * 70 + (1 - show) * 120;

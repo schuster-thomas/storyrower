@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Model sheet</title>
+<style>body{margin:0;background:#bfe2f2;font:12px system-ui} #grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px} .cell{position:relative;background:#cfe8f4} .cell canvas{width:100%;display:block} .cell span{position:absolute;left:4px;top:2px}</style>
+</head>
+<body>
+<div id="grid"></div>
+<script type="module">
+// Dev-only: renders every model of the raw Quaternius pack into a grid for selection.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+const names = (new URLSearchParams(location.search).get('m') || '').split(',').filter(Boolean);
+const base = new URLSearchParams(location.search).get('base') || '/assets/raw/packs/nature-megakit/glTF/';
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(220, 200);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const loader = new GLTFLoader();
+const grid = document.getElementById('grid');
+for (const n of names) {
+  const gltf = await loader.loadAsync(base + n + (base.includes('raw') ? '.gltf' : '.glb')).catch((e) => ({ error: e }));
+  const cell = document.createElement('div'); cell.className = 'cell';
+  const img = document.createElement('img'); img.style.width = '100%';
+  const label = document.createElement('span'); label.textContent = n;
+  cell.append(img, label); grid.append(cell);
+  if (gltf.error) { label.textContent += ' ✗'; continue; }
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xcfe8f4);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x667755, 1.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 2); sun.position.set(3, 5, 4); scene.add(sun);
+  scene.add(gltf.scene);
+  const box = new THREE.Box3().setFromObject(gltf.scene);
+  const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  const r = Math.max(size.x, size.y, size.z);
+  const cam = new THREE.PerspectiveCamera(35, 220 / 200, r / 100, r * 20);
+  cam.position.set(c.x + r * 1.3, c.y + r * 0.6, c.z + r * 1.6); cam.lookAt(c);
+  renderer.render(scene, cam);
+  img.src = renderer.domElement.toDataURL();
+  label.textContent = `${n} ${size.x.toFixed(1)}×${size.y.toFixed(1)}×${size.z.toFixed(1)}`;
+}
+document.title = 'done';
+</script>
+</body>
+</html>

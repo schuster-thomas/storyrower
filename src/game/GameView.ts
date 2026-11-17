@@ -58,6 +58,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   const graphics = loadGraphics();
   const auto = graphics.quality === 'auto' ? new AutoQuality('medium') : null;
   const scene = new RiverScene(canvas, level.phases.idyll.env, auto ? auto.level : graphics.quality === 'auto' ? 'medium' : graphics.quality);
+  if (import.meta.env.DEV) (window as unknown as { __scene: RiverScene }).__scene = scene; // debugging aid in dev builds only
   const hud = new Hud(wrap);
   const overlay = document.createElement('div');
   overlay.className = 'game-overlay';

@@ -17,7 +17,7 @@ What counts is not maximum effort but how well you stay inside the **target band
 | 1 – Data layer + simulator + diagnostics view | ✅ |
 | 2 – Greybox game (incl. heart rate display) | ✅ playable with rower or simulator |
 | 3 – Story engine + audio | ✅ story beats, reactive effects, placeholder soundtrack |
-| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain) · next: set pieces, boat, music, polish |
+| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain), ✅ painted horizon (mountains, volcano, wave), ✅ unified 3D props from a CC0 kit, ✅ shadows & colour grade · next: boat & rower, set pieces, music |
 
 ## Development
 Requires Node.js 24.
@@ -47,6 +47,25 @@ Everything is recorded automatically from the moment a rower (or simulator) is c
 - `game/scene/quality.ts` – graphics levels (low/medium/high/auto), auto-adjustment by frame rate, frame statistics
 - `game/scene/Water.ts`, `Sky.ts`, `Terrain.ts` – water shader (waves, foam, wake, sky reflection), gradient sky with sun, clouds and snow-capped mountains, rolling hills with basalt columns, lupines and waterfalls
 - `audio/AudioEngine.ts` – procedural placeholder soundtrack (Web Audio): music layers faded by intensity, splash per real stroke, ambience and story effects
+
+### 3D models (`scripts/models/`, `src/assets/models/`)
+All props (rocks, pebbles, grass, lupines, bushes, trees, boulder cliffs, icebergs) come from one CC0 kit – Quaternius' Stylized Nature MegaKit – so the look stays consistent. See [CREDITS.md](CREDITS.md).
+
+```bash
+# expects the extracted pack in assets/raw/packs/nature-megakit/ (download: quaternius.itch.io/stylized-nature-megakit, free standard version)
+npm run models:build   # selected models → src/assets/models/nature.glb (meshopt + WebP, ~0.6 MB)
+```
+`dev/models.html?m=Rock_Medium_1,Pine_1` (dev server) renders models side by side for picking. `src/game/scene/NatureKit.ts` loads the bundle and places models with instancing; `Post.ts` adds the colour grade, vignette and (on high) bloom.
+
+### Painted backdrops (`scripts/backdrops/`, `src/assets/backdrops/`)
+The horizon mountains, the volcano (calm and erupting) and the tidal wave are painted layers (the cliff and iceberg layers are generated too but currently unused – 3D models replaced them) generated with the OpenAI image API (`gpt-image-1.5`, transparent background) using the original mock-up as style reference. Prompts live in `scripts/backdrops/spec.mjs`.
+
+```bash
+npm run backdrops:generate   # needs the API key in the environment variable gpt_api_key; skips existing images
+npm run backdrops:process    # trim, resize and compress to WebP into src/assets/backdrops/
+npm run backdrops:sheet      # contact sheet for a quick visual check
+```
+Raw images stay in `assets/raw/` (not committed). `src/game/scene/Backdrop.ts` places the layers and grades them with the phase light and haze.
 
 ### Data layer (`src/rower/`)
 ```

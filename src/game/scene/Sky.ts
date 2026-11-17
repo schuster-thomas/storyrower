@@ -83,6 +83,9 @@ export class Sky {
     this.group.add(this.mountains);
   }
 
+  /** Hide the 3D stand-in mountains once the painted panorama is loaded. */
+  setMountainsVisible(on: boolean) { this.mountains.visible = on; }
+
   setCloudCount(n: number) {
     while (this.clouds.length > n) this.group.remove(this.clouds.pop()!.sprite);
     while (this.clouds.length < n) {

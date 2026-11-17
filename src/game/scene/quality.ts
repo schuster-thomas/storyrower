@@ -19,9 +19,9 @@ export interface QualityProfile {
 }
 
 export const PROFILES: Record<QualityLevel, QualityProfile> = {
-  low:    { pixelRatio: 1,    chunksAhead: 6,  trees: 5,  lupines: 12, particles: 0.35, clouds: 4,  waterSegments: [10, 60],  terrainSegments: [8, 4] },
-  medium: { pixelRatio: 1.25, chunksAhead: 8,  trees: 9,  lupines: 24, particles: 0.7,  clouds: 7,  waterSegments: [16, 90],  terrainSegments: [12, 6] },
-  high:   { pixelRatio: 2,    chunksAhead: 11, trees: 13, lupines: 40, particles: 1,    clouds: 11, waterSegments: [24, 130], terrainSegments: [16, 8] },
+  low:    { pixelRatio: 1,    chunksAhead: 6,  trees: 2,  lupines: 12, particles: 0.35, clouds: 4,  waterSegments: [10, 60],  terrainSegments: [8, 4] },
+  medium: { pixelRatio: 1.25, chunksAhead: 8,  trees: 4,  lupines: 24, particles: 0.7,  clouds: 7,  waterSegments: [16, 90],  terrainSegments: [12, 6] },
+  high:   { pixelRatio: 2,    chunksAhead: 11, trees: 6, lupines: 40, particles: 1,    clouds: 11, waterSegments: [24, 130], terrainSegments: [16, 8] },
 };
 
 export interface GraphicsSettings { quality: QualitySetting; showFps: boolean }
