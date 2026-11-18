@@ -3,8 +3,9 @@ import { glacierFront } from './Fjord';
 import type { PaintedProps } from './PaintedProps';
 
 /**
- * The glacier calves (a story beat right after the first tremor): ahead of the boat an ice tower
- * leans out of the glacier front, topples ever faster into the river and crashes down in a big
+ * The glacier calves (a story beat right after the first tremor): an ice tower that has been
+ * standing in the glacier front for a while (it is placed far ahead, in the haze, about 40 s
+ * before – where the boat will be) leans out of the front, topples ever faster into the river and crashes down in a big
  * fountain of spray with a ring of foam; a swell runs across the river and rocks the boat when it
  * arrives. The ice then drifts on as a bobbing iceberg until the boat has passed it.
  */
@@ -13,6 +14,8 @@ const AHEAD = 38;          // m in front of the boat
 const SCALE = 2.6;         // the painted pinnacle berg (Ice_B), about 13 m tall
 const FALL = 2.4;          // s from the first lean to the impact
 const SWELL_SPEED = 9;     // m/s
+/** the tower is put into the glacier front this long before the calving */
+const LEAD = 40;
 
 const sprayVertex = /* glsl */ `
   attribute vec4 seed;
@@ -78,6 +81,7 @@ export class Calving {
   private impact = new THREE.Vector3();
   private swellHit = false;
   private built = false;
+  private placed = false;
 
   constructor(private props: PaintedProps) {
     this.group.add(this.pivot);
@@ -104,26 +108,44 @@ export class Calving {
     this.group.visible = false;
   }
 
-  /** Start the calving ahead of the boat. */
-  start(boatZ: number) {
+  /** Put the tower into the glacier front at z (standing, part of the front). */
+  private place(z: number) {
     if (!this.built) {
       const model = this.props.get('Ice_B');
-      if (!model) return;
+      if (!model) return false;
       for (const p of model.parts) this.ice.add(new THREE.Mesh(p.geometry, p.material));
       this.ice.scale.setScalar(SCALE);
+      this.ice.rotation.set(0, Math.random() * Math.PI, 0);
       this.built = true;
     }
-    const z = boatZ - AHEAD;
-    const front = glacierFront(z);
-    // the tower stands right at the ice front; it tips over its outer foot into the river
-    this.pivot.position.set(front - 3, 0, z);
+    // half in the ice wall, so it reads as a serac of the front; it tips over its outer foot
+    this.pivot.position.set(glacierFront(z) - 1, 0, z);
     this.pivot.rotation.set(0, 0, 0);
-    this.ice.position.set(-1.0, 0, 0);
-    this.ice.rotation.set(0, Math.random() * Math.PI, 0);
+    this.ice.position.set(-1.2, 0, 0);
+    this.foam.material.opacity = 0;
+    this.swell.material.opacity = 0;
+    this.sprayMat.uniforms.uT.value = -1;
     this.group.visible = true;
+    this.placed = true;
+    return true;
+  }
+
+  /**
+   * Called every frame with the seconds until the calving: about 40 s before, the tower is put
+   * where the boat will be by then (far ahead, in the haze), so it is already there when it falls.
+   */
+  prepare(boatZ: number, speed: number, inSec: number) {
+    if (this.placed || this.t >= 0 || inSec < 0 || inSec > LEAD) return;
+    // (at least a typical rowing speed: right after a jump the boat still stands)
+    this.place(boatZ - AHEAD - Math.max(6, speed) * inSec);
+  }
+
+  /** Start the calving (the tower placed by prepare(), or right ahead if it is not where it should be). */
+  start(boatZ: number) {
+    const ahead = boatZ - this.pivot.position.z;
+    if (!this.placed || ahead < 8 || ahead > 200) { if (!this.place(boatZ - AHEAD)) return; }
     this.t = 0;
     this.swellHit = false;
-    this.sprayMat.uniforms.uT.value = -1;
   }
 
   update(p: { dt: number; time: number; boatZ: number; light: number; pixelHeight: number; camera: THREE.PerspectiveCamera }) {
@@ -161,7 +183,7 @@ export class Calving {
     this.sprayMat.uniforms.uLight.value = Math.min(1.1, 0.6 + p.light * 0.5);
     this.sprayMat.uniforms.uPx.value = p.pixelHeight / (2 * Math.tan(THREE.MathUtils.degToRad(p.camera.fov) / 2));
     // done once the boat has left the berg far behind
-    if (t > FALL + 2 && this.pivot.position.z > p.boatZ + 120) { this.t = -1; this.group.visible = false; }
+    if (t > FALL + 2 && this.pivot.position.z > p.boatZ + 120) { this.t = -1; this.group.visible = false; this.placed = false; }
   }
 
   dispose() {

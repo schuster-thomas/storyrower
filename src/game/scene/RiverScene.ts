@@ -105,7 +105,7 @@ export class RiverScene {
   private smokeBurst = 0;
   private viewDir = 1;
   private effects: Effects;
-  private story: StoryState = { lavaBombs: 0, ashfall: 0, birds: 0, unrest: 0, eruptionAge: -1, cooling: 0 };
+  private story: StoryState = { lavaBombs: 0, ashfall: 0, birds: 0, unrest: 0, eruptionAge: -1, cooling: 0, calvingIn: -1 };
   /** Forwarded from the effects (for sound): a lava bomb hit the water at this distance. */
   set onBombLanded(fn: ((distance: number) => void) | null) { this.effects.onBombLanded = fn; }
 
@@ -285,6 +285,7 @@ export class RiverScene {
       dt, time: this.time, boatZ: this.z, light: this.light, horizon: this.horizonColor, lava: this.env.lava, smoke: this.env.smoke,
       unrest: this.story.unrest, eruptionAge: this.story.eruptionAge, cooling: this.story.cooling, pixelHeight: this.bufferSize.y, camera: this.camera,
     });
+    this.calving.prepare(this.z, this.speed, this.story.calvingIn);
     this.calving.update({ dt, time: this.time, boatZ: this.z, light: this.light, pixelHeight: this.bufferSize.y, camera: this.camera });
     this.wave.update({
       time: this.time, boatZ: this.z, wave: this.env.wave, threat, light: this.light, tint: this.paintTint,

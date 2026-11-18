@@ -64,6 +64,9 @@ describe('story engine', () => {
     expect(storyStateAt(beats, w, at('eruption') + 30).eruptionAge).toBeCloseTo(30);
     expect(storyStateAt(beats, w, at('wave')).cooling).toBe(0);
     expect(storyStateAt(beats, w, w.duration - 1).cooling).toBeGreaterThan(0.5);
+    // the calving is announced to the scene ahead of time, so the ice tower can stand there already
+    expect(storyStateAt(beats, w, at('calving') - 30).calvingIn).toBeCloseTo(30);
+    expect(storyStateAt(beats, w, at('calving') + 1).calvingIn).toBe(-1);
   });
 
   it('blends the environment smoothly instead of jumping at phase borders', () => {

@@ -57,6 +57,8 @@ export interface StoryState {
   eruptionAge: number;
   /** 0–1 the eruption dies down after the escape: the lava cools, the plume thins */
   cooling: number;
+  /** seconds until the glacier calves (-1 when it has happened or is not in this workout) */
+  calvingIn: number;
 }
 
 export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number): StoryState {
@@ -74,6 +76,7 @@ export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number
     unrest: Number.isFinite(when('tremor')) ? ramp(when('tremor'), Math.max(1, Math.min(when('eruption'), winddown) - when('tremor'))) : 0,
     eruptionAge: t >= when('eruption') ? t - when('eruption') : -1,
     cooling: ramp(winddown, 120),
+    calvingIn: Number.isFinite(when('calving')) && t < when('calving') ? when('calving') - t : -1,
   };
 }
 
