@@ -72,6 +72,8 @@ export class AutoQuality {
   private windowFrames = 0;
   private goodWindows = 0;
   private cooldown = 0;
+  /** never climb back to a level that was already too slow (avoids high ↔ medium ping-pong) */
+  private ceiling = LEVELS.length - 1;
 
   constructor(start: QualityLevel = 'medium', private readonly windowSec = 4) { this.level = start; }
 
@@ -86,10 +88,10 @@ export class AutoQuality {
     this.windowFrames = 0;
     if (this.cooldown > 0) return null;
     const i = LEVELS.indexOf(this.level);
-    if (fps < 45 && i > 0) return this.change(LEVELS[i - 1]);
+    if (fps < 45 && i > 0) { this.ceiling = Math.min(this.ceiling, i - 1); return this.change(LEVELS[i - 1]); }
     if (fps > 57) {
       this.goodWindows++;
-      if (this.goodWindows >= 4 && i < LEVELS.length - 1) return this.change(LEVELS[i + 1]);
+      if (this.goodWindows >= 4 && i < this.ceiling) return this.change(LEVELS[i + 1]);
     } else this.goodWindows = 0;
     return null;
   }

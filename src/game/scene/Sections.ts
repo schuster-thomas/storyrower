@@ -61,7 +61,9 @@ export class SectionTrack {
   onReady: (() => void) | null = null;
 
   private template: THREE.Group | null = null;
-  private live = new Map<number, THREE.Group>();
+  /** built sections by index, with the settings generation they were built for */
+  private live = new Map<number, { g: THREE.Group; gen: number }>();
+  private gen = 0;
   private bakedMats: THREE.MeshBasicMaterial[] = [];
   private fallMat: THREE.ShaderMaterial;
   private placements: Placement[] = [];
@@ -77,9 +79,12 @@ export class SectionTrack {
 
   /** Share of the vegetation that is drawn (graphics level). Rebuilds the sections. */
   setDensity(share: number, shadows: boolean) {
+    if (share === this.density && shadows === this.shadows) return;
     this.density = share;
     this.shadows = shadows;
-    this.clear();
+    // Don't tear the world down (that showed the bright sky for a few frames): sections are
+    // swapped one by one in update(), each old one stays until its replacement exists.
+    this.gen++;
   }
   private shadows = true;
 
@@ -138,9 +143,9 @@ export class SectionTrack {
     return g;
   }
 
-  private clear() {
-    for (const g of this.live.values()) this.group.remove(g);
-    this.live.clear();
+  private drop(g: THREE.Group) {
+    this.group.remove(g);
+    g.traverse((o) => { if ((o as THREE.InstancedMesh).isInstancedMesh) (o as THREE.InstancedMesh).dispose(); });
   }
 
   /** Keep the sections around the boat alive; tint baked light with the phase. */
@@ -148,13 +153,16 @@ export class SectionTrack {
     if (!this.ready) return;
     const cur = Math.floor(-p.boatZ / this.length);
     const min = cur - 1, max = cur + Math.max(1, Math.ceil(p.ahead / this.length));
-    for (const [i, g] of this.live) if (i < min || i > max) { this.group.remove(g); this.live.delete(i); }
-    for (let i = min; i <= max; i++) {
-      if (this.live.has(i)) continue;
-      const g = this.build(i);
+    for (const [i, e] of this.live) if (i < min || i > max) { this.drop(e.g); this.live.delete(i); }
+    // build at most one section per frame: missing ones first (nearest first), then outdated ones
+    const order = [cur, ...Array.from({ length: max - cur }, (_, k) => cur + 1 + k), cur - 1];
+    const target = order.find((i) => !this.live.has(i)) ?? order.find((i) => this.live.get(i)!.gen !== this.gen);
+    if (target !== undefined) {
+      const g = this.build(target);
       this.group.add(g);
-      this.live.set(i, g);
-      break; // one per frame
+      const old = this.live.get(target);
+      if (old) this.drop(old.g);
+      this.live.set(target, { g, gen: this.gen });
     }
     for (const m of this.bakedMats) m.color.copy(p.tint).multiplyScalar(p.light);
     this.fallMat.uniforms.uTime.value = p.time;

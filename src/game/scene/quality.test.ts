@@ -22,6 +22,12 @@ describe('auto quality', () => {
     expect(run(q, 60, 10)).toEqual(['medium']);
   });
 
+  it('does not climb back to a level that was too slow', () => {
+    const q = new AutoQuality('high');
+    expect(run(q, 30, 5)).toEqual(['medium']);
+    expect(run(q, 60, 120)).toEqual([]);
+  });
+
   it('stays put in the middle band', () => {
     const q = new AutoQuality('medium');
     expect(run(q, 52, 60)).toEqual([]);
