@@ -33,8 +33,9 @@ export class HeartRateSource implements PacketSource {
       this.t0 ??= performance.now();
       const svc = await server.getPrimaryService(UUID.HEART_RATE);
       const ch = await svc.getCharacteristic(UUID.HEART_RATE_MEASUREMENT);
-      ch.addEventListener('characteristicvaluechanged', () => {
-        const v = ch.value;
+      ch.addEventListener('characteristicvaluechanged', (ev) => {
+        // the event's own characteristic carries the new value (Bluefy on iOS doesn't update ours)
+        const v = (ev.target as BluetoothRemoteGATTCharacteristic | null)?.value ?? ch.value;
         if (!v) return;
         const copy = new DataView(v.buffer.slice(v.byteOffset, v.byteOffset + v.byteLength));
         this.emitter.emit('packet', { t: performance.now() - this.t0!, uuid: UUID.HEART_RATE_MEASUREMENT, data: copy, kind: 'notify' });

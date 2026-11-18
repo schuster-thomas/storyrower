@@ -22,6 +22,7 @@ export class RowerSession {
   private emitter = new Emitter<{ event: (e: RowerEvent) => void }>();
   private unsub: (() => void)[] = [];
   private lastRowerHex: string | null = null;
+  private dupStreak = 0;
   private data: RowerData = { flags: 0 };
   private heartRateMonitor: number | null = null;
   private lastStrokeT: number | null = null;
@@ -151,6 +152,12 @@ export class RowerSession {
     const hex = toHex(p.data);
     const duplicate = hex === this.lastRowerHex;
     this.lastRowerHex = hex;
+    this.dupStreak = duplicate ? this.dupStreak + 1 : 0;
+    // the device sends ~4 packets/s; 40 identical ones while the stroke rate isn't 0 means the values
+    // are stuck somewhere on the way (seen with Bluefy on iOS) – say so in the log
+    if (this.dupStreak === 40 && (this.data.strokeRate ?? 0) > 0) {
+      this.log('The rower\'s values have not changed for ~10 s although the stroke rate is not 0 – the browser may be delivering stale data.', 'warn');
+    }
     if (duplicate) {
       this.emit({ type: 'raw', packet: p, decoded: null, duplicate: true });
       this.checkIdle(p.t);

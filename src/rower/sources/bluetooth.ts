@@ -124,7 +124,12 @@ export class BluetoothSource implements PacketSource {
           catch (e) { this.log(`Reading ${nameOf(chUuid)} failed: ${(e as Error).message}`, 'warn'); }
         }
         if ((p.notify || p.indicate) && AUTO_SUBSCRIBE.includes(chUuid)) {
-          ch.addEventListener('characteristicvaluechanged', () => { if (ch.value) this.emitPacket(chUuid, ch.value, 'notify'); });
+          // read the value from the event's own characteristic: Bluefy (iOS) only updates that one –
+          // the object we hold keeps its first value, so every packet looked the same
+          ch.addEventListener('characteristicvaluechanged', (ev) => {
+            const v = (ev.target as BluetoothRemoteGATTCharacteristic | null)?.value ?? ch.value;
+            if (v) this.emitPacket(chUuid, v, 'notify');
+          });
           try { await ch.startNotifications(); this.log(`subscribed: ${nameOf(chUuid)}`); }
           catch (e) { this.log(`Subscribing to ${nameOf(chUuid)} failed: ${(e as Error).message}`, 'warn'); }
         }
