@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import cliffsUrl from '../../assets/painted/cliffs.glb?url';
+import cliffsBUrl from '../../assets/painted/cliffs-b.glb?url';
 import glacierUrl from '../../assets/painted/glacier.glb?url';
+import glacierBUrl from '../../assets/painted/glacier-b.glb?url';
 import lupinesUrl from '../../assets/painted/lupines.webp';
 import { SHORE_SECTION } from './Fjord';
 
@@ -11,7 +13,8 @@ import { SHORE_SECTION } from './Fjord';
  * (matte-painting approach, scripts/blender/painted_shore.py): simple geometry with a painting
  * projected onto it, so the light, detail and style come from the painting while the banks still
  * pass by with real depth. Sections are 120 m long and alternate normal / mirrored, so neighbours
- * always meet without a seam.
+ * always meet without a seam; two different sections per bank (a, b – the same profile at their
+ * ends) are chained a, a mirrored, b, b mirrored, so the river repeats only every 480 m.
  *
  * Things that must stand upright would lie flat if they were only projected onto the ground, so
  * they are added on top: lupine clumps as painted cut-out cards swaying in the wind, and the
@@ -19,7 +22,9 @@ import { SHORE_SECTION } from './Fjord';
  */
 export type BankKind = 'cliffs' | 'glacier';
 
-interface Assets { gltf: GLTF; lupines: THREE.Texture | null }
+interface Assets { gltfs: GLTF[]; lupines: THREE.Texture | null }
+
+const URLS: Record<BankKind, string[]> = { cliffs: [cliffsUrl, cliffsBUrl], glacier: [glacierUrl, glacierBUrl] };
 
 const LUPINE_TILES = [1, 2, 3];     // atlas tiles with complete clumps (scripts/painted/sprites.mjs)
 
@@ -109,7 +114,7 @@ export class PaintedShore {
   ready = false;
   readonly loaded: Promise<void>;
 
-  private template: THREE.Object3D | null = null;
+  private templates: THREE.Object3D[] = [];
   private materials = new Map<THREE.Material, THREE.MeshBasicMaterial>();
   private lupineMat: THREE.MeshBasicMaterial | null = null;
   private lupineTime = { value: 0 };
@@ -161,7 +166,7 @@ export class PaintedShore {
       const lupines = kind === 'cliffs'
         ? new THREE.TextureLoader().loadAsync(lupinesUrl).then((t) => { t.colorSpace = THREE.SRGBColorSpace; return t; }).catch(() => null)
         : Promise.resolve(null);
-      p = Promise.all([loader.loadAsync(kind === 'cliffs' ? cliffsUrl : glacierUrl), lupines]).then(([gltf, tex]) => ({ gltf, lupines: tex }));
+      p = Promise.all([Promise.all(URLS[kind].map((u) => loader.loadAsync(u))), lupines]).then(([gltfs, tex]) => ({ gltfs, lupines: tex }));
       p.catch(() => { this.loading.delete(kind); });
       this.loading.set(kind, p);
     }
@@ -180,27 +185,31 @@ export class PaintedShore {
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uLight: { value: 1 } }]),
     });
     this.mistMat = mist.clone();
-    this.loaded = PaintedShore.preload(kind).then(({ gltf, lupines }) => {
-      const root = gltf.scene;
-      root.traverse((o) => {
-        const mesh = o as THREE.Mesh;
-        if (!mesh.isMesh) return;
-        const src = mesh.material as THREE.MeshStandardMaterial;
-        // the light is painted in: unlit, but fogged and tinted with the phase
-        // one material per painting (side view and the two views along the river)
-        let mat = this.materials.get(src);
-        if (!mat) {
-          mat = new THREE.MeshBasicMaterial({ map: src.map, fog: true, side: THREE.DoubleSide });
-          this.materials.set(src, mat);
-        }
-        mesh.material = mat;
-      });
-      root.updateMatrixWorld(true);
-      this.addWaterfalls(root);
-      if (lupines) this.addLupines(root, lupines);
-      this.template = root;
+    this.loaded = PaintedShore.preload(kind).then(({ gltfs, lupines }) => {
+      // the loaded scenes are cached for every later run ("Row again"): work on copies
+      this.templates = gltfs.map((g) => this.prepare(g.scene.clone(), lupines));
       this.ready = true;
     }).catch((e) => console.warn(`Painted ${kind} could not be loaded, keeping the generated bank`, e));
+  }
+
+  private prepare(root: THREE.Object3D, lupines: THREE.Texture | null) {
+    root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const src = mesh.material as THREE.MeshStandardMaterial;
+      // the light is painted in: unlit, but fogged and tinted with the phase
+      // one material per painting (side view and the two views along the river)
+      let mat = this.materials.get(src);
+      if (!mat) {
+        mat = new THREE.MeshBasicMaterial({ map: src.map, fog: true, side: THREE.DoubleSide });
+        this.materials.set(src, mat);
+      }
+      mesh.material = mat;
+    });
+    root.updateMatrixWorld(true);
+    this.addWaterfalls(root);
+    if (lupines) this.addLupines(root, lupines);
+    return root;
   }
 
   /** Arched falling sheets at the markers (scale = width × height), foam and mist at the foot. */
@@ -253,35 +262,24 @@ export class PaintedShore {
   private addLupines(root: THREE.Object3D, tex: THREE.Texture) {
     const bank = root.getObjectByName('Bank');
     if (!bank) return;
-    this.lupineMat = new THREE.MeshBasicMaterial({ map: tex, alphaTest: 0.5, side: THREE.DoubleSide, fog: true });
-    const time = this.lupineTime;
-    this.lupineMat.onBeforeCompile = (shader) => {
-      shader.uniforms.uTime = time;
-      shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float uTime;')
-        .replace('#include <begin_vertex>', `#include <begin_vertex>
-          vec4 basePos = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
-          float sway = sin(uTime * 1.6 + basePos.x * 0.35 + basePos.z * 0.22) + 0.4 * sin(uTime * 3.1 + basePos.z);
-          transformed.x += sway * 0.07 * position.y * position.y;`);
-    };
+    const falls = ['Fall_Lower', 'Fall_Upper'].map((n) => root.getObjectByName(n)).filter((o) => !!o);
+    if (!this.lupineMat) this.lupineMat = this.makeLupineMat(tex);
     const ray = new THREE.Raycaster();
     const down = new THREE.Vector3(0, -1, 0);
     const per = new Map<number, THREE.Matrix4[]>(LUPINE_TILES.map((t) => [t, []]));
     let seed = 7;
     const r = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3();
-    for (let n = 0; n < 380; n++) {
-      // section-local: the ledge at the water (3.6 m wide, scripts/blender/painted_shore.py), all
-      // along the section except where the waterfall comes down (z ≈ -76)
+    for (let n = 0; n < 560; n++) {
+      // section-local: on the open, low shore they spread up the slopes; along the tall cliffs the
+      // rays hit the cliff tops (too high) except on the ledge at the water; none where a
+      // waterfall comes down
       const z = -r() * SHORE_SECTION;
-      if (Math.abs(z + 76) < 7) continue;
-      // the first ~50 m of a section are an open, low shore (slopes visible from the boat):
-      // lupines spread up the slopes there; along the tall cliffs only on the ledge at the water
-      const open = -z < 50;
-      const x = -14 - (0.4 + r() * (open ? 16 : 2.8));
+      if (falls.some((f) => Math.abs(z - f.position.z) < f.scale.x * 0.5 + 4)) continue;
+      const x = -14 - (0.4 + r() * 16);
       ray.set(new THREE.Vector3(x, 200, z), down);
       const hit = ray.intersectObject(bank, true)[0];
-      if (!hit || hit.point.y < 0.3 || hit.point.y > (open ? 7 : 2.5) || !hit.face || hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y < 0.7) continue;
+      if (!hit || hit.point.y < 0.3 || hit.point.y > 7 || !hit.face || hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y < 0.7) continue;
       const tile = LUPINE_TILES[Math.floor(r() * LUPINE_TILES.length)];
       const size = 0.9 + r() * 0.7;
       p.copy(hit.point).y -= 0.08;
@@ -298,15 +296,32 @@ export class PaintedShore {
     }
   }
 
+  private makeLupineMat(tex: THREE.Texture) {
+    const mat = new THREE.MeshBasicMaterial({ map: tex, alphaTest: 0.5, side: THREE.DoubleSide, fog: true });
+    const time = this.lupineTime;
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = time;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform float uTime;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+          vec4 basePos = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+          float sway = sin(uTime * 1.6 + basePos.x * 0.35 + basePos.z * 0.22) + 0.4 * sin(uTime * 3.1 + basePos.z);
+          transformed.x += sway * 0.07 * position.y * position.y;`);
+    };
+    return mat;
+  }
+
   /** Keep the sections around the boat; tint the painted light with the phase. */
   update(p: { time: number; boatZ: number; ahead: number; behind: number; tint: THREE.Color; light: number }) {
-    if (!this.template) return;
+    if (!this.templates.length) return;
     const cur = Math.floor(-p.boatZ / SHORE_SECTION);
     const min = cur - Math.ceil(p.behind / SHORE_SECTION), max = cur + Math.ceil(p.ahead / SHORE_SECTION);
     for (const [k, g] of this.live) if (k < min || k > max) { this.group.remove(g); this.live.delete(k); }
     for (let k = min; k <= max; k++) {
       if (this.live.has(k)) continue;
-      const g = this.template.clone();
+      // a, a mirrored, b, b mirrored, … (both variants have the same profile at their ends)
+      const n = this.templates.length;
+      const g = this.templates[((Math.floor(k / 2) % n) + n) % n].clone();
       // even sections as painted, odd ones mirrored along the river
       if (k % 2 === 0) g.position.z = -k * SHORE_SECTION;
       else { g.scale.z = -1; g.position.z = -(k + 1) * SHORE_SECTION; }

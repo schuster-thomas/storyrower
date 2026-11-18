@@ -9,7 +9,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { openAiKey } from '../openai-key.mjs';
 
-const kind = process.argv[2] ?? 'cliffs';
+const kind = process.argv[2] ?? 'cliffs';          // cliffs | glacier | cliffs-b | glacier-b
+const [base, variant] = kind.split('-');
 const view = process.argv[3] ?? 'side';
 const DIR = `assets/raw/painted/${kind}`;
 const img = (f) => new Blob([readFileSync(f)], { type: 'image/png' });
@@ -17,7 +18,10 @@ const img = (f) => new Blob([readFileSync(f)], { type: 'image/png' });
 const MEANING = {
   cliffs: 'Meaning of the colours: an open, low shore: rolling green slopes of grass and moss with scattered dark rocks and boulders rising gently from the river; dark grey striped walls = tall hexagonal basalt column cliffs with moss on the ledges; green = bright moss and grass with small rocks and tufts; the thin green strip right at the waterline = a low rocky ledge covered in grass and moss; the very dark vertical strips = a dark, wet rock gully with moss where a stream runs down in wet weather – paint it as dark wet rock, NOT as a waterfall, no white water; light grey top = snow fields on dark rock; the small grey rock in the water = a dark mossy boulder with a green top. IMPORTANT: no flowers anywhere and no waterfalls – they are added separately later.',
   glacier: 'This is the front of a classic Icelandic glacier ending in the water. Meaning of the colours: light blue walls = a jagged wall of glacier ice and serac towers in bright turquoise and blue, with vertical cracks, layered old ice and a few darker blue caves; dark blue strips = deep crevasses; white tops = snow-covered ice surfaces rising behind the front; grey strip = a dark moraine band of gravel on the ice. Small ice chunks floating at the foot of the wall.',
-}[kind];
+}[base] + (variant === 'b' ? {
+  cliffs: ' In this stretch the tall cliffs form a horseshoe-shaped amphitheatre of dark hexagonal basalt columns (like Svartifoss) around a broad waterfall gully, and a tall slender basalt sea stack with a green grassy cap stands in the water near the open shore.',
+  glacier: ' In this stretch the glacier front drops to a low, broken ice ramp in one place, with many small ice blocks at its foot.',
+}[base] : '');
 
 const VIEW = {
   side: 'The first image is a flat-coloured 3D blockout render of a river bank in Iceland, seen from a boat across the river. The bank is a continuous stretch of a long river: it runs out of the picture at BOTH the left and the right edge. Fill the full width with land exactly as in the blockout – no sky, no water and no end of the land at the left or right side, it is not an island.',

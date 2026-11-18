@@ -461,12 +461,15 @@ export class RiverScene {
     // While the wave chases you, the camera swings around the boat: side view during the
     // eruption, a front view (the rower's own view – rowers face the stern) in the finale.
     const w = this.env.wave;
-    const a = Math.PI * w * w * w; // eruption (0.6) ≈ 40° three-quarter view, finale (1) = 180°
+    const a = Math.PI * w * w * w * w; // eruption (0.6) ≈ 23° (the volcano stays ahead), finale (1) = 180°
     const f = a / Math.PI;
     this.viewDir = Math.cos(a) >= 0 ? 1 : -1;
     // low chase camera close behind the stern: the rower is big in the lower third, the fjord opens up above
     const r = 7.2 + 4 * Math.sin(a) + 3 * f;
-    this.camera.position.set(sx + Math.sin(a) * r + Math.sin(this.time * 0.3) * 0.2, 2.5 + 2.2 * f + sy, this.z + Math.cos(a) * r);
+    // the banks are close: swing round inside the river (at most 6 m to the side), rising a little
+    // halfway round instead of passing through the cliffs
+    const side = Math.max(-6, Math.min(6, Math.sin(a) * r));
+    this.camera.position.set(sx + side + Math.sin(this.time * 0.3) * 0.2, 2.5 + 2.2 * f + 2 * Math.sin(a) + sy, this.z + Math.cos(a) * r);
     this.camera.lookAt(-Math.sin(a) * 3, 1.25 - 0.5 * f, this.z - Math.cos(a) * (14 - 3 * f));
   }
 }

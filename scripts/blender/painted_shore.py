@@ -21,6 +21,9 @@ ARGS = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 OUT = os.path.abspath(ARGS[0] if ARGS else 'assets/raw/painted/cliffs')
 PAINT = os.path.abspath(ARGS[ARGS.index('--paint') + 1]) if '--paint' in ARGS else None
 KIND = ARGS[ARGS.index('--kind') + 1] if '--kind' in ARGS else 'cliffs'
+# variant b: a second section of the same bank, so the river does not repeat every 240 m. It has
+# exactly the same profile as variant a at y = 0, so the game can chain a, a mirrored, b, b mirrored
+VARIANT = ARGS[ARGS.index('--variant') + 1] if '--variant' in ARGS else 'a'
 os.makedirs(OUT, exist_ok=True)
 
 LENGTH = 120.0
@@ -48,8 +51,8 @@ def lin(h):
     return [x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c] + [1.0]
 
 # ---------------------------------------------------------------- cliffs (left bank)
-FALL_Y = 76.0             # the waterfall
-ROCK_Y = 34.0             # the puffin rock in the water
+FALL_Y = 76.0 if VARIANT == 'a' else 64.0     # the waterfall
+ROCK_Y = 34.0 if VARIANT == 'a' else 16.0     # the puffin rock (a) / a sea stack (b) in the water
 LUPINES = (8.0, 60.0)     # lupine field along the lower bench
 
 LEDGE = 3.6               # width of the ledge at the foot of the cliffs
@@ -59,11 +62,19 @@ def band_d(y):
     return 34 + 6 * n1(0, y, 0.03, 4.0)
 
 def cliffs_tall(y):
-    """0 = low open shore with grassy slopes (first half of the section), 1 = tall basalt cliffs
-    (second half, with the waterfall) – so the valley is not walled in everywhere"""
-    return smooth(44.0, 62.0, y)
+    """0 = low open shore with grassy slopes, 1 = tall basalt cliffs – so the valley is not walled
+    in everywhere. a: open first half, cliffs with the waterfall in the second half;
+    b: open at both ends, an amphitheatre of basalt columns around a broad waterfall in the middle"""
+    if VARIANT == 'a':
+        return smooth(44.0, 62.0, y)
+    return smooth(26.0, 40.0, y) * (1.0 - smooth(96.0, 112.0, y))
+
+def recess(y):
+    """b: the cliffs step back around the waterfall into a horseshoe (amphitheatre)"""
+    return 0.0 if VARIANT == 'a' else 9.0 * math.exp(-((y - FALL_Y) / 11.0) ** 2)
 
 def cliffs_height(d, y):
+    d = d - recess(y)
     if d < 0:
         return -3.0 + d * 0.05
     tall = cliffs_tall(y)
@@ -89,6 +100,7 @@ COL = {
 }
 
 def cliffs_colour(cx, cy, cz, ny, d):
+    d = d - recess(cy)
     # waterfall and lupines are NOT painted: they are real 3D elements in the game (a painted
     # waterfall or flower field always looks flat). The painting only shows the wet rock gully.
     if abs(cy - FALL_Y) < 2.2 and ny < 0.55 and cz > 0.5 and (d < 2.5 or abs(d - band_d(cy) - 1.5) < 3):
@@ -110,7 +122,8 @@ def glacier_height(d, y):
     # ice cliff split into serac towers of different heights, crevassed ice field behind
     tower = column(y, 5.0, 2)
     # a low ice ramp along part of each section, so the glacier is not one long wall
-    tall = 1.0 - smooth(62.0, 78.0, y) * (1.0 - smooth(104.0, 118.0, y))
+    tall = 1.0 - (smooth(62.0, 78.0, y) * (1.0 - smooth(104.0, 118.0, y)) if VARIANT == 'a'
+                  else smooth(16.0, 28.0, y) * (1.0 - smooth(50.0, 62.0, y)))
     front = (2.5 + 5.5 * tall) + 3 * n1(0, y, 0.05, 1.7) * (0.5 + 0.5 * tall) + 6 * tower * (0.3 + 0.7 * tall)
     h = front * smooth(0.0, 0.8, d)
     blocks = column(y + 2.5 * math.floor(d / 7), 7.0, 3) * 6 * (1 - smooth(25, 90, d))
@@ -166,7 +179,10 @@ def rock():
     bm = bmesh.new()
     bmesh.ops.create_icosphere(bm, subdivisions=3, radius=1.0)
     for v in bm.verts:
-        v.co.x *= 4.5; v.co.y *= 3.5; v.co.z = (v.co.z * 3.0 if v.co.z > 0 else v.co.z * 1.5) + n1(v.co.x, v.co.y, 0.6, 6.0) * 0.5
+        if VARIANT == 'a':   # a low mossy boulder
+            v.co.x *= 4.5; v.co.y *= 3.5; v.co.z = (v.co.z * 3.0 if v.co.z > 0 else v.co.z * 1.5) + n1(v.co.x, v.co.y, 0.6, 6.0) * 0.5
+        else:                # a basalt sea stack with a green cap
+            v.co.x *= 2.6; v.co.y *= 2.4; v.co.z = (v.co.z * 7.5 if v.co.z > 0 else v.co.z * 1.5) + n1(v.co.x, v.co.y, 0.6, 6.0) * 0.4
     me = bpy.data.meshes.new('PuffinRock')
     bm.to_mesh(me); bm.free()
     o = bpy.data.objects.new('PuffinRock', me)
@@ -199,11 +215,12 @@ if KIND == 'cliffs':
 
     # waterfall markers for the animated overlay: centre of the falling sheet, scale = (width, 1, height)
     def fall_marker(name, d0, d1):
-        top = height(d1, FALL_Y); bottom = max(0.0, height(d0, FALL_Y))
+        r = recess(FALL_Y)
+        top = height(d1 + r, FALL_Y); bottom = max(0.0, height(d0 + r, FALL_Y))
         e = bpy.data.objects.new(name, None)
         scene.collection.objects.link(e)
-        e.location = (-bank(FALL_Y) - (d0 + d1) / 2 + 0.5, FALL_Y, (top + bottom) / 2)
-        e.scale = (6.0, 1.0, top - bottom + 0.8)   # a bold sheet, it is a key feature from the boat
+        e.location = (-bank(FALL_Y) - r - (d0 + d1) / 2 + 0.5, FALL_Y, (top + bottom) / 2)
+        e.scale = (6.0 if VARIANT == 'a' else 9.0, 1.0, top - bottom + 0.8)   # a bold sheet, it is a key feature from the boat
     fall_marker('Fall_Lower', -0.5, 1.0)
     fall_marker('Fall_Upper', band_d(FALL_Y) - 0.5, band_d(FALL_Y) + 3.5)
 
@@ -350,9 +367,12 @@ for o in projected:
     if KIND == 'cliffs' and o is bank_obj:
         sky_face = set()
         for i, p in enumerate(me.polygons):
-            if centres[i].z <= 6.0: continue
+            if centres[i].z <= 4.0: continue
             name = best[i][1]
-            if all(sky(name, *uv.data[li].uv) for li in p.loop_indices): sky_face.add(i)
+            loops = list(p.loop_indices)
+            hits = sum(1 for li in loops if sky(name, *uv.data[li].uv))
+            mid = sum((uv.data[li].uv for li in loops), Vector((0, 0))) / len(loops)
+            if hits * 2 >= len(loops) or sky(name, mid.x, mid.y): sky_face.add(i)
         bm = bmesh.new(); bm.from_mesh(me); bm.faces.ensure_lookup_table()
         bmesh.ops.delete(bm, geom=[bm.faces[i] for i in sky_face], context='FACES')
         bm.to_mesh(me); bm.free()
