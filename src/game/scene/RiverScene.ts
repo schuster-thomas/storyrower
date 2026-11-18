@@ -3,42 +3,43 @@ import type { EffectId, StoryState } from '../../story/story';
 import type { Environment } from '../levels/iceland';
 import { Backdrop } from './Backdrop';
 import { Effects } from './Effects';
+import { buildFjordChunk, createFjordMaterials, disposeFjordChunk } from './Fjord';
 import { NatureKit } from './NatureKit';
 import { Post } from './Post';
-import { SectionTrack } from './Sections';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
-import { buildChunk, createTerrainMaterials, disposeChunk } from './Terrain';
 import { Water } from './Water';
 
-const CHUNK = 40;          // length of one world chunk (m)
-const CHUNKS_BEHIND = 2;
-const RIVER_HALF = 9;      // half river width
+const CHUNK = 100;         // length of one fjord chunk (m)
+const CHUNKS_BEHIND = 3;   // the finale camera looks back at the wave
 /** World units per real metre. >1 makes the boat feel faster than the real split. */
 export const SPEED_SCALE = 2;
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-interface Chunk { index: number; group: THREE.Group }
+interface Chunk { index: number; group: THREE.Group; gen: number }
 
 /**
- * Greybox river world: endless river made of chunks, a rowing boat whose oars follow the
- * real strokes, a volcano in the distance and a tidal wave that chases the boat.
+ * The fjord world: an endless glacier lagoon made of chunks (mossy basalt slopes on the left,
+ * a glacier front on the right), a rowing boat whose oars follow the real strokes, a volcano
+ * in the distance and a tidal wave that chases the boat.
  */
 export class RiverScene {
   readonly renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
-  private camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1200);
+  private camera = new THREE.PerspectiveCamera(55, 1, 0.1, 2000);
   private hemi = new THREE.HemisphereLight(0xffffff, 0x6f7a5a, 1.7);
   private sun = new THREE.DirectionalLight(0xffffff, 2);
 
   private env: Environment;
   private envTarget: Environment;
   private skyColor = new THREE.Color();
-  private mats = createTerrainMaterials();
+  private mats = createFjordMaterials();
   private water: Water;
   private sky: Sky;
   private chunks: Chunk[] = [];
+  /** bumped when chunks must be rebuilt (graphics level, model kit loaded) */
+  private chunkGen = 0;
   private q: QualityProfile;
   private _quality: QualityLevel;
   /** frame time, render time, draw calls and triangles – for the diagnostics overlay and recordings */
@@ -50,9 +51,6 @@ export class RiverScene {
   private backdrop: Backdrop;
   private light = 1;
   private kit: NatureKit | null = null;
-  /** Authored sections from Blender; once loaded they replace the generated landscape */
-  private sections: SectionTrack;
-  private sectionTint = new THREE.Color();
   private post: Post;
   private tint = new THREE.Color(1, 1, 1);
 
@@ -93,7 +91,7 @@ export class RiverScene {
     this.sun.castShadow = quality !== 'low';
     this.sun.shadow.mapSize.set(quality === 'high' ? 2048 : 1024, quality === 'high' ? 2048 : 1024);
     const sc = this.sun.shadow.camera;
-    sc.left = -45; sc.right = 45; sc.top = 45; sc.bottom = -45; sc.near = 10; sc.far = 300;
+    sc.left = -30; sc.right = 30; sc.top = 30; sc.bottom = -30; sc.near = 10; sc.far = 300;
     this.sun.shadow.bias = -0.0005;
     this.sun.shadow.normalBias = 0.04;
     this.env = { ...env };
@@ -105,7 +103,7 @@ export class RiverScene {
 
     this.sky = new Sky(this.q.clouds);
     this.scene.add(this.sky.group);
-    this.water = new Water(RIVER_HALF, this.q.waterSegments);
+    this.water = new Water(this.q.waterSegments);
     this.scene.add(this.water.mesh);
 
     this.buildBoat();
@@ -114,26 +112,18 @@ export class RiverScene {
     this.effects = new Effects(this.scene);
     this.effects.setParticleShare(this.q.particles);
     // Painted layers replace the greybox mountains, volcano, cliffs and wave once loaded
-    this.backdrop = new Backdrop(CHUNK, RIVER_HALF);
+    this.backdrop = new Backdrop();
     this.scene.add(this.backdrop.group);
     this.backdrop.onReady = () => {
       this.sky.setMountainsVisible(false);
       this.volcano.visible = false;
       this.wave.visible = false;
     };
-    // Unified 3D props (CC0 model kit); the world is rebuilt once they are loaded
-    this.sections = new SectionTrack(NatureKit.load());
-    this.sections.setDensity(this.q.lupines / 40, this.sun.castShadow);
-    this.scene.add(this.sections.group);
-    this.sections.onReady = () => {
-      for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
-      this.chunks = [];
-    };
+    // Icebergs and shore boulders come from the model kit; the chunks are rebuilt once it is loaded
     NatureKit.load().then((kit) => {
       this.kit = kit;
-      for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
-      this.chunks = [];
-    }).catch((e) => console.warn('Model kit could not be loaded, keeping greybox props', e));
+      this.dropChunks();
+    }).catch((e) => console.warn('Model kit could not be loaded, the fjord stays without icebergs', e));
     this.post = new Post(this.renderer, this.scene, this.camera);
     this.post.setQuality(quality);
     this.applyEnvironment(1);
@@ -156,12 +146,12 @@ export class RiverScene {
     this.effects.setParticleShare(this.q.particles);
     this.sun.castShadow = level !== 'low';
     this.post.setQuality(level);
-    this.sections.setDensity(this.q.lupines / 40, this.sun.castShadow);
     this.post.setSize(size.x, size.y);
-    // rebuild the landscape with the new density
-    for (const c of this.chunks) { this.scene.remove(c.group); disposeChunk(c.group); }
-    this.chunks = [];
+    // rebuild the landscape with the new detail – chunk by chunk, so the sky never shows through
+    this.chunkGen++;
   }
+
+  private dropChunks() { this.chunkGen++; }
 
   /** Blend the world towards another phase look (smoothly over a few seconds). */
   setEnvironment(env: Environment, immediate = false) {
@@ -216,11 +206,9 @@ export class RiverScene {
     this.applyEnvironment(1 - Math.exp(-dt * 0.4));
     this.applyFlash(dt);
     this.light = 0.45 + 0.55 * Math.min(1, this.env.sunIntensity / 2.2) * (1 - this.env.smoke * 0.25) + this.flashLevel * 0.4;
-    if (this.sections.ready) {
-      // phase tint for the baked light: ash greys it, the eruption warms it
-      this.sectionTint.setRGB(1, 1, 1).lerp(new THREE.Color(0x9a948a), this.env.smoke * 0.45).lerp(new THREE.Color(1.1, 0.8, 0.62), this.env.lava * 0.35);
-      this.sections.update({ time: this.time, boatZ: this.z, ahead: this.q.chunksAhead * CHUNK, light: Math.min(1.15, this.light * 1.05), tint: this.sectionTint });
-    } else this.updateChunks();
+    this.updateChunks();
+    this.mats.fall.uniforms.uTime.value = this.time;
+    this.mats.fall.uniforms.uLight.value = Math.min(1.1, this.light);
     this.updateBoat(dt);
     this.updateVolcano(dt);
     this.updateWave(dt, threat);
@@ -228,11 +216,10 @@ export class RiverScene {
     this.effects.update({ dt, time: this.time, boatZ: this.z, speed: this.speed, viewDir: this.viewDir, threat, smoke: this.env.smoke, lava: this.env.lava, story: this.story });
     this.sky.update({ dt, time: this.time, camera: this.camera, boatZ: this.z, top: this.topColor, horizon: this.horizonColor, sunColor: this.sunColor, smoke: this.env.smoke, sunHeight: this.env.sunHeight });
     this.water.update({ time: this.time, boatZ: this.z, speed: this.speed, swell: this.env.swell, water: this.waterColor, sky: this.horizonColor, sunColor: this.sunColor, sunDir: this.sky.sunDir, light: this.light });
-    const current = Math.floor(-this.z / CHUNK);
-    this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, lava: this.env.lava, smoke: this.env.smoke, wave: this.env.wave, threat }, current - CHUNKS_BEHIND, current + this.q.chunksAhead);
-    // The visible sun sits ahead in the sky; the light comes from high left so the banks facing us are lit
-    if (this.sections.ready) this.sun.position.copy(this.sections.sunDir).multiplyScalar(120).add(new THREE.Vector3(0, 0, this.z));
-    else this.sun.position.set(-70, 60 + this.env.sunHeight * 80, this.z + 25);
+    this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, lava: this.env.lava, smoke: this.env.smoke, wave: this.env.wave, threat });
+    // The visible sun sits ahead in the sky; the light comes from high right-behind so the mossy
+    // slopes on the left and the rower's face are lit, the glacier walls glow blue in their own shade
+    this.sun.position.set(55, 50 + this.env.sunHeight * 90, this.z + 45);
     this.sun.target.position.set(0, 0, this.z);
 
     // count draw calls over all passes (post-processing would otherwise reset the counter per pass)
@@ -256,7 +243,7 @@ export class RiverScene {
   }
 
   dispose() {
-    for (const c of this.chunks) disposeChunk(c.group);
+    for (const c of this.chunks) disposeFjordChunk(c.group);
     this.post.dispose();
     this.backdrop.dispose();
     this.water.dispose();
@@ -289,7 +276,9 @@ export class RiverScene {
     this.skyColor.set(e.sky);
     this.scene.background = this.skyColor;
     const fog = this.scene.fog as THREE.Fog;
-    fog.color.set(e.fog); fog.near = e.fogNear; fog.far = e.fogFar;
+    // the fog must swallow the shores before the last built chunk ends
+    const reach = this.q.chunksAhead * CHUNK * 0.92;
+    fog.color.set(e.fog); fog.far = Math.min(e.fogFar, reach); fog.near = Math.min(e.fogNear, fog.far * 0.3);
     this.sun.color.set(e.sun); this.sun.intensity = e.sunIntensity;
     this.hemi.color.set(e.sky).lerp(new THREE.Color(0xffffff), 0.4);
     // sky: deeper colour overhead, the fog colour at the horizon so land and sky blend
@@ -297,11 +286,11 @@ export class RiverScene {
     this.horizonColor.set(e.fog);
     this.sunColor.set(e.sun);
     this.waterColor.set(e.water);
-    // ash greys the landscape
-    const ash = new THREE.Color(0x77736c);
-    this.mats.ground.color.set(0xffffff).lerp(ash, e.smoke * 0.45).lerp(new THREE.Color(e.ground), 0.15);
-    this.mats.tree.color.set(0x3f7d45).lerp(new THREE.Color(0x3a3d33), e.smoke * 0.6);
-    this.mats.lupine.color.set(0x8e66c4).lerp(ash, e.smoke * 0.5);
+    // ash greys the moss and dulls the ice; the eruption warms everything
+    const ash = new THREE.Color(0x8a857c);
+    this.mats.land.color.set(0xffffff).lerp(ash, e.smoke * 0.5).lerp(new THREE.Color(1.05, 0.85, 0.72), e.lava * 0.3);
+    this.mats.ice.color.set(0xffffff).lerp(ash, e.smoke * 0.3).lerp(new THREE.Color(1.05, 0.88, 0.8), e.lava * 0.25);
+    this.mats.ice.emissiveIntensity = 0.4 * (1 - e.smoke * 0.5);
     this.lavaMat.emissiveIntensity = e.lava * 2.5;
   }
 
@@ -313,17 +302,24 @@ export class RiverScene {
     this.chunks = this.chunks.filter((c) => {
       if (c.index >= min && c.index <= max) return true;
       this.scene.remove(c.group);
-      disposeChunk(c.group);
+      disposeFjordChunk(c.group);
       return false;
     });
-    // after the first fill, build at most one new chunk per frame to avoid hitches
-    let built = 0;
-    for (let i = min; i <= max; i++) {
-      if (this.chunks.some((c) => c.index === i)) continue;
-      const group = buildChunk(i, CHUNK, RIVER_HALF, this.q, this.mats, { kit: this.kit, shadows: this.sun.castShadow });
+    // Build missing chunks first (nearest first), then replace outdated ones (new detail level or
+    // the model kit arrived). After the first fill at most one per frame, to avoid hitches; an
+    // outdated chunk stays until its replacement exists, so the sky never shows through.
+    const fill = this.chunks.length < 3;
+    for (let n = 0; n < (fill ? 4 : 1); n++) {
+      let target = -1;
+      for (let i = current; i <= max && target < 0; i++) if (!this.chunks.some((c) => c.index === i)) target = i;
+      for (let i = min; i < current && target < 0; i++) if (!this.chunks.some((c) => c.index === i)) target = i;
+      for (let i = current; i <= max && target < 0; i++) if (this.chunks.find((c) => c.index === i)?.gen !== this.chunkGen) target = i;
+      if (target < 0) break;
+      const group = buildFjordChunk(target, CHUNK, this.mats, { kit: this.kit, detail: this.q.fjordDetail, shadows: this.sun.castShadow });
       this.scene.add(group);
-      this.chunks.push({ index: i, group });
-      if (++built >= 1 && this.chunks.length > 4) break;
+      const old = this.chunks.find((c) => c.index === target);
+      if (old) { this.scene.remove(old.group); disposeFjordChunk(old.group); this.chunks.splice(this.chunks.indexOf(old), 1); }
+      this.chunks.push({ index: target, group, gen: this.chunkGen });
     }
   }
 
@@ -462,9 +458,10 @@ export class RiverScene {
     const a = Math.PI * w * w * w; // eruption (0.6) ≈ 40° three-quarter view, finale (1) = 180°
     const f = a / Math.PI;
     this.viewDir = Math.cos(a) >= 0 ? 1 : -1;
-    const r = 8.5 + 3 * Math.sin(a) + 2.5 * f;
-    this.camera.position.set(sx + Math.sin(a) * r + Math.sin(this.time * 0.3) * 0.3, 3.4 + 2.6 * f + sy, this.z + Math.cos(a) * r);
-    this.camera.lookAt(-Math.sin(a) * 4, 1.2 - 0.7 * f, this.z - Math.cos(a) * (12 - 2 * f));
+    // low chase camera close behind the stern: the rower is big in the lower third, the fjord opens up above
+    const r = 10 + 3 * Math.sin(a) + 2 * f;
+    this.camera.position.set(sx + Math.sin(a) * r + Math.sin(this.time * 0.3) * 0.25, 3.1 + 2 * f + sy, this.z + Math.cos(a) * r);
+    this.camera.lookAt(-Math.sin(a) * 4, 1.5 - 0.7 * f, this.z - Math.cos(a) * (18 - 3 * f));
   }
 }
 

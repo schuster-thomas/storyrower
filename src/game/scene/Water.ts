@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { FJORD_GLSL } from './Fjord';
+
+const WIDTH = 520; // from beyond the left shore to beyond the glacier front
 
 const vertex = /* glsl */ `
   #include <common>
@@ -38,7 +41,7 @@ const fragment = /* glsl */ `
   #include <common>
   #include <fog_pars_fragment>
   uniform float uTime;
-  uniform float uRiverHalf;
+  uniform vec3 uMilk;
   uniform float uBoatZ;
   uniform float uSpeed;
   uniform vec3 uDeep;
@@ -57,15 +60,19 @@ const fragment = /* glsl */ `
     vec2 u = f * f * (3.0 - 2.0 * f);
     return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
   }
+  ${FJORD_GLSL}
 
   void main() {
     // Smooth wave normal, slightly roughened with noise for sparkle
     vec3 n = normalize(vNormal + vec3(noise(vWorld.xz * 1.7 + uTime * 0.8) - 0.5, 0.0, noise(vWorld.zx * 1.7 - uTime * 0.7) - 0.5) * 0.25);
     vec3 viewDir = normalize(cameraPosition - vWorld);
 
-    // Deep in the middle, lighter towards the banks
-    float edge = abs(vWorld.x) / uRiverHalf;
-    vec3 col = mix(uDeep, uShallow, smoothstep(0.55, 1.0, edge));
+    // Distance to the shores: lighter shallows under the cliffs, milky turquoise meltwater before the glacier
+    float toLeft = vWorld.x + leftShore(vWorld.z);        // 0 at the left shore, > 0 on the water
+    float toIce = glacierFront(vWorld.z) - vWorld.x;      // 0 at the glacier front
+    float shore = min(toLeft, toIce);
+    vec3 col = mix(uShallow, uDeep, smoothstep(2.0, 26.0, toLeft));
+    col = mix(col, uMilk, (1.0 - smoothstep(0.0, 70.0, toIce)) * 0.75);
 
     // Sky reflection at grazing angles
     float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 5.0);
@@ -78,7 +85,7 @@ const fragment = /* glsl */ `
 
     // Foam: along the banks, on wave crests, and in the boat's wake
     float t = uTime;
-    float bankFoam = smoothstep(0.9, 0.99, edge + (noise(vWorld.xz * 0.6 + t * 0.3) - 0.5) * 0.08) * (1.0 - smoothstep(1.02, 1.1, edge));
+    float bankFoam = 1.0 - smoothstep(0.0, 1.6 + noise(vWorld.xz * 0.4 + t * 0.3) * 1.4, shore);
     float crest = smoothstep(1.15, 1.5, vHeight + noise(vWorld.xz * 1.3 - t * 0.5) * 0.3);
     float behind = vWorld.z - (uBoatZ + 3.0);           // > 0 behind the stern
     float wakeWidth = 0.35 + behind * 0.16;
@@ -98,7 +105,7 @@ const fragment = /* glsl */ `
 `;
 
 /**
- * Stylised river water: GPU waves (no per-frame vertex work on the CPU), faceted shading,
+ * Stylised fjord water:GPU waves (no per-frame vertex work on the CPU), faceted shading,
  * deep/shallow colours, sky reflection, sun glint and foam on banks, crests and the wake.
  */
 export class Water {
@@ -106,9 +113,9 @@ export class Water {
   private uniforms: Record<string, THREE.IUniform>;
   private segLen = 1;
 
-  constructor(private riverHalf: number, segments: [number, number]) {
+  constructor(segments: [number, number]) {
     this.uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
-      uTime: { value: 0 }, uSwell: { value: 0.1 }, uRiverHalf: { value: riverHalf }, uBoatZ: { value: 0 }, uSpeed: { value: 0 },
+      uTime: { value: 0 }, uSwell: { value: 0.1 }, uMilk: { value: new THREE.Color(0x5cc3c8) }, uBoatZ: { value: 0 }, uSpeed: { value: 0 },
       uDeep: { value: new THREE.Color(0x1f6390) }, uShallow: { value: new THREE.Color(0x4fa3c0) }, uSky: { value: new THREE.Color(0xbfe2f2) },
       uSunDir: { value: new THREE.Vector3(-0.4, 0.5, -0.75).normalize() }, uSunColor: { value: new THREE.Color(0xfff3d6) }, uLight: { value: 1 },
     }]);
@@ -118,9 +125,10 @@ export class Water {
   }
 
   private geometry([sx, sz]: [number, number]) {
-    const length = 380;
+    // the whole fjord out to the horizon; the shores cover the edges
+    const length = 1000;
     this.segLen = length / sz;
-    const g = new THREE.PlaneGeometry(this.riverHalf * 2 + 4, length, sx, sz);
+    const g = new THREE.PlaneGeometry(WIDTH, length, sx, sz);
     g.rotateX(-Math.PI / 2);
     return g;
   }
@@ -132,7 +140,7 @@ export class Water {
 
   update(p: { time: number; boatZ: number; speed: number; swell: number; water: THREE.Color; sky: THREE.Color; sunColor: THREE.Color; sunDir: THREE.Vector3; light: number }) {
     // Snap to the grid spacing so waves don't shimmer while the mesh follows the boat
-    this.mesh.position.z = Math.round((p.boatZ - 150) / this.segLen) * this.segLen;
+    this.mesh.position.set(WIDTH / 2 - 160, 0, Math.round((p.boatZ - 430) / this.segLen) * this.segLen);
     const u = this.uniforms;
     u.uTime.value = p.time;
     u.uSwell.value = p.swell;
@@ -140,7 +148,8 @@ export class Water {
     u.uSpeed.value = p.speed;
     u.uLight.value = p.light;
     (u.uDeep.value as THREE.Color).copy(p.water).multiplyScalar(0.75);
-    (u.uShallow.value as THREE.Color).copy(p.water).lerp(new THREE.Color(0x5fb8c0), 0.35);
+    (u.uShallow.value as THREE.Color).copy(p.water).lerp(new THREE.Color(0x4fae9c), 0.4);
+    (u.uMilk.value as THREE.Color).copy(p.water).lerp(new THREE.Color(0x7fd6d2), 0.55);
     (u.uSky.value as THREE.Color).copy(p.sky);
     (u.uSunColor.value as THREE.Color).copy(p.sunColor);
     (u.uSunDir.value as THREE.Vector3).copy(p.sunDir);

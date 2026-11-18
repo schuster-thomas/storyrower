@@ -4,7 +4,7 @@
 // Raw PNGs go to assets/raw/backdrops/ (not committed); run process.mjs afterwards.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { openAiKey } from '../openai-key.mjs';
-import { LAYERS, STYLE } from './spec.mjs';
+import { LAYERS, STYLE, STYLE_V2 } from './spec.mjs';
 
 // gpt-image-2 has no transparent backgrounds yet; 1.5 does
 const MODEL = process.env.IMAGE_MODEL || 'gpt-image-1.5';
@@ -20,11 +20,12 @@ const reference = new Blob([readFileSync(REFERENCE)], { type: 'image/png' });
 
 async function generate(layer) {
   const form = new FormData();
-  form.append('model', MODEL);
-  form.append('prompt', `${STYLE}\n\nSubject: ${layer.prompt}`);
-  form.append('image[]', reference, 'reference.png');
+  // chroma layers: gpt-image-2 (larger sizes) on a flat magenta background, keyed out by process.mjs
+  form.append('model', layer.chroma ? 'gpt-image-2' : MODEL);
+  form.append('prompt', `${layer.chroma ? STYLE_V2 : STYLE}\n\nSubject: ${layer.prompt}`);
+  form.append('image[]', layer.ref ? new Blob([readFileSync(layer.ref)], { type: 'image/png' }) : reference, 'reference.png');
   form.append('size', layer.size);
-  form.append('background', 'transparent');
+  if (!layer.chroma) form.append('background', 'transparent');
   form.append('quality', 'high');
   form.append('output_format', 'png');
   form.append('n', '1');

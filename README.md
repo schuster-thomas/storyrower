@@ -17,7 +17,7 @@ What counts is not maximum effort but how well you stay inside the **target band
 | 1 – Data layer + simulator + diagnostics view | ✅ |
 | 2 – Greybox game (incl. heart rate display) | ✅ playable with rower or simulator |
 | 3 – Story engine + audio | ✅ story beats, reactive effects, placeholder soundtrack |
-| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain), ✅ painted horizon (mountains, volcano, wave), ✅ unified 3D props from a CC0 kit, ✅ shadows & colour grade · next: boat & rower, set pieces, music |
+| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain), ✅ painted horizon (mountains, volcano, wave), ✅ unified 3D props from a CC0 kit, ✅ shadows & colour grade · art rework ([CONCEPT.md §9.6](CONCEPT.md)): ✅ A – style frames, wide fjord with glacier, new camera · next: B – boat & rower |
 
 ## Development
 Requires Node.js 24.
@@ -45,20 +45,20 @@ Everything is recorded automatically from the moment a rower (or simulator) is c
 - `story/story.ts` – story engine: places a level's beats on any training curve, derives ongoing effects (ash, lava bombs, birds) and a smoothly blended environment from the workout time
 - `game/scene/Effects.ts` – ash, embers, bow spray, lava bombs with splash rings, puffins
 - `game/scene/quality.ts` – graphics levels (low/medium/high/auto), auto-adjustment by frame rate, frame statistics
-- `game/scene/Water.ts`, `Sky.ts`, `Terrain.ts` – water shader (waves, foam, wake, sky reflection), gradient sky with sun, clouds and snow-capped mountains, rolling hills with basalt columns, lupines and waterfalls
+- `game/scene/Fjord.ts` – the world layout: a wide glacier lagoon built in 100 m chunks, with angular moss-and-basalt terraces (snow on top, a column cliff at the water, waterfalls with mist) on the left and a blue glacier front with seracs on the right; the shore lines are shared with the water shader
+- `game/scene/Water.ts`, `Sky.ts` – water shader (waves, shallows, milky meltwater before the glacier, foam, wake, sky reflection), gradient sky with sun and clouds
 - `audio/AudioEngine.ts` – procedural placeholder soundtrack (Web Audio): music layers faded by intensity, splash per real stroke, ambience and story effects
 
-### Authored river sections (`scripts/blender/`, `src/assets/sections/`)
-The river is no longer generated at random once sections are loaded: each section is a composed 200 m stretch built by a Blender script from CC0 Poly Haven scans (cliffs, boulders, mossy stones) on a sculpted terrain with scanned grass/moss/rock textures, lit by a sky HDRI. The terrain lighting is **baked** into a texture (cheap on tablets, looks rich); the scans are lit live; waterfalls get an animated shader; grass, lupines and flowers are placed from a JSON exported by the script and drawn with the model kit.
+### Art direction (`docs/art/`, `scripts/concepts/`)
+The visual target since the art rework (see [CONCEPT.md §9.6](CONCEPT.md)): style frames from the game camera and model sheets for the rower and boat, puffins, glacier ice and shore props, generated with the OpenAI image API (`gpt-image-2`) from the original mock-up.
 
 ```bash
-npm run polyhaven:download   # CC0 scans/textures/HDRIs → assets/raw/polyhaven (≈130 MB, not committed)
-npm run section:fjord        # Blender (headless): build, bake, export, preview → compress into src/assets/sections
+node scripts/concepts/generate.mjs   # needs gpt_api_key; skips existing images, --force to redo
 ```
-Sections repeat seamlessly (same bank profile at both ends). `src/game/scene/Sections.ts` lines them up along the river.
+The first experiment with photo-scanned river sections (Poly Haven scans baked in Blender) was dropped for the stylised look; its scripts stay in `scripts/blender/` and `scripts/sections/` as a starting point for the Blender kits.
 
 ### 3D models (`scripts/models/`, `src/assets/models/`)
-All props (rocks, pebbles, grass, lupines, bushes, trees, boulder cliffs, icebergs) come from one CC0 kit – Quaternius' Stylized Nature MegaKit – so the look stays consistent. See [CREDITS.md](CREDITS.md).
+Shore boulders and (for now) the icebergs come from one CC0 kit – Quaternius' Stylized Nature MegaKit. See [CREDITS.md](CREDITS.md).
 
 ```bash
 # expects the extracted pack in assets/raw/packs/nature-megakit/ (download: quaternius.itch.io/stylized-nature-megakit, free standard version)
@@ -67,7 +67,7 @@ npm run models:build   # selected models → src/assets/models/nature.glb (mesho
 `dev/models.html?m=Rock_Medium_1,Pine_1` (dev server) renders models side by side for picking. `src/game/scene/NatureKit.ts` loads the bundle and places models with instancing; `Post.ts` adds the colour grade, vignette and (on high) bloom.
 
 ### Painted backdrops (`scripts/backdrops/`, `src/assets/backdrops/`)
-The horizon mountains, the volcano (calm and erupting) and the tidal wave are painted layers (the cliff and iceberg layers are generated too but currently unused – 3D models replaced them) generated with the OpenAI image API (`gpt-image-1.5`, transparent background) using the original mock-up as style reference. Prompts live in `scripts/backdrops/spec.mjs`.
+The mountain panorama around the fjord, the volcano (calm and erupting) and the tidal wave are painted layers generated with the OpenAI image API. The panorama (`far-mountains`, 3072 px wide) is made with `gpt-image-2` on a flat magenta background and keyed out by `process.mjs`; the older layers use `gpt-image-1.5` with a transparent background. Prompts live in `scripts/backdrops/spec.mjs`.
 
 ```bash
 npm run backdrops:generate   # needs the API key in the environment variable gpt_api_key; skips existing images

@@ -6,22 +6,21 @@ export const LEVELS: QualityLevel[] = ['low', 'medium', 'high'];
 export interface QualityProfile {
   /** cap for devicePixelRatio (render resolution) */
   pixelRatio: number;
+  /** fjord chunks (100 m) built ahead of the boat – also caps the fog distance */
   chunksAhead: number;
-  trees: number;
-  lupines: number;
   /** 0–1 share of particles that are drawn */
   particles: number;
   clouds: number;
-  /** water grid resolution across × along the river */
+  /** water grid resolution across × along the fjord */
   waterSegments: [number, number];
-  /** terrain grid resolution per chunk side (across × along) */
-  terrainSegments: [number, number];
+  /** shore grid per chunk: samples inland × samples along the fjord */
+  fjordDetail: [number, number];
 }
 
 export const PROFILES: Record<QualityLevel, QualityProfile> = {
-  low:    { pixelRatio: 1,    chunksAhead: 6,  trees: 2,  lupines: 12, particles: 0.35, clouds: 4,  waterSegments: [10, 60],  terrainSegments: [8, 4] },
-  medium: { pixelRatio: 1.25, chunksAhead: 8,  trees: 4,  lupines: 24, particles: 0.7,  clouds: 7,  waterSegments: [16, 90],  terrainSegments: [12, 6] },
-  high:   { pixelRatio: 2,    chunksAhead: 11, trees: 6, lupines: 40, particles: 1,    clouds: 11, waterSegments: [24, 130], terrainSegments: [16, 8] },
+  low:    { pixelRatio: 1,    chunksAhead: 5, particles: 0.35, clouds: 4,  waterSegments: [40, 80],  fjordDetail: [24, 12] },
+  medium: { pixelRatio: 1.25, chunksAhead: 7, particles: 0.7,  clouds: 7,  waterSegments: [64, 120], fjordDetail: [32, 16] },
+  high:   { pixelRatio: 2,    chunksAhead: 9, particles: 1,    clouds: 11, waterSegments: [96, 180], fjordDetail: [42, 22] },
 };
 
 export interface GraphicsSettings { quality: QualitySetting; showFps: boolean }

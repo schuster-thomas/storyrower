@@ -213,6 +213,26 @@ Idyllic start with Icelandic landscape, waterfalls and puffins → volcanic erup
 - Export as a JSON file for backups. Note: clearing browser data deletes local workouts.
 - To decide later: export for Strava/Garmin (FIT/TCX), sync between devices.
 
+### 9.6 Art direction rework (2026-11-18)
+The first world look (photo scans + low-poly kit + paintings on a narrow river) was too far from the mock-up. New direction:
+- **Style:** stylized, saturated, clean shapes – roughly Mario Kart 8. Not photorealistic, but **every object must be recognisable at a glance** (puffins, lupines, waterfalls, glacier ice). No photo scans.
+- **Layout:** a wide fjord / glacier lagoon instead of a narrow river. Left: angular, moss-green basalt slopes with snow patches, waterfalls, lupines, puffins. Right: a classic Icelandic glacier with blue ice – the source of the icebergs drifting in the water.
+- **Three depth layers:** far = painted panorama layers (ChatGPT image API), mid = stylized Blender geometry with painted textures, near = animated hero models (boat, rower, puffins, icebergs).
+- **Rower:** realistic – sits facing the stern; the chase camera behind the boat sees the rower's face. The stroke animation follows the real stroke rate.
+- **Tools:** OpenAI image API (concepts, textures, panorama), Tripo3D image-to-3D (organic models), Blender (cleanup, rigging, animation, level building). Performance target: Samsung Galaxy Tab S9 (SM-X710).
+
+| Phase | Content |
+|---|---|
+| A | Style frames + model sheets as the visual target; wide fjord, lower camera, glacier-lagoon water; new transparent panorama layers; photo scans and reed grass removed |
+| B | Racing single scull and rigged rower, stroke clip driven by the real strokes, blade splashes |
+| C | Left shore kit: basalt steps with moss and snow, animated waterfalls with mist, readable lupine fields, puffin rocks |
+| D | Puffins: sit, look around, waddle, take off, fly; flee when the boat passes or the earth shakes |
+| E | Glacier front with stylized ice shader; drifting, bobbing icebergs and brash ice; calving event |
+| F | 3D volcano: lava flows spreading down the flank, lava fountain, glowing plume, volcanic lightning, steam where lava meets the sea |
+| G | Stylized 3D tidal wave; KTX2 textures, LODs, tablet profiling |
+
+Each phase ends with an in-game screenshot next to the style frame.
+
 ## 10. Open questions
 - None right now.
 
