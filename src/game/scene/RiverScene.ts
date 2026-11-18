@@ -15,6 +15,8 @@ import { NO_REFLECTION, Water } from './Water';
 
 const CHUNK = 100;         // length of one fjord chunk (m)
 const CHUNKS_BEHIND = 3;   // the finale camera looks back at the wave
+const HULL = 8;            // hull length (scripts/blender/boat.py) – where the boat samples the waves
+const SPAN = 1.6;          // across the riggers
 /** World units per real metre. >1 makes the boat feel faster than the real split. */
 export const SPEED_SCALE = 2;
 
@@ -388,9 +390,16 @@ export class RiverScene {
     if (this.strokePhase < 1) this.strokePhase = Math.min(1, this.strokePhase + dt / this.strokeCycle);
     const p = this.strokePhase;
 
-    this.boat.position.set(0, Math.sin(this.time * 1.7) * 0.04 * (1 + this.env.swell * 3), this.z);
-    this.boat.rotation.z = Math.sin(this.time * 1.1) * 0.015 * (1 + this.env.swell * 4);
-    this.boat.rotation.x = Math.sin(this.time * 0.9) * 0.01 * (1 + this.env.swell * 3);
+    // The boat floats on the same waves the water shader draws: height from the hull's average,
+    // pitch from bow vs stern, roll from the two riggers – it rides the crests instead of sinking
+    const t = this.time, sw = this.env.swell, z = this.z;
+    const at = (x: number, dz: number) => this.water.surfaceAt(x, z + dz, t, sw);
+    const bow = at(0, -HULL / 2), stern = at(0, HULL / 2), mid = at(0, 0);
+    const left = at(-SPAN / 2, 0), right = at(SPAN / 2, 0);
+    const y = (bow + stern + 2 * mid + left + right) / 6;
+    this.boat.position.set(0, y + Math.sin(t * 1.7) * 0.02, z);
+    this.boat.rotation.x = Math.atan2(bow - stern, HULL) + Math.sin(t * 0.9) * 0.006;
+    this.boat.rotation.z = Math.atan2(right - left, SPAN) + Math.sin(t * 1.1) * 0.008;
 
     // The real rower model: same phase convention as the clip (catch 0, finish 0.35)
     this.model.update(p);

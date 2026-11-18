@@ -2,6 +2,18 @@ import * as THREE from 'three';
 import { FJORD_GLSL } from './Fjord';
 
 const WIDTH = 520; // from beyond the left shore to beyond the glacier front
+const X0 = -160;    // left edge of the water grid
+
+/**
+ * Height of the water surface at a world position – exactly the waves of the vertex shader below
+ * (keep the two in sync), so the boat can ride them instead of sinking into a wave crest.
+ */
+export function waterHeight(x: number, z: number, t: number, swell: number) {
+  let h = Math.sin(x * 0.45 + t * 1.3) * Math.cos(z * 0.18 + t * 0.9);
+  h += Math.sin(z * 0.07 - t * 0.6) * 0.6;
+  h += Math.sin((x + z) * 0.9 + t * 2.1) * 0.18;
+  return h * (0.06 + swell * 0.45);
+}
 
 const vertex = /* glsl */ `
   #include <common>
@@ -14,6 +26,7 @@ const vertex = /* glsl */ `
   varying float vHeight;
   varying vec3 vNormal;
 
+  // same waves as waterHeight() in TypeScript
   float waves(vec2 p, float t) {
     float h = sin(p.x * 0.45 + t * 1.3) * cos(p.y * 0.18 + t * 0.9);
     h += sin(p.y * 0.07 - t * 0.6) * 0.6;
@@ -129,6 +142,7 @@ export const NO_REFLECTION = 1;
 export class Water {
   readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private uniforms: Record<string, THREE.IUniform>;
+  private segWidth = 1;
   private segLen = 1;
   // planar reflection (see renderReflection)
   private target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
@@ -156,9 +170,22 @@ export class Water {
     // the whole fjord out to the horizon; the shores cover the edges
     const length = 1000;
     this.segLen = length / sz;
+    this.segWidth = WIDTH / sx;
     const g = new THREE.PlaneGeometry(WIDTH, length, sx, sz);
     g.rotateX(-Math.PI / 2);
     return g;
+  }
+
+  /**
+   * The water surface as it is drawn: the shader moves only the grid points (~5 m apart) and the
+   * GPU draws straight between them, so small ripples are flattened – interpolate the same way.
+   */
+  surfaceAt(x: number, z: number, t: number, swell: number) {
+    const x0 = X0 + Math.floor((x - X0) / this.segWidth) * this.segWidth;
+    const z0 = Math.floor(z / this.segLen) * this.segLen;   // the grid snaps to multiples of segLen
+    const fx = (x - x0) / this.segWidth, fz = (z - z0) / this.segLen;
+    const h = (dx: number, dz: number) => waterHeight(x0 + dx * this.segWidth, z0 + dz * this.segLen, t, swell);
+    return (h(0, 0) * (1 - fx) + h(1, 0) * fx) * (1 - fz) + (h(0, 1) * (1 - fx) + h(1, 1) * fx) * fz;
   }
 
   setSegments(segments: [number, number]) {
@@ -168,7 +195,7 @@ export class Water {
 
   update(p: { time: number; boatZ: number; speed: number; swell: number; water: THREE.Color; sky: THREE.Color; sunColor: THREE.Color; sunDir: THREE.Vector3; light: number }) {
     // Snap to the grid spacing so waves don't shimmer while the mesh follows the boat
-    this.mesh.position.set(WIDTH / 2 - 160, 0, Math.round((p.boatZ - 430) / this.segLen) * this.segLen);
+    this.mesh.position.set(X0 + WIDTH / 2, 0, Math.round((p.boatZ - 430) / this.segLen) * this.segLen);
     const u = this.uniforms;
     u.uTime.value = p.time;
     u.uSwell.value = p.swell;
