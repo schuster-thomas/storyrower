@@ -19,11 +19,13 @@ import { NO_REFLECTION } from './Water';
  * sideways for parallax to show.
  */
 
-/** Width of the painted frame in metres at the volcano's distance (tuned to sit between the banks). */
-const WIDTH = 560;
+/** Width of the painted frame in the game: the blockout's metres, scaled a little to sit between the banks. */
+const WIDTH = meta.widthAtAxis * (560 / 580);
 const HEIGHT = WIDTH * (meta.size[1] / meta.size[0]);
-/** the painting's horizon (eye level of the blockout camera) sits at this height in the game */
-const EYE_Y = 3;
+/** the painting's horizon (eye level of the blockout camera) sits at this height in the game –
+ *  well above the water: the volcano stands on a plateau behind the valley, so its green foot shows
+ *  above the banks */
+const EYE_Y = 28;
 const BOTTOM = EYE_Y - meta.horizon * HEIGHT;
 /** where the crater sits in the group (x, y) */
 const CRATER = new THREE.Vector3((meta.crater[0] - 0.5) * WIDTH, BOTTOM + meta.crater[1] * HEIGHT, 1);

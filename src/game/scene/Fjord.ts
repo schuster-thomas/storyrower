@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { type NatureKit, Scatter } from './NatureKit';
+import type { PaintedProps } from './PaintedProps';
 
 // ---------- shape of the fjord (pure functions of world z, mirrored in the water shader) ----------
 
@@ -218,6 +219,8 @@ function buildGlacier(z0: number, length: number, [rows, cols]: FjordDetail) {
 
 export interface FjordChunkOptions {
   kit: NatureKit | null; detail: FjordDetail; shadows: boolean;
+  /** painted icebergs and rocks (they replace the kit's stand-ins once loaded) */
+  props?: PaintedProps | null;
   /** the left shore comes from painted sections (PaintedShore): skip the generated slopes there */
   paintedLeft?: boolean;
   /** the glacier comes from painted sections too: skip the generated one */
@@ -259,7 +262,30 @@ export function buildFjordChunk(index: number, length: number, m: FjordMaterials
     }
   }
 
-  if (o.kit) {
+  if (o.props?.ready) {
+    const s = new Scatter(o.props);
+    const props = o.props;
+    // waterline at y = 0 (the models are built that way); `add` places the base, so lift by minY
+    const put = (id: string, x: number, z: number, scale: number, rot: number) =>
+      s.add(id, x, (props.get(id)?.minY ?? 0) * scale, z, scale, rot);
+    // ice calved from the glacier: mostly chunks and small blocks near its front, now and then a
+    // big tabular berg or a pinnacle; a few small blocks drift further out (never in the boat's lane)
+    const bergs = 3 + Math.floor(r() * 3);
+    for (let k = 0; k < bergs; k++) {
+      const z = z0 - r() * length;
+      const pick = r();
+      const id = pick < 0.12 ? 'Ice_A' : pick < 0.24 ? 'Ice_B' : pick < 0.62 ? 'Ice_C' : 'Ice_D';
+      const x = glacierFront(z) - 2.5 - r() * (id === 'Ice_D' ? 9 : 5);
+      put(id, Math.max(5, x), z, 0.75 + r() * 0.5, r() * Math.PI * 2);
+    }
+    // a rock now and then at the foot of the cliffs
+    for (let k = 0; k < 2; k++) {
+      if (r() < 0.45) continue;
+      const z = z0 - r() * length;
+      put(r() < 0.6 ? 'Rock_C' : 'Rock_D', -leftShore(z) + 1.2 + r() * 2.5, z, 0.8 + r() * 0.5, r() * Math.PI * 2);
+    }
+    s.build(group, { cast: o.shadows });
+  } else if (o.kit) {
     const s = new Scatter(o.kit);
     // icebergs calved from the glacier: many near the ice, a few drifting across; never in the boat's lane
     // small ice chunks calved from the glacier, close to its front (proper icebergs come later)

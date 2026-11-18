@@ -17,7 +17,7 @@ What counts is not maximum effort but how well you stay inside the **target band
 | 1 – Data layer + simulator + diagnostics view | ✅ |
 | 2 – Greybox game (incl. heart rate display) | ✅ playable with rower or simulator |
 | 3 – Story engine + audio | ✅ story beats, reactive effects, placeholder soundtrack |
-| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain), ✅ painted horizon (mountains, volcano, wave), ✅ unified 3D props from a CC0 kit, ✅ shadows & colour grade · art rework ([CONCEPT.md §9.6](CONCEPT.md)): ✅ A – style frames, new camera · ✅ B – scull and rigged rower in time with the real strokes · ✅ C – painted river banks · ✅ F – volcano with flowing lava · next: puffins, tidal wave ([§11](CONCEPT.md#11-next-steps)) |
+| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain), ✅ painted horizon (mountains, volcano, wave), ✅ unified 3D props from a CC0 kit, ✅ shadows & colour grade · art rework ([CONCEPT.md §9.6](CONCEPT.md)): ✅ A – style frames, new camera · ✅ B – scull and rigged rower in time with the real strokes · ✅ C – painted river banks · ✅ F – volcano with flowing lava · ✅ D – puffins · ✅ painted icebergs and rocks · next: tidal wave ([§11](CONCEPT.md#11-next-steps)) |
 
 ## Development
 Requires Node.js 24.
@@ -43,7 +43,9 @@ Everything is recorded automatically from the moment a rower (or simulator) is c
 - `game/hud/Hud.ts` – HUD with phase progress and band bars
 - `app/connection.ts` – one shared rower session plus optional heart-rate monitor for setup, game and diagnostics
 - `story/story.ts` – story engine: places a level's beats on any training curve, derives ongoing effects (ash, lava bombs, birds) and a smoothly blended environment from the workout time
-- `game/scene/Effects.ts` – ash, embers, bow spray, lava bombs with splash rings, puffins
+- `game/scene/Effects.ts` – ash, embers, bow spray, lava bombs with splash rings
+- `game/scene/Puffins.ts` – puffins sitting on the rocks in the river (turning their heads), taking off when the boat comes close or the earth trembles, a few circling in the calm morning; wing beat and head turns in the vertex shader, two instanced draw calls
+- `game/scene/PaintedProps.ts` – icebergs and rocks in the water, painted from all sides; the icebergs bob on the swell
 - `game/scene/quality.ts` – graphics levels (low/medium/high/auto), auto-adjustment by frame rate, frame statistics
 - `game/scene/RiverScene.ts` preloads boat, painted layers and model kit while the setup screen is open; the game view stays dark ("Loading the fjord…") until they and the first stretch of fjord are ready, and the workout clock only starts then
 - `game/scene/Fjord.ts` – the world layout: a narrow river built in 100 m chunks (water, icebergs, fallback banks); the bank lines are shared with the water shader and the painted sections
@@ -97,6 +99,27 @@ The volcano is made like the river banks ([CONCEPT.md §9.7](CONCEPT.md#97-how-a
 "C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" --background --factory-startup --python scripts/blender/volcano.py -- assets/raw/painted/volcano
 node scripts/painted/paint.mjs volcano     # → assets/raw/painted/volcano/painted.png
 node scripts/painted/volcano.mjs           # keys the magenta, packs painting, mask and ash puffs into src/assets/painted/
+```
+
+### Icebergs and rocks in the water (`scripts/blender/props.py`, `scripts/painted/props.mjs`)
+Four icebergs and four rocks (incl. the puffins' rock and a basalt sea stack) as coloured blockouts, rendered in a row from five directions (four sides and from above), each view painted by the image model (the later views get the first one as a reference), the backgrounds filled with the objects' edge colours, then projected back: every face takes the view that sees it most squarely and unhidden.
+
+```bash
+"C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" --background --factory-startup --python scripts/blender/props.py -- assets/raw/painted/ice --kind ice
+node scripts/painted/props.mjs ice          # paint the five views (rocks: same with "rocks")
+node scripts/painted/props.mjs ice fill
+"C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" --background --factory-startup --python scripts/blender/props.py -- assets/raw/painted/ice --kind ice --paint
+node scripts/painted/props.mjs ice build    # → src/assets/painted/ice.glb
+```
+
+### Puffins (`scripts/tripo/puffin-ref.mjs`, `scripts/blender/puffin.py`, `scripts/puffin/build.mjs`)
+Two Tripo3D models: standing (from the model sheet) and flying with the wings spread straight out (reference from `puffin-ref.mjs`), so the game can bend the wings in the vertex shader.
+
+```bash
+node scripts/tripo/puffin-ref.mjs
+node scripts/tripo/tripo.mjs image assets/raw/puffin/ref-flying.png --name puffin-flying --faces 4000
+"C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" --background --factory-startup --python scripts/blender/puffin.py -- assets/raw/tripo/puffin-flying.pbr_model.glb assets/raw/puffin/flying.glb --pose flying --yaw 90
+node scripts/puffin/build.mjs               # → src/assets/models/puffin-standing.glb, puffin-flying.glb
 ```
 
 ### Data layer (`src/rower/`)

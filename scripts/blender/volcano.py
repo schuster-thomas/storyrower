@@ -20,17 +20,18 @@ ARGS = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 OUT = os.path.abspath(ARGS[0] if ARGS else 'assets/raw/painted/volcano')
 os.makedirs(OUT, exist_ok=True)
 
-R = 260.0          # base radius
+# a broad Icelandic stratovolcano with an ice cap (think Eyjafjallajökull), not a steep cone
+R = 340.0          # base radius
 H = 150.0          # height of the rim
-RC = 26.0          # crater radius
+RC = 34.0          # crater radius
 CRATER_DEPTH = 16.0
 UC = RC / R
 
-# camera on the river: 600 m away, eye 13 m above the volcano's foot (the game camera sits ~3 m
+# camera on the river: 1000 m away (little perspective, like the far view from the river), eye 13 m above the volcano's foot (the game camera sits ~3 m
 # above the water, the foot lies ~10 m below it); the horizon sits 10 % above the image bottom
-DIST, EYE = 600.0, 13.0
+DIST, EYE = 1000.0, 13.0
 RES = (3072, 1024)
-HALF_W = R + 30.0                      # half the image width at the volcano's axis
+HALF_W = R + 40.0                      # half the image width at the volcano's axis
 HFOV = 2 * math.atan(HALF_W / DIST)
 HORIZON = 0.10
 
@@ -79,7 +80,7 @@ def channel_at(theta, u):
             continue
         dt = (theta - centre(c, u) + math.pi) % (2 * math.pi) - math.pi
         dist = abs(dt) * r
-        width = 3.5 + 9.0 * (u - UC) / (1 - UC)
+        width = (3.5 + 9.0 * (u - UC) / (1 - UC)) * R / 260.0
         w = math.exp(-(dist / width) ** 2)
         # starts at the rim / branch point, ends with a rounded tongue
         w *= smooth(c['u0'] - 0.01, c['u0'] + 0.02, u) * (1 - smooth(c['u1'] - 0.04, c['u1'], u))
@@ -94,9 +95,9 @@ def height(theta, u):
         k = u / UC
         return H - CRATER_DEPTH * (1 - k * k) + 2.0 * smooth(0.85, 1.0, k)
     t = (1 - u) / (1 - UC)
-    z = H * t ** 1.55 + 2.0 * smooth(UC + 0.03, UC, u)
+    z = H * t ** 1.35 + 2.0 * smooth(UC + 0.03, UC, u)
     # radial ridges and gullies, strongest on the middle slopes
-    amp = 9.0 * math.sin(math.pi * min(1.0, (u - UC) / (1 - UC))) ** 0.8
+    amp = 10.0 * math.sin(math.pi * min(1.0, (u - UC) / (1 - UC))) ** 0.8
     ridge = n1(math.cos(theta) * 3.2, math.sin(theta) * 3.2, 1.0, u * 1.4)
     z += amp * ridge
     w, _ = channel_at(theta, u)
@@ -113,16 +114,21 @@ def colour(theta, u, z):
         return COL['crater']
     k = (u - UC) / (1 - UC)
     n = n1(math.cos(theta) * 5, math.sin(theta) * 5, 1.0, 9.0 + u * 3)
-    c = mix(COL['ash'], COL['rust'], smooth(0.08, 0.3, k))
-    c = mix(c, COL['ochre'], smooth(0.25, 0.5, k) * (0.5 + 0.5 * n))
-    c = mix(c, COL['moss'], smooth(0.55, 0.78, k + 0.08 * n))
-    c = mix(c, COL['moss_dark'], smooth(0.85, 1.0, k) * 0.6)
-    # snow in the upper gullies
+    c = mix(COL['ash'], COL['rust'], smooth(0.05, 0.2, k))
+    c = mix(c, COL['ochre'], smooth(0.3, 0.45, k) * (0.35 + 0.4 * n))
+    c = mix(c, COL['moss'], smooth(0.42, 0.6, k + 0.08 * n))
+    c = mix(c, COL['moss_dark'], smooth(0.8, 1.0, k) * 0.5)
+    # the ice cap: the upper half lies under snow and ice, dark ridges poke through it and snow
+    # fingers reach down the gullies; only the crater rim is bare
     ridge = n1(math.cos(theta) * 3.2, math.sin(theta) * 3.2, 1.0, u * 1.4)
-    snow = smooth(0.42, 0.18, k) * smooth(-0.05, -0.25, ridge) * smooth(0.1, 0.25, k)
-    c = mix(c, COL['snow'], min(1.0, snow * 1.6))
+    cap = smooth(0.52, 0.32, k + 0.1 * n)
+    fingers = smooth(0.66, 0.46, k) * smooth(0.0, -0.3, ridge)
+    rock = smooth(0.25, 0.5, ridge) * smooth(0.12, 0.3, k)
+    snow = max(cap * (1 - 0.8 * rock), fingers) * smooth(0.02, 0.08, k)
+    c = mix(c, COL['snow'], min(1.0, snow))
     w, _ = channel_at(theta, u)
-    return mix(c, COL['groove'], smooth(0.25, 0.7, w))
+    # the grooves are narrower in the snow (the lava mask keeps its full width)
+    return mix(c, COL['groove'], smooth(0.25 + 0.25 * snow, 0.7 + 0.15 * snow, w))
 
 NT, NR = 420, 170
 me = bpy.data.meshes.new('Volcano')

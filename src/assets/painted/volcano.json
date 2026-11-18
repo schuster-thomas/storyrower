@@ -5,18 +5,18 @@
   ],
   "crater": [
     0.5,
-    0.8086
+    0.6408
   ],
   "craterLeft": [
-    0.4552,
-    0.8086
+    0.4553,
+    0.6408
   ],
   "craterRight": [
-    0.5448,
-    0.8086
+    0.5447,
+    0.6408
   ],
   "horizon": 0.1,
-  "widthAtAxis": 580.0,
+  "widthAtAxis": 760.0,
   "eye": 13.0,
-  "distance": 600.0
+  "distance": 1000.0
 }

@@ -26,8 +26,50 @@ async function keyMagenta(src) {
   return sharp(data, { raw: info }).png().toBuffer();
 }
 
+/**
+ * The image model sometimes stretches the volcano a little vertically. The lava mask comes from the
+ * blockout, so fit the painting back onto it: per column, the top of the silhouette in the painting
+ * vs. the blockout gives y_blockout = a · y_painting + b (least squares), then resample the rows.
+ */
+async function alignToBlockout(keyed) {
+  const p = await sharp(keyed).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const b = await sharp(`${DIR}/blockout.png`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width: W, height: H } = p.info;
+  const topP = (x) => { for (let y = 0; y < H; y++) if (p.data[(y * W + x) * 4 + 3] > 128) return y; return -1; };
+  const topB = (x) => {
+    for (let y = 0; y < H; y++) {
+      const i = (y * W + x) * 4;
+      if (!(b.data[i] > 200 && b.data[i + 1] < 60 && b.data[i + 2] > 200)) return y;
+    }
+    return -1;
+  };
+  const pairs = [];
+  for (let x = Math.round(W * 0.08); x < W * 0.92; x += 4) {
+    const yp = topP(x), yb = topB(x);
+    if (yp > 0 && yb > 0 && yb < H * 0.86) pairs.push([yp, yb]);
+  }
+  const n = pairs.length;
+  const sx = pairs.reduce((s, q) => s + q[0], 0), sy = pairs.reduce((s, q) => s + q[1], 0);
+  const sxx = pairs.reduce((s, q) => s + q[0] * q[0], 0), sxy = pairs.reduce((s, q) => s + q[0] * q[1], 0);
+  const a = (n * sxy - sx * sy) / (n * sxx - sx * sx), off = (sy - a * sx) / n;
+  const err = Math.sqrt(pairs.reduce((s, [yp, yb]) => s + (a * yp + off - yb) ** 2, 0) / n);
+  console.log(`align: y_blockout = ${a.toFixed(4)} · y_painting + ${off.toFixed(1)}  (rms ${err.toFixed(1)} px over ${n} columns)`);
+  const out = Buffer.alloc(p.data.length);
+  for (let y = 0; y < H; y++) {
+    const src = (y - off) / a;                     // row in the painting that lands on row y
+    const y0 = Math.floor(src), f = src - y0;
+    if (y0 < 0 || y0 + 1 >= H) continue;           // outside: transparent
+    for (let x = 0; x < W; x++) {
+      for (let c = 0; c < 4; c++) {
+        out[(y * W + x) * 4 + c] = Math.round(p.data[(y0 * W + x) * 4 + c] * (1 - f) + p.data[((y0 + 1) * W + x) * 4 + c] * f);
+      }
+    }
+  }
+  return sharp(out, { raw: p.info }).png().toBuffer();
+}
+
 // painting and mask keep the full frame, so they stay aligned with each other and with volcano.json
-await sharp(await keyMagenta(`${DIR}/painted.png`)).resize({ width: 2048 })
+await sharp(await alignToBlockout(await keyMagenta(`${DIR}/painted.png`))).resize({ width: 2048 })
   .webp({ quality: 84, alphaQuality: 90, effort: 6 }).toFile(`${OUT}/volcano.webp`);
 await sharp(`${DIR}/mask.png`).resize({ width: 1024 }).removeAlpha()
   .webp({ lossless: true }).toFile(`${OUT}/volcano-mask.webp`);

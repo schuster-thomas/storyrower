@@ -37,7 +37,7 @@ interface Ring { mesh: THREE.Mesh; age: number; active: boolean }
 
 /**
  * Story effects on top of the river world: falling ash, glowing embers, bow spray,
- * lava bombs that splash down near the boat, splash rings and circling puffins.
+ * lava bombs that splash down near the boat and splash rings (the puffins are Puffins.ts).
  * Everything is pooled – nothing is allocated per frame.
  */
 export class Effects {
@@ -55,9 +55,6 @@ export class Effects {
   private bombTimer = 1;
   private rings: Ring[] = [];
   private puddles: Ring[] = [];
-  private birds = new THREE.Group();
-  private birdWings: THREE.Mesh[][] = [];
-  private birdScale = 0;
 
   constructor(scene: THREE.Scene) {
     const dot = dotTexture();
@@ -120,33 +117,7 @@ export class Effects {
       scene.add(mesh);
     }
 
-    // Puffins: black body, white belly, orange beak – two flapping wings each
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1d1d22, flatShading: true });
-    const bellyMat = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, flatShading: true });
-    const beakMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, flatShading: true });
-    const wingGeo = new THREE.BufferGeometry();
-    wingGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, -0.3, 0, 0, 0.35, 1.4, 0, 0.1]), 3));
-    wingGeo.computeVertexNormals();
-    for (let i = 0; i < 7; i++) {
-      const bird = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.5, 3, 6), bodyMat);
-      body.rotation.x = Math.PI / 2;
-      const belly = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 4), bellyMat);
-      belly.position.set(0, -0.08, -0.1);
-      const beak = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.25, 4), beakMat);
-      beak.rotation.x = -Math.PI / 2;
-      beak.position.z = -0.55;
-      const wings = [1, -1].map((side) => {
-        const w = new THREE.Mesh(wingGeo, new THREE.MeshStandardMaterial({ color: 0x1d1d22, side: THREE.DoubleSide, flatShading: true }));
-        w.scale.x = side;
-        bird.add(w);
-        return w;
-      });
-      bird.add(body, belly, beak);
-      this.birdWings.push(wings);
-      this.birds.add(bird);
-    }
-    scene.add(this.ash, this.embers, this.spray, this.birds);
+    scene.add(this.ash, this.embers, this.spray);
   }
 
   /** Draw only a share of the ash/ember/spray particles (graphics level). */
@@ -164,7 +135,6 @@ export class Effects {
     this.updateBombs(c);
     this.updateRings(c);
     this.updatePuddles(c.dt);
-    this.updateBirds(c);
   }
 
   /** Burst of bombs right away (used by the eruption beat). */
@@ -332,22 +302,5 @@ export class Effects {
       r.mesh.scale.setScalar(1 + k * 7);
       (r.mesh.material as THREE.MeshBasicMaterial).opacity = 0.9 * (1 - k);
     }
-  }
-
-  private updateBirds(c: EffectsContext) {
-    this.birdScale += ((c.story.birds > 0 ? 1 : 0) - this.birdScale) * Math.min(1, c.dt * 0.8);
-    this.birds.visible = this.birdScale > 0.02;
-    if (!this.birds.visible) return;
-    this.birds.children.forEach((bird, i) => {
-      const a = c.time * 0.35 + (i / this.birds.children.length) * Math.PI * 2;
-      const r = 14 + (i % 3) * 4;
-      const cx = (i % 2 ? 8 : -8);
-      bird.position.set(cx + Math.cos(a) * r, 11 + Math.sin(c.time * 0.9 + i) * 1.5 + (i % 3), c.boatZ - 45 + Math.sin(a) * r * 0.6);
-      bird.rotation.y = -a;
-      bird.scale.setScalar(this.birdScale * 1.4);
-      const flap = Math.sin(c.time * 9 + i * 1.7) * 0.6;
-      this.birdWings[i][0].rotation.z = flap;
-      this.birdWings[i][1].rotation.z = -flap;
-    });
   }
 }

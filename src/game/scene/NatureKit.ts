@@ -6,6 +6,8 @@ import natureUrl from '../../assets/models/nature.glb?url';
 /** One drawable piece of a model (models can have e.g. bark + leaves). */
 export interface Part { geometry: THREE.BufferGeometry; material: THREE.Material }
 export interface Model { parts: Part[]; size: THREE.Vector3; minY: number }
+/** Anything that hands out models by name (the CC0 kit, the painted props). */
+export interface ModelSource { get(id: string): Model | undefined }
 
 export type ModelId =
   | 'Rock_Medium_1' | 'Rock_Medium_2' | 'Rock_Medium_3' | 'Pebble_Round_2' | 'Pebble_Square_2'
@@ -100,17 +102,17 @@ export class NatureKit {
 
 /** Collects transforms per model and turns them into InstancedMeshes (one per part). */
 export class Scatter {
-  private items = new Map<ModelId, THREE.Matrix4[]>();
+  private items = new Map<string, THREE.Matrix4[]>();
   private m = new THREE.Matrix4();
   private q = new THREE.Quaternion();
   private e = new THREE.Euler();
   private s = new THREE.Vector3();
   private p = new THREE.Vector3();
 
-  constructor(private kit: NatureKit) {}
+  constructor(private kit: ModelSource) {}
 
   /** Place a model with its base at `y` (scale is uniform unless `stretchY` is given). */
-  add(id: ModelId, x: number, y: number, z: number, scale: number, rotY = 0, stretchY = 1, tilt = 0) {
+  add(id: string, x: number, y: number, z: number, scale: number, rotY = 0, stretchY = 1, tilt = 0) {
     const model = this.kit.get(id);
     if (!model) return;
     const list = this.items.get(id) ?? [];

@@ -7,6 +7,7 @@ import glacierUrl from '../../assets/painted/glacier.glb?url';
 import glacierBUrl from '../../assets/painted/glacier-b.glb?url';
 import lupinesUrl from '../../assets/painted/lupines.webp';
 import { SHORE_SECTION } from './Fjord';
+import type { PaintedProps } from './PaintedProps';
 
 /**
  * A river bank as painted sections – basalt cliffs on the left, the glacier front on the right
@@ -173,7 +174,7 @@ export class PaintedShore {
     return p;
   }
 
-  constructor(kind: BankKind, mist: THREE.SpriteMaterial) {
+  constructor(kind: BankKind, mist: THREE.SpriteMaterial, private props: PaintedProps) {
     // every section is built as a left bank; the glacier is mirrored onto the right bank
     if (kind === 'glacier') this.group.scale.x = -1;
     this.fallMat = new THREE.ShaderMaterial({
@@ -185,14 +186,14 @@ export class PaintedShore {
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uLight: { value: 1 } }]),
     });
     this.mistMat = mist.clone();
-    this.loaded = PaintedShore.preload(kind).then(({ gltfs, lupines }) => {
+    this.loaded = Promise.all([PaintedShore.preload(kind), props.loaded]).then(([{ gltfs, lupines }]) => {
       // the loaded scenes are cached for every later run ("Row again"): work on copies
-      this.templates = gltfs.map((g) => this.prepare(g.scene.clone(), lupines));
+      this.templates = gltfs.map((g, i) => this.prepare(g.scene.clone(), lupines, i));
       this.ready = true;
     }).catch((e) => console.warn(`Painted ${kind} could not be loaded, keeping the generated bank`, e));
   }
 
-  private prepare(root: THREE.Object3D, lupines: THREE.Texture | null) {
+  private prepare(root: THREE.Object3D, lupines: THREE.Texture | null, variant: number) {
     root.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
@@ -207,9 +208,63 @@ export class PaintedShore {
       mesh.material = mat;
     });
     root.updateMatrixWorld(true);
+    this.replaceRock(root, variant);
     this.addWaterfalls(root);
     if (lupines) this.addLupines(root, lupines);
     return root;
+  }
+
+  /**
+   * The rock in the water was painted with the bank, seen only from across the river, so it smears
+   * from the boat: swap it for the painted prop (variant a: the low puffins' rock, b: the basalt
+   * sea stack), which is painted from all sides.
+   */
+  private replaceRock(root: THREE.Object3D, variant: number) {
+    const old = root.getObjectByName('PuffinRock');
+    if (!old) return;
+    const id = variant === 0 ? 'Rock_A' : 'Rock_B';
+    const model = this.props.get(id);
+    if (!model) return;
+    old.visible = false;
+    const box = new THREE.Box3().setFromObject(old);
+    const rock = new THREE.Group();
+    rock.name = 'Rock';
+    for (const p of model.parts) rock.add(new THREE.Mesh(p.geometry, p.material));
+    // about the old rock's footprint; waterline at y = 0
+    const scale = variant === 0 ? 1.45 : 1.15;
+    rock.scale.setScalar(scale);
+    rock.position.set((box.min.x + box.max.x) / 2, 0, (box.min.z + box.max.z) / 2);
+    rock.rotation.y = variant === 0 ? 0.4 : -0.3;
+    root.add(rock);
+    root.updateMatrixWorld(true);
+    // where the puffins sit: spots on the top of the rock (the low rock's flat top, the sea stack's
+    // highest column), found by casting rays down onto it; kept as plain numbers (clone copies userData)
+    const top = (model.size.y + model.minY) * scale;
+    const reach = variant === 0 ? 1.7 : 0.45;
+    const ray = new THREE.Raycaster();
+    const spots: number[][] = [];
+    for (let n = 0; n < 60 && spots.length < (variant === 0 ? 5 : 2); n++) {
+      const a = n * 2.39996, r = reach * Math.sqrt((n + 0.5) / 60);
+      const x = rock.position.x + Math.cos(a) * r, z = rock.position.z + Math.sin(a) * r;
+      ray.set(new THREE.Vector3(x, 60, z), new THREE.Vector3(0, -1, 0));
+      const hit = ray.intersectObject(rock, true)[0];
+      if (!hit || hit.point.y < top * 0.8 || !hit.face || hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y < 0.6) continue;
+      if (spots.some(([sx, , sz]) => Math.hypot(sx - x, sz - z) < 0.55)) continue;
+      spots.push([x, hit.point.y, z]);
+    }
+    root.userData.perch = spots;
+  }
+
+  /** World positions of the puffins' spots on the rocks of the sections around the boat, per section. */
+  perches(): { key: number; spots: THREE.Vector3[] }[] {
+    const out: { key: number; spots: THREE.Vector3[] }[] = [];
+    for (const [k, g] of this.live) {
+      const spots = g.userData.perch as number[][] | undefined;
+      if (!spots?.length) continue;
+      g.updateMatrixWorld();
+      out.push({ key: k, spots: spots.map(([x, y, z]) => new THREE.Vector3(x, y, z).applyMatrix4(g.matrixWorld)) });
+    }
+    return out;
   }
 
   /** Arched falling sheets at the markers (scale = width × height), foam and mist at the foot. */

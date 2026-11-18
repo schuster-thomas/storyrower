@@ -8,6 +8,8 @@ import { buildFjordChunk, createFjordMaterials, disposeFjordChunk } from './Fjor
 import { NatureKit } from './NatureKit';
 import { PaintedShore } from './PaintedShore';
 import { Volcano } from './Volcano';
+import { PaintedProps } from './PaintedProps';
+import { Puffins } from './Puffins';
 import { Post } from './Post';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
@@ -54,7 +56,7 @@ export class RiverScene {
 
   /** Start loading every asset of the world early (setup screen), so a game starts in the final look. */
   static preload() {
-    return Promise.all([Boat.preload(), Backdrop.preload(), NatureKit.load(), PaintedShore.preload('cliffs'), PaintedShore.preload('glacier'), Volcano.preload()]).then(() => {}, () => {});
+    return Promise.all([Boat.preload(), Backdrop.preload(), NatureKit.load(), PaintedShore.preload('cliffs'), PaintedShore.preload('glacier'), Volcano.preload(), PaintedProps.preload(), Puffins.preload()]).then(() => {}, () => {});
   }
   private topColor = new THREE.Color();
   private horizonColor = new THREE.Color();
@@ -65,6 +67,9 @@ export class RiverScene {
   private kit: NatureKit | null = null;
   /** painted banks (replace the generated slopes and glacier once loaded) */
   private painted: PaintedShore;
+  /** painted icebergs and rocks in the water */
+  private props = new PaintedProps();
+  private puffins = new Puffins();
   /** the painted volcano with flowing lava, plume and fountain (the greybox `volcano` is its stand-in) */
   private setPiece: Volcano;
   private bufferSize = new THREE.Vector2();
@@ -150,11 +155,11 @@ export class RiverScene {
       this.kit = kit;
       this.dropChunks();
     }).catch((e) => console.warn('Model kit could not be loaded, the fjord stays without icebergs', e));
-    this.painted = new PaintedShore('cliffs', this.mats.mist);
-    this.paintedIce = new PaintedShore('glacier', this.mats.mist);
-    this.scene.add(this.painted.group, this.paintedIce.group);
-    const paintedReady = Promise.all([this.painted.loaded, this.paintedIce.loaded]).then(() => this.dropChunks());
-    this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady, paintedReady, this.setPiece.loaded]).then(() => {});
+    this.painted = new PaintedShore('cliffs', this.mats.mist, this.props);
+    this.paintedIce = new PaintedShore('glacier', this.mats.mist, this.props);
+    this.scene.add(this.painted.group, this.paintedIce.group, this.puffins.group);
+    const paintedReady = Promise.all([this.painted.loaded, this.paintedIce.loaded, this.props.loaded]).then(() => this.dropChunks());
+    this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady, paintedReady, this.setPiece.loaded, this.puffins.loaded]).then(() => {});
     this.post = new Post(this.renderer, this.scene, this.camera);
     this.post.setQuality(quality);
     this.water.reflections = quality !== 'low';
@@ -255,6 +260,8 @@ export class RiverScene {
     const bankFrame = { time: this.time, boatZ: this.z, ahead: Math.min(600, this.q.chunksAhead * CHUNK), behind: 240, tint: this.paintTint, light: Math.min(1.1, this.light * 1.02) };
     this.painted.update(bankFrame);
     this.paintedIce.update(bankFrame);
+    this.props.update({ time: this.time, swell: this.env.swell, tint: this.paintTint, light: bankFrame.light });
+    this.puffins.update({ dt, time: this.time, boatZ: this.z, birds: this.story.birds, light: this.light, perches: this.painted.perches() });
     this.mats.fall.uniforms.uTime.value = this.time;
     this.mats.fall.uniforms.uLight.value = Math.min(1.1, this.light);
     this.updateBoat(dt);
@@ -302,6 +309,7 @@ export class RiverScene {
     this.post.dispose();
     this.backdrop.dispose();
     this.setPiece.dispose();
+    this.puffins.dispose();
     this.water.dispose();
     this.sky.dispose();
     this.renderer.dispose();
@@ -371,7 +379,7 @@ export class RiverScene {
       for (let i = min; i < current && target < 0; i++) if (!this.chunks.some((c) => c.index === i)) target = i;
       for (let i = current; i <= max && target < 0; i++) if (this.chunks.find((c) => c.index === i)?.gen !== this.chunkGen) target = i;
       if (target < 0) break;
-      const group = buildFjordChunk(target, CHUNK, this.mats, { kit: this.kit, detail: this.q.fjordDetail, shadows: this.sun.castShadow, paintedLeft: this.painted.ready, paintedRight: this.paintedIce.ready });
+      const group = buildFjordChunk(target, CHUNK, this.mats, { kit: this.kit, props: this.props, detail: this.q.fjordDetail, shadows: this.sun.castShadow, paintedLeft: this.painted.ready, paintedRight: this.paintedIce.ready });
       this.scene.add(group);
       const old = this.chunks.find((c) => c.index === target);
       if (old) { this.scene.remove(old.group); disposeFjordChunk(old.group); this.chunks.splice(this.chunks.indexOf(old), 1); }
