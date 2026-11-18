@@ -10,7 +10,8 @@ mkdirSync('src/assets/models', { recursive: true });
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 execFileSync(npx, ['gltf-transform', 'optimize', SRC, 'assets/raw/boat/boat.opt.glb',
   '--compress', 'meshopt', '--texture-compress', 'webp', '--texture-size', '1024',
-  '--join', 'false', '--flatten', 'false', '--instance', 'false', '--simplify', 'false', '--palette', 'false'],
+  '--join', 'false', '--flatten', 'false', '--instance', 'false', '--simplify', 'false', '--palette', 'false',
+  '--prune', 'false'], // keep the empty marker nodes (waterfall positions, blade centres)
 { stdio: 'pipe', shell: process.platform === 'win32' });
 copyFileSync('assets/raw/boat/boat.opt.glb', OUT);
 console.log(`✓ ${OUT} ${(statSync(OUT).size / 1024).toFixed(0)} KB (raw ${(statSync(SRC).size / 1024).toFixed(0)} KB)`);

@@ -23,6 +23,53 @@ interface Assets { gltf: GLTF; lupines: THREE.Texture | null }
 
 const LUPINE_TILES = [1, 2, 3];     // atlas tiles with complete clumps (scripts/painted/sprites.mjs)
 
+const fallVertex = /* glsl */ `
+  #include <common>
+  #include <fog_pars_vertex>
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    #include <fog_vertex>
+  }
+`;
+/** A real waterfall sheet: strands of water at three speeds, a bright lip, ragged see-through
+ *  edges where the sheet breaks into strands, and white water at the foot. */
+const fallFragment = /* glsl */ `
+  #include <common>
+  #include <fog_pars_fragment>
+  uniform float uTime;
+  uniform float uLight;
+  varying vec2 vUv;
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float noise(vec2 p) {
+    vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
+  }
+  void main() {
+    float across = vUv.x, along = vUv.y;            // along = 1 at the lip, 0 at the foot
+    float t = uTime;
+    float s1 = noise(vec2(across * 8.0, along * 2.2 + t * 2.0));
+    float s2 = noise(vec2(across * 24.0, along * 5.5 + t * 3.3));
+    float s3 = noise(vec2(across * 64.0, along * 13.0 + t * 5.2));
+    float strands = s1 * 0.5 + s2 * 0.32 + s3 * 0.18;
+    float edge = smoothstep(0.0, 0.2, across) * smoothstep(1.0, 0.8, across);
+    float ragged = smoothstep(0.22, 0.5, strands * (0.6 + 0.6 * edge) + edge * 0.35);
+    float lip = smoothstep(1.0, 0.95, along);
+    float foot = smoothstep(0.2, 0.0, along);
+    vec3 deep = vec3(0.42, 0.62, 0.74);
+    vec3 white = vec3(0.97, 0.99, 1.0);
+    vec3 col = mix(deep, white, smoothstep(0.3, 0.75, strands));
+    col = mix(col, white, smoothstep(0.86, 0.98, along) * 0.6 + foot);
+    float alpha = edge * ragged * lip * (0.78 + 0.22 * strands);
+    alpha = max(alpha, foot * edge * 0.92);
+    gl_FragColor = vec4(col * uLight, clamp(alpha, 0.0, 0.97));
+    #include <colorspace_fragment>
+    #include <fog_fragment>
+  }
+`;
+
 const foamVertex = /* glsl */ `
   #include <common>
   #include <fog_pars_vertex>
@@ -69,6 +116,40 @@ export class PaintedShore {
   private live = new Map<number, THREE.Object3D>();
   private fallMat: THREE.ShaderMaterial;
   private foamMat: THREE.ShaderMaterial;
+  private sprayMat = new THREE.PointsMaterial({ color: 0xf4fbff, size: 0.28, transparent: true, opacity: 0.85, depthWrite: false, fog: true });
+  private spray: { geo: THREE.BufferGeometry; vel: Float32Array; life: Float32Array } | null = null;
+  private lastTime = 0;
+
+  private sprayGeometry() {
+    if (!this.spray) {
+      const n = 90;
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+      this.spray = { geo, vel: new Float32Array(n * 3), life: new Float32Array(n).map(() => Math.random() * 1.2) };
+    }
+    return this.spray.geo;
+  }
+
+  /** droplets leap out from the foot of the fall towards the river and drop back */
+  private updateSpray(dt: number) {
+    if (!this.spray) return;
+    const { geo, vel, life } = this.spray;
+    const pos = geo.attributes.position as THREE.BufferAttribute;
+    const a = pos.array as Float32Array;
+    for (let i = 0; i < life.length; i++) {
+      life[i] -= dt;
+      if (life[i] <= 0) {
+        life[i] = 0.7 + Math.random() * 0.7;
+        a.set([0, 0, (Math.random() - 0.5) * 3], i * 3);
+        vel.set([0.6 + Math.random() * 2.2, 1.2 + Math.random() * 2.4, (Math.random() - 0.5) * 1.2], i * 3);
+      }
+      vel[i * 3 + 1] -= 6 * dt;
+      a[i * 3] += vel[i * 3] * dt;
+      a[i * 3 + 1] = Math.max(0, a[i * 3 + 1] + vel[i * 3 + 1] * dt);
+      a[i * 3 + 2] += vel[i * 3 + 2] * dt;
+    }
+    pos.needsUpdate = true;
+  }
   private mistMat: THREE.SpriteMaterial;
 
   private static loading = new Map<BankKind, Promise<Assets>>();
@@ -87,12 +168,13 @@ export class PaintedShore {
     return p;
   }
 
-  constructor(kind: BankKind, fall: THREE.ShaderMaterial, mist: THREE.SpriteMaterial) {
+  constructor(kind: BankKind, mist: THREE.SpriteMaterial) {
     // every section is built as a left bank; the glacier is mirrored onto the right bank
     if (kind === 'glacier') this.group.scale.x = -1;
-    // the fjord's waterfall shader, a little softer: the painting already shows the water
-    this.fallMat = fall.clone();
-    this.fallMat.uniforms.uAlpha.value = 0.75;
+    this.fallMat = new THREE.ShaderMaterial({
+      vertexShader: fallVertex, fragmentShader: fallFragment, transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: true,
+      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uLight: { value: 1 } }]),
+    });
     this.foamMat = new THREE.ShaderMaterial({
       vertexShader: foamVertex, fragmentShader: foamFragment, transparent: true, depthWrite: false, fog: true,
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uLight: { value: 1 } }]),
@@ -142,6 +224,12 @@ export class PaintedShore {
         foam.position.set(marker.position.x + 1.6, 0.08, marker.position.z);
         foam.renderOrder = 3;
         root.add(foam);
+        // spray thrown up where the water hits the river (one shared, animated point cloud)
+        const spray = new THREE.Points(this.sprayGeometry(), this.sprayMat);
+        spray.position.set(marker.position.x + 0.9, 0.1, marker.position.z);
+        spray.frustumCulled = false;
+        spray.renderOrder = 4;
+        root.add(spray);
       }
       for (let k = 0; k < 3; k++) {
         const m = new THREE.Sprite(this.mistMat);
@@ -177,15 +265,18 @@ export class PaintedShore {
     let seed = 7;
     const r = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3();
-    for (let n = 0; n < 200; n++) {
+    for (let n = 0; n < 380; n++) {
       // section-local: the ledge at the water (3.6 m wide, scripts/blender/painted_shore.py), all
       // along the section except where the waterfall comes down (z ≈ -76)
       const z = -r() * SHORE_SECTION;
       if (Math.abs(z + 76) < 7) continue;
-      const x = -14 - (0.4 + r() * 2.8);
+      // the first ~50 m of a section are an open, low shore (slopes visible from the boat):
+      // lupines spread up the slopes there; along the tall cliffs only on the ledge at the water
+      const open = -z < 50;
+      const x = -14 - (0.4 + r() * (open ? 16 : 2.8));
       ray.set(new THREE.Vector3(x, 200, z), down);
       const hit = ray.intersectObject(bank, true)[0];
-      if (!hit || hit.point.y < 0.3 || hit.point.y > 2.5 || !hit.face || hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y < 0.7) continue;
+      if (!hit || hit.point.y < 0.3 || hit.point.y > (open ? 7 : 2.5) || !hit.face || hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y < 0.7) continue;
       const tile = LUPINE_TILES[Math.floor(r() * LUPINE_TILES.length)];
       const size = 0.9 + r() * 0.7;
       p.copy(hit.point).y -= 0.08;
@@ -220,6 +311,9 @@ export class PaintedShore {
     this.material?.color.copy(p.tint).multiplyScalar(p.light);
     this.lupineMat?.color.copy(p.tint).multiplyScalar(p.light);
     this.lupineTime.value = p.time;
+    this.updateSpray(Math.min(0.1, Math.max(0, p.time - this.lastTime)));
+    this.lastTime = p.time;
+    this.sprayMat.color.setRGB(0.96, 0.98, 1).multiplyScalar(p.light);
     this.fallMat.uniforms.uTime.value = p.time;
     this.fallMat.uniforms.uLight.value = p.light;
     this.foamMat.uniforms.uTime.value = p.time;

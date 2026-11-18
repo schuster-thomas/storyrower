@@ -11,7 +11,8 @@ mkdirSync('src/assets/painted', { recursive: true });
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 execFileSync(npx, ['gltf-transform', 'optimize', SRC, TMP,
   '--compress', 'meshopt', '--texture-compress', 'webp', '--texture-size', '4096',
-  '--join', 'false', '--flatten', 'false', '--instance', 'false', '--simplify', 'false', '--palette', 'false'],
+  '--join', 'false', '--flatten', 'false', '--instance', 'false', '--simplify', 'false', '--palette', 'false',
+  '--prune', 'false'], // keep the empty marker nodes (waterfall positions, blade centres)
 { stdio: 'pipe', shell: process.platform === 'win32' });
 copyFileSync(TMP, OUT);
 console.log(`✓ ${OUT} ${(statSync(OUT).size / 1024).toFixed(0)} KB`);

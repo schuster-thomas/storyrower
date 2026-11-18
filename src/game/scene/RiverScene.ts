@@ -141,8 +141,8 @@ export class RiverScene {
       this.kit = kit;
       this.dropChunks();
     }).catch((e) => console.warn('Model kit could not be loaded, the fjord stays without icebergs', e));
-    this.painted = new PaintedShore('cliffs', this.mats.fall, this.mats.mist);
-    this.paintedIce = new PaintedShore('glacier', this.mats.fall, this.mats.mist);
+    this.painted = new PaintedShore('cliffs', this.mats.mist);
+    this.paintedIce = new PaintedShore('glacier', this.mats.mist);
     this.scene.add(this.painted.group, this.paintedIce.group);
     const paintedReady = Promise.all([this.painted.loaded, this.paintedIce.loaded]).then(() => this.dropChunks());
     this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady, paintedReady]).then(() => {});

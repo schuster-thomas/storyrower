@@ -53,15 +53,21 @@ ROCK_Y = 34.0             # the puffin rock in the water
 LUPINES = (8.0, 60.0)     # lupine field along the lower bench
 
 LEDGE = 3.6               # width of the ledge at the foot of the cliffs
-LEDGE_LIFT = float(os.environ.get('LEDGE_LIFT', '1.8'))   # the painter put the waterline ~1.3 m higher than the blockout
+LEDGE_LIFT = float(os.environ.get('LEDGE_LIFT', '0.3'))   # per painting: how far the painted ledge sits above the geometry's
 
 def band_d(y):
     return 34 + 6 * n1(0, y, 0.03, 4.0)
 
+def cliffs_tall(y):
+    """0 = low open shore with grassy slopes (first half of the section), 1 = tall basalt cliffs
+    (second half, with the waterfall) – so the valley is not walled in everywhere"""
+    return smooth(44.0, 62.0, y)
+
 def cliffs_height(d, y):
     if d < 0:
         return -3.0 + d * 0.05
-    cliff = 9 + 3 * n1(0, y, 0.06, 1.0) + 2.0 * column(y, 3.5, 1)   # basalt columns ~3.5 m wide
+    tall = cliffs_tall(y)
+    cliff = (3.0 + 4.5 * tall) + 2.5 * n1(0, y, 0.06, 1.0) * (0.4 + 0.6 * tall) + 2.0 * column(y, 3.5, 1) * tall   # basalt columns ~3.5 m wide
     notch = 3.0 * math.exp(-((y - FALL_Y) / 3.5) ** 2)
     # a low grassy rock ledge at the water (lupines, puffins – what you see from the boat), except
     # where the waterfall comes down: there the cliff drops straight into the river
@@ -71,8 +77,8 @@ def cliffs_height(d, y):
     h = ledge + (cliff - notch - ledge) * smooth(0.0, 1.0, d) if d > 0 else ledge
     bd = band_d(y)
     h += max(0.0, d - 1.0) * 0.10
-    h += (22 - 5 * math.exp(-((y - FALL_Y) / 4.0) ** 2)) * smooth(bd, bd + 3, d)
-    h += max(0.0, d - bd - 3) * 0.45 * (0.8 + 0.4 * n1(d, y, 0.012, 7.0))
+    h += (16 - 4 * math.exp(-((y - FALL_Y) / 4.0) ** 2)) * (0.25 + 0.75 * tall) * smooth(bd, bd + 3 + 10 * (1 - tall), d)
+    h += max(0.0, d - bd - 3) * 0.3 * (0.6 + 0.4 * tall) * (0.8 + 0.4 * n1(d, y, 0.012, 7.0))
     h += n1(d, y, 0.08, 2.0) * 2.0 * smooth(3, 14, d)
     return h
 
@@ -83,17 +89,17 @@ COL = {
 }
 
 def cliffs_colour(cx, cy, cz, ny, d):
+    # waterfall and lupines are NOT painted: they are real 3D elements in the game (a painted
+    # waterfall or flower field always looks flat). The painting only shows the wet rock gully.
     if abs(cy - FALL_Y) < 2.2 and ny < 0.55 and cz > 0.5 and (d < 2.5 or abs(d - band_d(cy) - 1.5) < 3):
-        return COL['fall']
+        return COL['wet']
     if cz < 0.6:
         return COL['wet']
     if ny > 0.6:
         if cz > 55 + 20 * n1(cx, cy, 0.03, 9.0):
             return COL['snow']
-        if cz < 2.5 and d < LEDGE + 0.2:     # the ledge at the water: lupines and grass
-            return COL['lupine'] if n1(cx, cy, 0.25, 3.0) > -0.2 and abs(cy - FALL_Y) > 7 else COL['grass']
-        if LUPINES[0] < cy < LUPINES[1] and LEDGE + 2 < d < band_d(cy) - 4 and n1(cx, cy, 0.18, 3.0) > -0.15:
-            return COL['lupine']
+        if cz < 2.5 and d < LEDGE + 0.2:     # the ledge at the water (the lupines on it are 3D)
+            return COL['grass'] if n1(cx, cy, 0.25, 3.0) > -0.3 else COL['moss']
         return COL['grass'] if n1(cx, cy, 0.1, 5.0) > 0 else COL['moss']
     return COL['rockLight'] if column(cy, 3.5, 1) > 0.5 else COL['rock']
 
@@ -103,11 +109,13 @@ def glacier_height(d, y):
         return -3.0 + d * 0.05
     # ice cliff split into serac towers of different heights, crevassed ice field behind
     tower = column(y, 5.0, 2)
-    front = 8 + 3 * n1(0, y, 0.05, 1.7) + 6 * tower
+    # a low ice ramp along part of each section, so the glacier is not one long wall
+    tall = 1.0 - smooth(62.0, 78.0, y) * (1.0 - smooth(104.0, 118.0, y))
+    front = (2.5 + 5.5 * tall) + 3 * n1(0, y, 0.05, 1.7) * (0.5 + 0.5 * tall) + 6 * tower * (0.3 + 0.7 * tall)
     h = front * smooth(0.0, 0.8, d)
     blocks = column(y + 2.5 * math.floor(d / 7), 7.0, 3) * 6 * (1 - smooth(25, 90, d))
     h += blocks * smooth(1, 4, d)
-    h += max(0.0, d - 2) * 0.32 + n1(d, y, 0.02, 4.0) * 10 * smooth(30, 120, d)
+    h += max(0.0, d - 2) * 0.22 + n1(d, y, 0.02, 4.0) * 8 * smooth(30, 120, d)
     return h
 
 def glacier_colour(cx, cy, cz, ny, d):
