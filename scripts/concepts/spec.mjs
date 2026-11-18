@@ -54,6 +54,13 @@ export const ITEMS = [
     prompt: 'Full-body character reference for 3D model generation: exactly the rower character from the reference sheet (athletic adult, short brown hair, friendly face, red and white rowing unisuit, white socks and light sneakers). Standing in a neutral A-pose: arms straight and angled down about 45 degrees away from the body, palms facing down, fingers together, legs straight and slightly apart. Front view, facing the camera, the whole body from head to feet in frame with some margin. Plain light grey background, soft even lighting, no cast shadows, no oars, no boat, no props.',
   },
   {
+    // second version: closed fists, because the auto-rig has no finger bones to close open hands
+    id: 'ref-rower-fists',
+    size: '1024x1536',
+    refs: ['assets/raw/concepts/ref-rower-apose.png'],
+    prompt: 'Exactly the same character, outfit, proportions, pose and framing as the reference image, with one change: both hands are closed into compact loose fists as if gripping a horizontal bar – fingers curled tightly, thumbs tucked along the index fingers, backs of the hands facing outwards and slightly up, wrists straight. The hands are a natural, slightly small size. Neutral A-pose, front view, plain light grey background, soft even lighting, no shadows, no props.',
+  },
+  {
     id: 'sheet-puffin',
     size: '1536x1024',
     refs: [MOCKUP],

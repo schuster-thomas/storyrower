@@ -56,17 +56,36 @@ def ik(bone, target, pole, chain=2, pole_angle=-math.pi / 2):
     return c
 
 # Character left side ends up at +X (after the turn), so the left hand holds the +X oar.
-for side, prefix in ((1, 'Left'), (-1, 'Right')):
-    _, _, wrist, fingers = oars[side]
-    elbow = empty(f'ElbowPole{side}', seat, (side * 0.75, 0.25, 0.25))
-    ik(P + prefix + 'ForeArm', wrist, elbow)
-    # fingers wrap over the handle
-    t = pb[P + prefix + 'Hand'].constraints.new('DAMPED_TRACK')
-    t.target = fingers
+# The fists close around the handle: the wrist sits on the rower's side of the grip, the fist
+# points through the grip and away from the body, knuckles up. In the oar's local space the rower
+# is on +Y of the right oar and on -Y of the left one (its base yaw is π).
+HAND_SCALE = float(os.environ.get('HAND_SCALE', '0.9'))
+# The auto-rig rolls left and right bones differently, so every arm and knee gets its own IK pole
+# angle, searched below (env ELBOW_LEFT, KNEE_RIGHT … override it).
+chains = []   # (kind, prefix, side, constraint)
+hold = -INBOARD + 0.07
+# Mixamo names: Left = the character's left (+X once turned to face the stern). SWAP=1 is a debug switch.
+SWAP = os.environ.get('SWAP') == '1'
+for side, prefix in (((1, 'Right'), (-1, 'Left')) if SWAP else ((1, 'Left'), (-1, 'Right'))):
+    pivot = oars[side][0]
+    hand = pb[P + prefix + 'Hand']
+    hand.scale = (HAND_SCALE,) * 3
+    reach = hand.bone.length * s * HAND_SCALE * 0.55        # wrist to the middle of the fist
+    wrist = empty(f'Wrist{side}', pivot, (hold, side * reach, 0.025))
+    through = empty(f'Through{side}', pivot, (hold, -side * 0.12, -0.03))
+    elbow = empty(f'ElbowPole{side}', seat, (side * 1.0, 0.1, 0.45))   # out to the side: stable with straight arms
+    chains.append(('ELBOW', prefix, side, ik(P + prefix + 'ForeArm', wrist, elbow)))
+    t = hand.constraints.new('DAMPED_TRACK')
+    t.target = through
     t.track_axis = 'TRACK_Y'
     ankle = empty(f'Ankle{side}', boat, (side * 0.11, FEET_Y, 0.16))
     knee = empty(f'KneePole{side}', boat, (side * 0.16, FEET_Y + 0.1, 1.4))
-    ik(P + prefix + 'Leg', ankle, knee)
+    chains.append(('KNEE', prefix, side, ik(P + prefix + 'Leg', ankle, knee)))
+    # feet flat on the stretcher plate: toes towards the stern and up along the plate
+    toe = empty(f'Toe{side}', boat, (side * 0.12, FEET_Y - 0.3, 0.40))
+    t = pb[P + prefix + 'Foot'].constraints.new('DAMPED_TRACK')
+    t.target = toe
+    t.track_axis = 'TRACK_Y'
 
 # Body swing: lean from the hips (+ = towards the stern), the head stays level
 axis = (arm.matrix_world.inverted().to_3x3() @ Vector((1, 0, 0))).normalized()
@@ -79,12 +98,41 @@ for phase, lean in LEAN:
         b.rotation_quaternion = Quaternion((b.bone.matrix_local.to_3x3().inverted() @ axis), lean * share)
         b.keyframe_insert('rotation_quaternion', frame=f)
 
+# Pole angles: elbows as far out to the side as possible (and not up), knees up over the feet
+SAMPLE = [0, 10, 21, 40]
+def world(name):
+    ev = arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    return ev.matrix_world @ ev.pose.bones[P + name].head
+def score(kind, prefix, side):
+    total = 0.0
+    for f in SAMPLE:
+        scene.frame_set(f)
+        if kind == 'ELBOW':
+            e, sh = world(prefix + 'ForeArm'), world(prefix + 'Arm')
+            total += side * (e.x - sh.x) - 0.5 * max(0.0, e.z - sh.z)
+        else:
+            k, hip = world(prefix + 'Leg'), world(prefix + 'UpLeg')
+            total += k.z - 2 * abs(k.x - hip.x)
+    return total
+for kind, prefix, side, c in chains:
+    env = os.environ.get(f'{kind}_{prefix.upper()}')
+    if env is not None:
+        c.pole_angle = math.radians(float(env))
+        continue
+    best = None
+    for deg in range(-180, 180, 15):
+        c.pole_angle = math.radians(deg)
+        sc = score(kind, prefix, side)
+        if best is None or sc > best[0]: best = (sc, deg)
+    c.pole_angle = math.radians(best[1])
+    print(f'pole {kind} {prefix}: {best[1]} deg')
+
 # Bake IK into plain keys and drop the helpers
 bpy.ops.pose.select_all(action='SELECT')
 bpy.ops.nla.bake(frame_start=0, frame_end=FRAMES, only_selected=True, visual_keying=True,
                  clear_constraints=True, use_current_action=True, bake_types={'POSE'})
 bpy.ops.object.mode_set(mode='OBJECT')
 for o in list(scene.objects):
-    if o.name.startswith(('ElbowPole', 'Ankle', 'KneePole')):
+    if o.name.startswith(('ElbowPole', 'Ankle', 'KneePole', 'Wrist', 'Through', 'Toe')):
         bpy.data.objects.remove(o, do_unlink=True)
 print('rower baked')

@@ -20,7 +20,7 @@ FRAMES = 60                  # one stroke cycle
 LENGTH = 8.0                 # hull length (m)
 BEAM = 0.36                  # max hull width – a bit wider than real so it reads from the camera
 PIN_X = 0.80                 # half the sculling span (pin to centreline)
-PIN_Y = -0.09                # pin position along the boat (just stern of the finish seat position)
+PIN_Y = -0.36                # pin position along the boat: long arms at the catch, hands at the body at the finish
 PIN_Z = 0.36                 # oarlock height above the waterline
 INBOARD = 0.88               # pin to the handle end
 OUTBOARD = 2.00              # pin to the blade tip
@@ -191,25 +191,20 @@ def build_oar(side):
     band.rotation_euler = (0, math.radians(-30), 0)
     tube('Neck', (OUTBOARD - 0.55, 0, 0), (OUTBOARD - 0.45, 0, -0.01), 0.016, M['shaft'], feather)
     empty(f'Blade{"R" if side > 0 else "L"}', feather, (OUTBOARD - 0.25, 0, -0.02))   # splash position for the game
-    # hand helpers (used by the rower IK): wrist just above the handle on the rower's side, fingers
-    # wrapping over it. The rower sits on local +Y of the right oar and local -Y of the left one.
-    hold = -INBOARD + 0.07
-    wrist = empty(f'Wrist{side}', pivot, (hold, 0.035 * side, 0.05))
-    fingers = empty(f'Fingers{side}', pivot, (hold, -0.06 * side, -0.07))
-    return pivot, feather, wrist, fingers
+    return pivot, feather
 
 oars = {side: build_oar(side) for side in (1, -1)}
 
 # ------------------------------------------------------------------ stroke animation
 # (phase, value) keys; phase 0 = catch, 0.35 = finish
-SWEEP = [(0, 0.95), (0.12, 0.62), (0.25, 0.0), (0.35, -0.42), (0.45, -0.15), (0.6, 0.3), (0.8, 0.75), (1.0, 0.95)]
+SWEEP = [(0, 0.92), (0.12, 0.6), (0.25, -0.05), (0.35, -0.5), (0.45, -0.2), (0.6, 0.3), (0.8, 0.72), (1.0, 0.92)]
 # + = blade down. Buried: blade centre just under the surface; recovery: ~15 cm above it
 BURIED = math.atan2(PIN_Z + 0.06, OUTBOARD - 0.25)
 CARRY = math.atan2(PIN_Z - 0.16, OUTBOARD - 0.25)
 PITCH = [(0, BURIED * 0.75), (0.04, BURIED), (0.33, BURIED), (0.39, CARRY), (0.92, CARRY), (1.0, BURIED * 0.75)]
 FEATHER = [(0, 0), (0.36, 0), (0.43, math.pi / 2), (0.85, math.pi / 2), (0.95, 0), (1.0, 0)]
 SEAT = [(0, -0.28), (0.08, -0.22), (0.2, 0.06), (0.28, 0.16), (0.35, 0.17), (0.55, 0.14), (0.75, -0.06), (1.0, -0.28)]
-LEAN = [(0, 0.45), (0.15, 0.35), (0.3, -0.25), (0.35, -0.35), (0.5, -0.12), (0.62, 0.45), (1.0, 0.45)]
+LEAN = [(0, 0.55), (0.15, 0.42), (0.3, -0.25), (0.35, -0.35), (0.5, -0.12), (0.62, 0.5), (1.0, 0.55)]
 
 def key(o, path, index, keys, base=0.0, scale=1.0):
     for p, v in keys:
@@ -217,7 +212,7 @@ def key(o, path, index, keys, base=0.0, scale=1.0):
         else: getattr(o, path)[index] = base + v * scale
         o.keyframe_insert(data_path=path, index=-1 if index is None else index, frame=round(p * FRAMES))
 
-for side, (pivot, feather, _, _) in oars.items():
+for side, (pivot, feather) in oars.items():
     # right oar: +yaw swings the blade to the bow; left oar mirrored around a base yaw of π
     key(pivot, 'rotation_euler', 2, SWEEP, base=0 if side > 0 else math.pi, scale=1 if side > 0 else -1)
     key(pivot, 'rotation_euler', 1, PITCH)
@@ -253,16 +248,21 @@ print('exported', f'{OUT}/boat.glb')
 if PREVIEW:
     scene.render.engine = 'BLENDER_WORKBENCH'
     scene.display.shading.light = 'STUDIO'
-    scene.display.shading.color_type = 'MATERIAL'
     scene.render.resolution_x, scene.render.resolution_y = 1280, 720
     cam = bpy.data.objects.new('Cam', bpy.data.cameras.new('Cam'))
     scene.collection.objects.link(cam)
     scene.camera = cam
     # game camera (behind the stern, the rower faces it) and a side view, through the stroke
     views = []
-    for frame in (0, 10, 21, 40):
-        views.append((frame, f'game-{frame:02d}', (0, -7.5, 2.6), (0, 0, 0.7)))
-        views.append((frame, f'side-{frame:02d}', (5.0, -0.2, 1.0), (0, -0.2, 0.55)))
+    CLOSE = '--close' in ARGS   # close-ups of the hands on the grips
+    scene.display.shading.color_type = 'TEXTURE' if CLOSE else 'MATERIAL'
+    for frame in ((0, 5, 21, 50) if '--close' in ARGS else (0, 10, 21, 40)):
+        if CLOSE:
+            views.append((frame, f'hands-{frame:02d}', (0.9, -2.2, 1.3), (0, -0.2, 0.55)))
+            views.append((frame, f'handfront-{frame:02d}', (0.0, -2.6, 0.9), (0, -0.2, 0.6)))
+        else:
+            views.append((frame, f'game-{frame:02d}', (0, -7.5, 2.6), (0, 0, 0.7)))
+            views.append((frame, f'side-{frame:02d}', (5.0, -0.2, 1.0), (0, -0.2, 0.55)))
     for frame, name, loc, look in views:
         scene.frame_set(frame)
         cam.location = loc
