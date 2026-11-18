@@ -20,8 +20,8 @@ FRAMES = 60                  # one stroke cycle
 LENGTH = 8.0                 # hull length (m)
 BEAM = 0.36                  # max hull width – a bit wider than real so it reads from the camera
 PIN_X = 0.80                 # half the sculling span (pin to centreline)
-PIN_Y = -0.36                # pin position along the boat: long arms at the catch, hands at the body at the finish
-PIN_Z = 0.36                 # oarlock height above the waterline
+PIN_Y = -0.38                # pin position along the boat: straight arms at the catch, hands at the ribs at the finish
+PIN_Z = 0.44                 # oarlock height above the waterline (handles at about knee height at the catch)
 INBOARD = 0.88               # pin to the handle end
 OUTBOARD = 2.00              # pin to the blade tip
 SEAT_Z = 0.20
@@ -197,14 +197,14 @@ oars = {side: build_oar(side) for side in (1, -1)}
 
 # ------------------------------------------------------------------ stroke animation
 # (phase, value) keys; phase 0 = catch, 0.35 = finish
-SWEEP = [(0, 0.92), (0.12, 0.6), (0.25, -0.05), (0.35, -0.5), (0.45, -0.2), (0.6, 0.3), (0.8, 0.72), (1.0, 0.92)]
+SWEEP = [(0, 0.92), (0.12, 0.6), (0.25, -0.1), (0.35, -0.62), (0.45, -0.3), (0.6, 0.2), (0.75, 0.45), (0.88, 0.72), (1.0, 0.92)]
 # + = blade down. Buried: blade centre just under the surface; recovery: ~15 cm above it
 BURIED = math.atan2(PIN_Z + 0.06, OUTBOARD - 0.25)
 CARRY = math.atan2(PIN_Z - 0.16, OUTBOARD - 0.25)
 PITCH = [(0, BURIED * 0.75), (0.04, BURIED), (0.33, BURIED), (0.39, CARRY), (0.92, CARRY), (1.0, BURIED * 0.75)]
 FEATHER = [(0, 0), (0.36, 0), (0.43, math.pi / 2), (0.85, math.pi / 2), (0.95, 0), (1.0, 0)]
 SEAT = [(0, -0.28), (0.08, -0.22), (0.2, 0.06), (0.28, 0.16), (0.35, 0.17), (0.55, 0.14), (0.75, -0.06), (1.0, -0.28)]
-LEAN = [(0, 0.55), (0.15, 0.42), (0.3, -0.25), (0.35, -0.35), (0.5, -0.12), (0.62, 0.5), (1.0, 0.55)]
+LEAN = [(0, 0.6), (0.15, 0.45), (0.3, -0.25), (0.35, -0.35), (0.42, -0.25), (0.52, 0.2), (0.62, 0.5), (1.0, 0.6)]
 
 def key(o, path, index, keys, base=0.0, scale=1.0):
     for p, v in keys:
@@ -259,7 +259,7 @@ if PREVIEW:
     for frame in ((0, 5, 21, 50) if '--close' in ARGS else (0, 10, 21, 40)):
         if CLOSE:
             views.append((frame, f'hands-{frame:02d}', (0.9, -2.2, 1.3), (0, -0.2, 0.55)))
-            views.append((frame, f'handfront-{frame:02d}', (0.0, -2.6, 0.9), (0, -0.2, 0.6)))
+            views.append((frame, f'handfront-{frame:02d}', (0.0, -2.8, 1.7), (0, -0.3, 0.45)))
         else:
             views.append((frame, f'game-{frame:02d}', (0, -7.5, 2.6), (0, 0, 0.7)))
             views.append((frame, f'side-{frame:02d}', (5.0, -0.2, 1.0), (0, -0.2, 0.55)))

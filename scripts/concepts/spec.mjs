@@ -61,6 +61,21 @@ export const ITEMS = [
     prompt: 'Exactly the same character, outfit, proportions, pose and framing as the reference image, with one change: both hands are closed into compact loose fists as if gripping a horizontal bar – fingers curled tightly, thumbs tucked along the index fingers, backs of the hands facing outwards and slightly up, wrists straight. The hands are a natural, slightly small size. Neutral A-pose, front view, plain light grey background, soft even lighting, no shadows, no props.',
   },
   {
+    // technique reference for the stroke animation
+    id: 'stroke-front',
+    size: '1536x1024',
+    refs: ['assets/raw/concepts/ref-rower-fists.png', 'assets/raw/concepts/sheet-rower.png'],
+    background: 'opaque',
+    prompt: 'Rowing technique reference sheet, plain light grey background, four panels in a row labelled only by position (no text). The same athlete in a racing single scull, seen from directly behind the stern at chest height, so the sculler faces the viewer. Correct sculling technique, anatomically accurate: 1 the catch – shins vertical, body leaning forward from the hips, arms fully straight reaching forward, hands about shoulder-width apart; 2 the drive – legs pushing, arms still straight; 3 the finish – legs flat, body leaning slightly back, hands drawn in to the lower ribs, elbows pointing outwards and back past the body, forearms horizontal; 4 the recovery – arms straight again, body pivoted forward, knees starting to rise. In every panel the hands hold the ends of the oar handles in an overhand grip: palms facing down, knuckles up, fingers wrapped around the handle, thumbs on the end of the handle, wrists flat and in line with the forearms (not bent). Left hand slightly ahead of and above the right one where the handles overlap.',
+  },
+  {
+    id: 'stroke-side',
+    size: '1536x1024',
+    refs: ['assets/raw/concepts/ref-rower-fists.png', 'assets/raw/concepts/sheet-rower.png'],
+    background: 'opaque',
+    prompt: 'Rowing technique reference sheet, plain light grey background, four panels in a row, no text. The same athlete in a racing single scull seen exactly from the side, boat moving to the left (the sculler faces right, towards the stern). Correct sculling technique: 1 catch – compressed, shins vertical, body angled forward about 30 degrees, arms straight, blades square and just entering the water behind the athlete; 2 drive – legs pushing, body still forward, arms straight, blades in the water; 3 finish – legs flat, body leaning back about 15 degrees, hands at the lower ribs, elbows behind the body, blades coming out; 4 recovery – hands away first, body forward, then sliding forward with knees rising, blades feathered flat above the water. Overhand grip on the handle ends, wrists flat in line with the forearms.',
+  },
+  {
     id: 'sheet-puffin',
     size: '1536x1024',
     refs: [MOCKUP],
