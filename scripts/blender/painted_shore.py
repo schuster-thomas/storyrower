@@ -52,6 +52,9 @@ FALL_Y = 76.0             # the waterfall
 ROCK_Y = 34.0             # the puffin rock in the water
 LUPINES = (8.0, 60.0)     # lupine field along the lower bench
 
+LEDGE = 3.6               # width of the ledge at the foot of the cliffs
+LEDGE_LIFT = float(os.environ.get('LEDGE_LIFT', '1.8'))   # the painter put the waterline ~1.3 m higher than the blockout
+
 def band_d(y):
     return 34 + 6 * n1(0, y, 0.03, 4.0)
 
@@ -60,7 +63,12 @@ def cliffs_height(d, y):
         return -3.0 + d * 0.05
     cliff = 9 + 3 * n1(0, y, 0.06, 1.0) + 2.0 * column(y, 3.5, 1)   # basalt columns ~3.5 m wide
     notch = 3.0 * math.exp(-((y - FALL_Y) / 3.5) ** 2)
-    h = (cliff - notch) * smooth(0.0, 1.0, d)
+    # a low grassy rock ledge at the water (lupines, puffins – what you see from the boat), except
+    # where the waterfall comes down: there the cliff drops straight into the river
+    ledge_w = LEDGE * (1 - math.exp(-((y - FALL_Y) / 5.0) ** 2))
+    ledge = (0.7 + 0.35 * n1(0, y, 0.15, 6.0)) * smooth(0.0, 0.6, d)
+    d = max(0.0, d - ledge_w)
+    h = ledge + (cliff - notch - ledge) * smooth(0.0, 1.0, d) if d > 0 else ledge
     bd = band_d(y)
     h += max(0.0, d - 1.0) * 0.10
     h += (22 - 5 * math.exp(-((y - FALL_Y) / 4.0) ** 2)) * smooth(bd, bd + 3, d)
@@ -82,7 +90,9 @@ def cliffs_colour(cx, cy, cz, ny, d):
     if ny > 0.6:
         if cz > 55 + 20 * n1(cx, cy, 0.03, 9.0):
             return COL['snow']
-        if LUPINES[0] < cy < LUPINES[1] and 2 < d < band_d(cy) - 4 and n1(cx, cy, 0.18, 3.0) > -0.15:
+        if cz < 2.5 and d < LEDGE + 0.2:     # the ledge at the water: lupines and grass
+            return COL['lupine'] if n1(cx, cy, 0.25, 3.0) > -0.2 and abs(cy - FALL_Y) > 7 else COL['grass']
+        if LUPINES[0] < cy < LUPINES[1] and LEDGE + 2 < d < band_d(cy) - 4 and n1(cx, cy, 0.18, 3.0) > -0.15:
             return COL['lupine']
         return COL['grass'] if n1(cx, cy, 0.1, 5.0) > 0 else COL['moss']
     return COL['rockLight'] if column(cy, 3.5, 1) > 0.5 else COL['rock']
@@ -198,11 +208,11 @@ for li in range(len(water.data.loops)): wa.data[li].color = lin(0x2a8fb0)
 
 # painting camera: across the river, looking at the whole section (it may stand inside the far
 # bank – only this bank is rendered)
-DIST = 52.0
+DIST, CAM_Z, TILT = 52.0, 8.0, 6.5
 cam = bpy.data.objects.new('PaintCam', bpy.data.cameras.new('PaintCam'))
 scene.collection.objects.link(cam)
-cam.location = (DIST - BASE, LENGTH / 2, 8)
-look = Vector((-BASE - 40, LENGTH / 2, 8 + (DIST + 40) * math.tan(math.radians(6.5))))
+cam.location = (DIST - BASE, LENGTH / 2, CAM_Z)
+look = Vector((-BASE - 40, LENGTH / 2, CAM_Z + (DIST + 40) * math.tan(math.radians(TILT))))
 cam.rotation_mode = 'QUATERNION'
 cam.rotation_quaternion = (look - cam.location).to_track_quat('-Z', 'Y')
 cam.data.sensor_fit = 'HORIZONTAL'
@@ -242,7 +252,12 @@ for o in projected:
     uv = me.uv_layers.new(name='UVMap')
     mw = o.matrix_world
     for loop in me.loops:
-        p = world_to_camera_view(scene, cam, mw @ me.vertices[loop.vertex_index].co)
+        co = mw @ me.vertices[loop.vertex_index].co
+        # the top of the ledge at the water is seen almost edge-on by the painting camera, so the
+        # painting's thin lupine strip sits a little above it: sample there, not the water below
+        if KIND == 'cliffs' and o is bank_obj and co.z > 0.3 and 0.05 < -co.x - bank(co.y) < LEDGE + 0.3:
+            co = co + Vector((0, 0, LEDGE_LIFT))
+        p = world_to_camera_view(scene, cam, co)
         uv.data[loop.index].uv = (p.x, p.y)
     for a in list(me.color_attributes): me.color_attributes.remove(a)
 
