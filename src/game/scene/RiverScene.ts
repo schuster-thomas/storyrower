@@ -6,6 +6,7 @@ import { Boat } from './Boat';
 import { Effects } from './Effects';
 import { buildFjordChunk, createFjordMaterials, disposeFjordChunk } from './Fjord';
 import { NatureKit } from './NatureKit';
+import { PaintedShore } from './PaintedShore';
 import { Post } from './Post';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
@@ -50,7 +51,7 @@ export class RiverScene {
 
   /** Start loading every asset of the world early (setup screen), so a game starts in the final look. */
   static preload() {
-    return Promise.all([Boat.preload(), Backdrop.preload(), NatureKit.load()]).then(() => {}, () => {});
+    return Promise.all([Boat.preload(), Backdrop.preload(), NatureKit.load(), PaintedShore.preload()]).then(() => {}, () => {});
   }
   private topColor = new THREE.Color();
   private horizonColor = new THREE.Color();
@@ -59,6 +60,9 @@ export class RiverScene {
   private backdrop: Backdrop;
   private light = 1;
   private kit: NatureKit | null = null;
+  /** painted left shore (replaces the generated slopes once loaded) */
+  private painted: PaintedShore;
+  private paintTint = new THREE.Color();
   private post: Post;
   private tint = new THREE.Color(1, 1, 1);
 
@@ -136,7 +140,10 @@ export class RiverScene {
       this.kit = kit;
       this.dropChunks();
     }).catch((e) => console.warn('Model kit could not be loaded, the fjord stays without icebergs', e));
-    this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady]).then(() => {});
+    this.painted = new PaintedShore(this.mats.fall, this.mats.mist);
+    this.scene.add(this.painted.group);
+    const paintedReady = this.painted.loaded.then(() => this.dropChunks());
+    this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady, paintedReady]).then(() => {});
     this.post = new Post(this.renderer, this.scene, this.camera);
     this.post.setQuality(quality);
     this.applyEnvironment(1);
@@ -221,6 +228,9 @@ export class RiverScene {
     this.applyFlash(dt);
     this.light = 0.45 + 0.55 * Math.min(1, this.env.sunIntensity / 2.2) * (1 - this.env.smoke * 0.25) + this.flashLevel * 0.4;
     this.updateChunks();
+    // phase tint for the painted light: ash greys it, the eruption warms it
+    this.paintTint.setRGB(1, 1, 1).lerp(new THREE.Color(0x9a948a), this.env.smoke * 0.45).lerp(new THREE.Color(1.1, 0.8, 0.62), this.env.lava * 0.35);
+    this.painted.update({ time: this.time, boatZ: this.z, ahead: this.q.chunksAhead * CHUNK, behind: CHUNKS_BEHIND * CHUNK, tint: this.paintTint, light: Math.min(1.1, this.light * 1.02) });
     this.mats.fall.uniforms.uTime.value = this.time;
     this.mats.fall.uniforms.uLight.value = Math.min(1.1, this.light);
     this.updateBoat(dt);
@@ -329,7 +339,7 @@ export class RiverScene {
       for (let i = min; i < current && target < 0; i++) if (!this.chunks.some((c) => c.index === i)) target = i;
       for (let i = current; i <= max && target < 0; i++) if (this.chunks.find((c) => c.index === i)?.gen !== this.chunkGen) target = i;
       if (target < 0) break;
-      const group = buildFjordChunk(target, CHUNK, this.mats, { kit: this.kit, detail: this.q.fjordDetail, shadows: this.sun.castShadow });
+      const group = buildFjordChunk(target, CHUNK, this.mats, { kit: this.kit, detail: this.q.fjordDetail, shadows: this.sun.castShadow, paintedLeft: this.painted.ready });
       this.scene.add(group);
       const old = this.chunks.find((c) => c.index === target);
       if (old) { this.scene.remove(old.group); disposeFjordChunk(old.group); this.chunks.splice(this.chunks.indexOf(old), 1); }

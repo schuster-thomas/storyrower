@@ -4,12 +4,15 @@ import { type NatureKit, Scatter } from './NatureKit';
 // ---------- shape of the fjord (pure functions of world z, mirrored in the water shader) ----------
 
 /** Distance from the boat's lane (x = 0) to the left shore (basalt slopes). */
-export const leftShore = (z: number) => 60 + 12 * Math.sin(z * 0.011) + 6 * Math.sin(z * 0.027 + 1.3);
+/** Painted shore sections are 200 m long and alternate normal / mirrored, so the shore line is
+ * symmetric about every multiple of 200 m (same function in scripts/blender/painted_shore.py). */
+export const SHORE_SECTION = 200;
+export const leftShore = (z: number) => { const w = (2 * Math.PI * z) / (2 * SHORE_SECTION); return 60 + 2 * Math.cos(w) + Math.cos(3 * w); };
 /** Distance from the boat's lane to the glacier front on the right. */
 export const glacierFront = (z: number) => 88 + 16 * Math.sin(z * 0.008 + 2.0) + 7 * Math.sin(z * 0.031 + 0.4);
 /** The same two functions in GLSL, for the water shader (shallows, glacier milk, foam). */
 export const FJORD_GLSL = /* glsl */ `
-  float leftShore(float z) { return 60.0 + 12.0 * sin(z * 0.011) + 6.0 * sin(z * 0.027 + 1.3); }
+  float leftShore(float z) { float w = 6.2831853 * z / 400.0; return 60.0 + 2.0 * cos(w) + cos(3.0 * w); }
   float glacierFront(float z) { return 88.0 + 16.0 * sin(z * 0.008 + 2.0) + 7.0 * sin(z * 0.031 + 0.4); }
 `;
 
@@ -86,6 +89,7 @@ const fallFragment = /* glsl */ `
   #include <fog_pars_fragment>
   uniform float uTime;
   uniform float uLight;
+  uniform float uAlpha;
   varying vec2 vUv;
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float noise(vec2 p) {
@@ -100,7 +104,7 @@ const fallFragment = /* glsl */ `
     float foamBottom = smoothstep(0.22, 0.0, along);
     float alpha = clamp(edge * lip * (0.62 + streaks * 0.45) + foamBottom * 0.5 * edge, 0.0, 0.97);
     vec3 col = mix(vec3(0.74, 0.87, 0.95), vec3(1.0), streaks) * uLight;
-    gl_FragColor = vec4(col, alpha);
+    gl_FragColor = vec4(col, alpha * uAlpha);
     #include <colorspace_fragment>
     #include <fog_fragment>
   }
@@ -127,7 +131,7 @@ export function createFjordMaterials(): FjordMaterials {
     ice: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, flatShading: true, emissive: 0x1a78b0, emissiveIntensity: 0.4 }),
     fall: new THREE.ShaderMaterial({
       vertexShader: fallVertex, fragmentShader: fallFragment, transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: true,
-      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uLight: { value: 1 } }]),
+      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uLight: { value: 1 }, uAlpha: { value: 1 } }]),
     }),
     mist: new THREE.SpriteMaterial({ map: mistTexture(), transparent: true, depthWrite: false, opacity: 0.7 }),
   };
@@ -209,22 +213,30 @@ function buildGlacier(z0: number, length: number, [rows, cols]: FjordDetail) {
     });
 }
 
-export interface FjordChunkOptions { kit: NatureKit | null; detail: FjordDetail; shadows: boolean }
+export interface FjordChunkOptions {
+  kit: NatureKit | null; detail: FjordDetail; shadows: boolean;
+  /** the left shore comes from painted sections (PaintedShore): skip the generated slopes there */
+  paintedLeft?: boolean;
+}
 
 /** One stretch of the fjord: both shores, waterfalls with mist, icebergs and shore rocks. */
 export function buildFjordChunk(index: number, length: number, m: FjordMaterials, o: FjordChunkOptions): THREE.Group {
   const group = new THREE.Group();
   const z0 = -index * length;
-  const slopes = new THREE.Mesh(buildSlopes(z0, length, o.detail), m.land);
   const glacier = new THREE.Mesh(buildGlacier(z0, length, [Math.round(o.detail[0] * 1.2), o.detail[1]]), m.ice);
-  slopes.matrixAutoUpdate = glacier.matrixAutoUpdate = false;
-  group.add(slopes, glacier);
+  glacier.matrixAutoUpdate = false;
+  group.add(glacier);
+  if (!o.paintedLeft) {
+    const slopes = new THREE.Mesh(buildSlopes(z0, length, o.detail), m.land);
+    slopes.matrixAutoUpdate = false;
+    group.add(slopes);
+  }
 
   let seed = index * 7919 + 13;
   const r = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
 
   // Waterfalls pour over the shore cliff into the fjord
-  if (r() < 0.55) {
+  if (r() < 0.55 && !o.paintedLeft) {
     const z = z0 - (0.2 + r() * 0.6) * length;
     const top = slopeHeight(3.2, z) + 0.5;
     const w = 4 + r() * 5;
@@ -255,7 +267,7 @@ export function buildFjordChunk(index: number, length: number, m: FjordMaterials
       s.add(r() < 0.5 ? 'Iceberg_1' : 'Iceberg_2', x, -0.6 - big * 0.6, z, 1.2 + big * big * 6, r() * Math.PI * 2, 0.55 + r() * 0.4);
     }
     // dark boulders at the foot of the cliffs
-    for (let k = 0; k < 6; k++) {
+    for (let k = 0; k < (o.paintedLeft ? 0 : 6); k++) {
       const z = z0 - r() * length;
       s.add(r() < 0.5 ? 'Rock_Medium_1' : 'Rock_Medium_2', -leftShore(z) + 0.5 + r() * 2.5, -0.8, z, 1.5 + r() * 2.5, r() * Math.PI * 2, 0.7);
     }
