@@ -217,6 +217,9 @@ function buildGlacier(z0: number, length: number, [rows, cols]: FjordDetail) {
     });
 }
 
+/** Spots where puffins sit (world space), one group per rock or iceberg; side: −1 left bank, 1 glacier side. */
+export interface Perch { key: number; spots: THREE.Vector3[]; side: -1 | 1 }
+
 export interface FjordChunkOptions {
   kit: NatureKit | null; detail: FjordDetail; shadows: boolean;
   /** painted icebergs and rocks (they replace the kit's stand-ins once loaded) */
@@ -262,6 +265,8 @@ export function buildFjordChunk(index: number, length: number, m: FjordMaterials
     }
   }
 
+  const perches: Perch[] = [];
+  group.userData.perches = perches;
   if (o.props?.ready) {
     const s = new Scatter(o.props);
     const props = o.props;
@@ -275,8 +280,17 @@ export function buildFjordChunk(index: number, length: number, m: FjordMaterials
       const z = z0 - r() * length;
       const pick = r();
       const id = pick < 0.12 ? 'Ice_A' : pick < 0.24 ? 'Ice_B' : pick < 0.62 ? 'Ice_C' : 'Ice_D';
-      const x = glacierFront(z) - 2.5 - r() * (id === 'Ice_D' ? 9 : 5);
-      put(id, Math.max(5, x), z, 0.75 + r() * 0.5, r() * Math.PI * 2);
+      const x = Math.max(5, glacierFront(z) - 2.5 - r() * (id === 'Ice_D' ? 9 : 5));
+      const scale = 0.75 + r() * 0.5;
+      put(id, x, z, scale, r() * Math.PI * 2);
+      // now and then a puffin or two rests on a flat berg (Puffins.ts lets them take off)
+      const model = props.get(id);
+      if (model && (id === 'Ice_A' || id === 'Ice_C') && r() < 0.35) {
+        const top = (model.size.y + model.minY) * scale * 0.9;
+        const spots = [new THREE.Vector3(x, top, z)];
+        if (id === 'Ice_A' && r() < 0.6) spots.push(new THREE.Vector3(x + 0.6, top, z - 0.9));
+        perches.push({ key: index * 16 + k + 1e6, spots, side: 1 });
+      }
     }
     // a rock now and then at the foot of the cliffs
     for (let k = 0; k < 2; k++) {

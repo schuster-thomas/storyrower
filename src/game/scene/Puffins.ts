@@ -4,6 +4,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import standingUrl from '../../assets/models/puffin-standing.glb?url';
 import flyingUrl from '../../assets/models/puffin-flying.glb?url';
 import { bakeGeometry } from './PaintedProps';
+import type { Perch } from './Fjord';
 
 /**
  * Atlantic puffins (Tripo3D models, scripts/blender/puffin.py): they sit on the rocks in the river,
@@ -32,6 +33,8 @@ interface Flyer {
   /** where it sat and which way it looked: until it takes off (age < 0) it is drawn sitting there */
   spot: THREE.Vector3 | null;
   yaw: number;
+  /** the bank it turns back to: −1 left, 1 glacier side */
+  side: number;
   /** circling above the river (idyll) or fleeing; age < 0: waiting to take off */
   circle: { cx: number; cz: number; r: number; speed: number; a: number; y: number } | null;
 }
@@ -139,43 +142,43 @@ export class Puffins {
     return inst;
   }
 
-  /** which way the bird on spot i of a section looks: most of them towards the river */
-  private static yaw(key: number, i: number) { return -Math.PI * 0.5 + Math.sin(key * 7.1 + i * 2.3) * 1.1; }
+  /** which way the bird on spot i looks: most of them towards the middle of the river */
+  private static yaw(key: number, i: number, side: number) { return side * -Math.PI * 0.5 + Math.sin(key * 7.1 + i * 2.3) * 1.1; }
 
   /**
    * A bird leaves its spot: it keeps sitting until its turn (one after the other), then pushes off
    * the way it was looking, climbs and turns ahead along the river and back over the bank.
    */
-  private takeOff(at: THREE.Vector3, yaw: number, delay: number) {
+  private takeOff(at: THREE.Vector3, yaw: number, side: number, delay: number) {
     if (this.flyers.length >= MAX_FLYING) return;
     const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
     this.flyers.push({
       pos: at.clone().add(new THREE.Vector3(0, 0.3 * SIZE, 0)),
       vel: fwd.multiplyScalar(2.5 + Math.random()).add(new THREE.Vector3(0, 2.6 + Math.random(), -(2 + Math.random() * 2))),
       age: -delay, life: 8 + Math.random() * 3, phase: Math.random() * 40, rate: 17 + Math.random() * 4,
-      spot: at.clone(), yaw, circle: null,
+      spot: at.clone(), yaw, side, circle: null,
     });
   }
 
-  update(p: { dt: number; time: number; boatZ: number; birds: number; light: number; perches: { key: number; spots: THREE.Vector3[] }[] }) {
+  update(p: { dt: number; time: number; boatZ: number; birds: number; light: number; perches: Perch[] }) {
     if (!this.ready || !this.sitting || !this.flying) return;
     this.time.value = p.time;
 
     // sitting birds: on the rocks of the sections around the boat, until they fly
     let n = 0;
     const scared = p.birds <= 0;   // the earth trembled: every bird is up
-    for (const { key, spots } of p.perches) {
+    for (const { key, spots, side } of p.perches) {
       if (this.gone.has(key)) continue;
       const ahead = p.boatZ - spots[0].z;
       if (scared || (ahead > -4 && ahead < SHY)) {
         this.gone.add(key);
         // one after the other, not all in the same instant
-        spots.forEach((sp, i) => this.takeOff(sp, Puffins.yaw(key, i), i * 0.18 + Math.random() * 0.25));
+        spots.forEach((sp, i) => this.takeOff(sp, Puffins.yaw(key, i, side), side, i * 0.18 + Math.random() * 0.25));
         continue;
       }
       for (const [i, sp] of spots.entries()) {
         if (n >= MAX_SITTING) break;
-        this.q.setFromAxisAngle(this.up, Puffins.yaw(key, i));
+        this.q.setFromAxisAngle(this.up, Puffins.yaw(key, i, side));
         this.sitting.setMatrixAt(n++, this.m.compose(sp, this.q, this.s.setScalar(SIZE)));
       }
     }
@@ -195,7 +198,7 @@ export class Puffins {
       this.circling = true;
       for (let i = 0; i < 6; i++) {
         this.flyers.push({
-          pos: new THREE.Vector3(), vel: new THREE.Vector3(), age: 0, life: Infinity, phase: Math.random() * 40, rate: 15 + Math.random() * 3, spot: null, yaw: 0,
+          pos: new THREE.Vector3(), vel: new THREE.Vector3(), age: 0, life: Infinity, phase: Math.random() * 40, rate: 15 + Math.random() * 3, spot: null, yaw: 0, side: -1,
           circle: { cx: i % 2 ? 7 : -7, cz: -45 - (i % 3) * 10, r: 12 + (i % 3) * 4, speed: 0.32 + (i % 2) * 0.06, a: (i / 6) * Math.PI * 2, y: 10 + (i % 3) * 1.5 },
         });
       }
@@ -225,7 +228,7 @@ export class Puffins {
       } else {
         // climb away ahead of the boat, then curve back over the bank they came from
         f.vel.y = Math.max(0.3, f.vel.y - p.dt * 0.4);
-        f.vel.x -= p.dt * 1.1;
+        f.vel.x += f.side * p.dt * 1.1;
         f.vel.z -= p.dt * 1.5;
         f.pos.addScaledVector(f.vel, p.dt);
         this.look.lookAt(f.pos, this.tmp.copy(f.pos).add(f.vel), this.up);

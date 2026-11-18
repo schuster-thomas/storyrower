@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import farUrl from '../../assets/backdrops/far-mountains.webp';
-import waveUrl from '../../assets/backdrops/tidal-wave.webp';
 
-type Key = 'far' | 'wave';
-const URLS: Record<Key, string> = { far: farUrl, wave: waveUrl };
+type Key = 'far';
+const URLS: Record<Key, string> = { far: farUrl };
 
 const RADIUS = 800;      // distance of the mountain panorama
 const SQUASH = 0.65;     // keep the peaks low on the horizon
@@ -17,15 +16,11 @@ export interface BackdropFrame {
   /** 0–1 overall light level (darker under the ash cloud) */
   light: number;
   smoke: number;
-  /** 0–1 how present the tidal wave is */
-  wave: number;
-  /** 0 = wave right behind the boat, 1 = far away */
-  threat: number;
 }
 
 /**
  * Painted 2.5D layers: a mountain panorama all around the fjord (snowy peaks, green slopes on the
- * left, an ice cap on the right) and the tidal wave. The volcano has its own module (Volcano.ts).
+ * left, an ice cap on the right). The volcano and the tidal wave have their own modules.
  * Textures load in the background; until then the 3D greybox stand-ins stay visible.
  */
 export class Backdrop {
@@ -37,7 +32,6 @@ export class Backdrop {
   private tex = {} as Record<Key, THREE.Texture>;
   private far = new THREE.Group();            // follows the boat (horizon)
   private mountainMat!: THREE.MeshBasicMaterial;
-  private wave!: THREE.Sprite;
   private tmp = new THREE.Color();
 
   /** Resolves once the layers are built (also when loading failed, so nothing waits forever). */
@@ -82,11 +76,6 @@ export class Backdrop {
     ring.renderOrder = -5;
     this.far.add(ring);
 
-    // Tidal wave: always faces the camera
-    this.wave = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex.wave, transparent: true, depthWrite: false }));
-    this.wave.center.set(0.5, 0.08);
-    this.wave.visible = false;
-    this.group.add(this.wave);
 
     this.ready = true;
     this.onReady?.();
@@ -101,16 +90,6 @@ export class Backdrop {
     this.tmp.setRGB(light, light, light).lerp(f.horizon, 0.3);
     this.mountainMat.color.copy(this.tmp).lerp(f.horizon, 0.15 + f.smoke * 0.35);
 
-    // Tidal wave sprite behind the boat
-    this.wave.visible = f.wave > 0.02;
-    if (this.wave.visible) {
-      const dist = 14 + f.threat * 70 + (1 - f.wave) * 120;
-      const w = 220; // wide enough to fill the view behind the boat
-      const h = (w / this.aspect('wave')) * (0.55 + f.wave * 0.75);
-      this.wave.scale.set(w, h, 1);
-      this.wave.position.set(0, -1.2, f.boatZ + dist);
-      this.wave.material.color.setRGB(light, light, light).lerp(new THREE.Color(1, 1, 1), 0.3);
-    }
   }
 
   dispose() {

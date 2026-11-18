@@ -4,12 +4,13 @@ import type { Environment } from '../levels/iceland';
 import { Backdrop } from './Backdrop';
 import { Boat } from './Boat';
 import { Effects } from './Effects';
-import { buildFjordChunk, createFjordMaterials, disposeFjordChunk } from './Fjord';
+import { buildFjordChunk, createFjordMaterials, disposeFjordChunk, type Perch } from './Fjord';
 import { NatureKit } from './NatureKit';
 import { PaintedShore } from './PaintedShore';
 import { Volcano } from './Volcano';
 import { PaintedProps } from './PaintedProps';
 import { Puffins } from './Puffins';
+import { TidalWave } from './TidalWave';
 import { Post } from './Post';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
@@ -86,8 +87,7 @@ export class RiverScene {
   private volcano = new THREE.Group();
   private lavaMat = new THREE.MeshStandardMaterial({ color: 0x3a2a24, emissive: 0xff4a10, emissiveIntensity: 0, roughness: 1, flatShading: true, fog: false });
   private smoke: THREE.Mesh[] = [];
-  private wave: THREE.Mesh;
-  private waveMat = new THREE.MeshStandardMaterial({ color: 0x6fb4d8, roughness: 0.3, transparent: true, opacity: 0.92, flatShading: true });
+  private wave: TidalWave;
 
   private z = 0;              // boat position (moves towards -z)
   private speed = 0;          // current world speed (units/s)
@@ -136,15 +136,15 @@ export class RiverScene {
     this.model = new Boat(this.sun.castShadow);
     this.boat.add(this.model.group);
     this.buildVolcano();
-    this.wave = this.buildWave();
+    this.wave = new TidalWave(this.q.particles);
+    this.scene.add(this.wave.group);
     this.effects = new Effects(this.scene);
     this.effects.setParticleShare(this.q.particles);
-    // Painted layers replace the greybox mountains, volcano, cliffs and wave once loaded
+    // Painted layers replace the greybox mountains once loaded
     this.backdrop = new Backdrop();
     this.scene.add(this.backdrop.group);
     this.backdrop.onReady = () => {
       this.sky.setMountainsVisible(false);
-      this.wave.visible = false;
     };
     this.setPiece = new Volcano(quality);
     this.scene.add(this.setPiece.group);
@@ -261,21 +261,24 @@ export class RiverScene {
     this.painted.update(bankFrame);
     this.paintedIce.update(bankFrame);
     this.props.update({ time: this.time, swell: this.env.swell, tint: this.paintTint, light: bankFrame.light });
-    this.puffins.update({ dt, time: this.time, boatZ: this.z, birds: this.story.birds, light: this.light, perches: this.painted.perches() });
+    this.puffins.update({ dt, time: this.time, boatZ: this.z, birds: this.story.birds, light: this.light, perches: [...this.painted.perches(), ...this.chunks.flatMap((c) => (c.group.userData.perches ?? []) as Perch[])] });
     this.mats.fall.uniforms.uTime.value = this.time;
     this.mats.fall.uniforms.uLight.value = Math.min(1.1, this.light);
     this.updateBoat(dt);
     this.updateVolcano(dt);
-    this.updateWave(dt, threat);
     this.updateCamera(dt, threat, intensity);
     this.effects.update({ dt, time: this.time, boatZ: this.z, speed: this.speed, viewDir: this.viewDir, threat, smoke: this.env.smoke, lava: this.env.lava, story: this.story });
     this.sky.update({ dt, time: this.time, camera: this.camera, boatZ: this.z, top: this.topColor, horizon: this.horizonColor, sunColor: this.sunColor, smoke: this.env.smoke, sunHeight: this.env.sunHeight });
     this.water.update({ time: this.time, boatZ: this.z, speed: this.speed, swell: this.env.swell, water: this.waterColor, sky: this.horizonColor, sunColor: this.sunColor, sunDir: this.sky.sunDir, light: this.light });
-    this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, smoke: this.env.smoke, wave: this.env.wave, threat });
+    this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, smoke: this.env.smoke });
     this.renderer.getDrawingBufferSize(this.bufferSize);
     this.setPiece.update({
       dt, time: this.time, boatZ: this.z, light: this.light, horizon: this.horizonColor, lava: this.env.lava, smoke: this.env.smoke,
       unrest: this.story.unrest, eruptionAge: this.story.eruptionAge, cooling: this.story.cooling, pixelHeight: this.bufferSize.y, camera: this.camera,
+    });
+    this.wave.update({
+      time: this.time, boatZ: this.z, wave: this.env.wave, threat, light: this.light, tint: this.paintTint,
+      sunDir: this.sky.sunDir, pixelHeight: this.bufferSize.y, camera: this.camera,
     });
     // The visible sun sits ahead in the sky; the light comes from high right-behind so the mossy
     // slopes on the left and the rower's face are lit, the glacier walls glow blue in their own shade
@@ -310,6 +313,7 @@ export class RiverScene {
     this.backdrop.dispose();
     this.setPiece.dispose();
     this.puffins.dispose();
+    this.wave.dispose();
     this.water.dispose();
     this.sky.dispose();
     this.renderer.dispose();
@@ -458,29 +462,6 @@ export class RiverScene {
       puff.position.set(Math.sin(i * 2.1) * 20 * life, 150 + life * 160 * Math.max(0.3, s), Math.cos(i * 1.7) * 15 * life);
       puff.visible = s > 0.02;
     });
-  }
-
-  // ---------- tidal wave ----------
-
-  private buildWave(): THREE.Mesh {
-    const g = new THREE.CylinderGeometry(9, 9, 60, 20, 1, true, 0, Math.PI);
-    g.rotateZ(Math.PI / 2);
-    const wave = new THREE.Mesh(g, this.waveMat);
-    wave.material.side = THREE.DoubleSide;
-    this.scene.add(wave);
-    return wave;
-  }
-
-  private updateWave(_dt: number, threat: number) {
-    const show = this.env.wave;
-    this.wave.visible = show > 0.02 && !this.backdrop.ready;
-    if (!this.wave.visible) return;
-    // threat 1 → far behind, threat 0 → right at the stern
-    const dist = 12 + threat * 70 + (1 - show) * 120;
-    const h = 0.6 + show * 1.2;
-    this.wave.position.set(0, -2, this.z + dist);
-    this.wave.scale.set(1, h, 1);
-    this.wave.rotation.x = Math.sin(this.time * 2) * 0.03;
   }
 
   // ---------- camera ----------

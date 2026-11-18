@@ -2,7 +2,7 @@
 
 > Rowing as a story you live through: live data from the **Domyos Woodrower** drives a boat through a level with a dramatic arc – idyllic start, escalation (volcano, kaiju, earthquake …), escape, calm cool-down.
 
-Last updated: 2026-11-18 · Status: milestone 4 in progress – painted river banks, boat and rower done; volcano, puffins and tidal wave next (see [§11](#11-next-steps)). Further levels follow the pattern in [§12](#12-building-further-levels).
+Last updated: 2026-11-18 · Status: milestone 4 in progress – banks, boat and rower, volcano, puffins, painted props and tidal wave done; calving, sound and a tablet run-through next (see [§11](#11-next-steps)). Further levels follow the pattern in [§12](#12-building-further-levels).
 
 ---
 
@@ -235,7 +235,7 @@ The first world look (photo scans + low-poly kit + paintings on a narrow river) 
 | D | Puffins (Tripo3D): sit on the rocks in the river and turn their heads, take off when the boat comes close or the earth trembles, circle in the calm morning | ✅ |
 | E | Glacier front: painted ice (two variants) ✅; icebergs and rocks in the water painted from all sides, bobbing ✅; a calving event | mostly |
 | F | Volcano: painted, with lava flowing down its grooves as the eruption goes on and cooling after the escape, a lava fountain, a plume of painted ash puffs lit from below, crater glow, volcanic lightning | ✅ |
-| G | Stylized 3D tidal wave; texture compression, tablet profiling | open |
+| G | Stylized 3D tidal wave (procedural breaker with curling crest, foam and spray) ✅; tablet profiling of the whole run | mostly |
 
 Each phase ends with an in-game screenshot next to the style frame. Tablet check (2026-11-18): smooth on "High".
 
@@ -263,13 +263,13 @@ Order by **impact on the workout's story**: the escalation and the finale take a
 |---|---|---|---|---|
 | 1 ✅ | **Volcano (art phase F)** – done 2026-11-18 | The central element and the climax; before, a flat picture that only swapped calm ↔ erupting | Blockout of cone, crater and lava channels → painted like the banks; at 700–780 m a plane with a pixel-aligned lava mask is enough (no visible parallax). Lava as an emissive shader on the channels that **flows down step by step** with the story (`lava` 0 → 1), lava fountain from the crater (particles), glowing plume with lightning flashes, glow tinting sky and water | 1–2 weekends |
 | 2 ✅ | **Puffins (art phase D)** – done 2026-11-18 | The signature of the idyll, in the mock-up and in a beat caption, but not yet in the world | Tripo3D model, wings as separate parts flapped in the vertex shader (instancing, cheap); sitting on the puffin rock and ledges (markers already in the sections), turning heads; **take off** when the boat comes close or at the tremor; small flocks crossing the river | 1 weekend |
-| 3 | **Tidal wave (art phase G)** | Fills the screen in the finale (camera looks back at it) | 3D wave mesh with a curling, translucent crest, foam and spray, distance driven by the threat value as today | 1 weekend |
+| 3 ✅ | **Tidal wave (art phase G)** – done 2026-11-18 | Fills the screen in the finale (camera looks back at it) | 3D wave mesh with a curling, translucent crest, foam and spray, distance driven by the threat value as today | 1 weekend |
 | 4 | Glacier life (rest of E) | Makes the right bank move | ✅ icebergs and rocks in the water painted from all sides (2026-11-18); still open: a calving event as a story beat (splash + swell reaching the boat) | 1 evening |
 | 5 | Sound pass | Big for immersion, small effort | Real music stems per intensity, waterfall/bird/lava ambience placed in the world | 1 weekend + sourcing |
 | 6 | Results & PWA (milestone 5) | Everyday use: history, install on the tablet, offline | as in §8 | 1 weekend |
 | 7 | Level kit (milestone 6) | Before level 2 | §12.3 | 1 weekend |
 
-**My recommendation:** 3 next (1 and 2 are done), then a tablet check of the whole run (frame rate in the eruption with lava, particles and reflections at the same time). Steps 4–6 can be swapped freely depending on what you miss most while rowing.
+**My recommendation:** 1–3 are done. Next a tablet check of the whole run (frame rate in the eruption and the finale), then steps 4–6 in any order, depending on what you miss most while rowing.
 
 ---
 

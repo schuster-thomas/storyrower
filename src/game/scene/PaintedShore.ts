@@ -8,6 +8,7 @@ import glacierBUrl from '../../assets/painted/glacier-b.glb?url';
 import lupinesUrl from '../../assets/painted/lupines.webp';
 import { SHORE_SECTION } from './Fjord';
 import type { PaintedProps } from './PaintedProps';
+import type { Perch } from './Fjord';
 
 /**
  * A river bank as painted sections – basalt cliffs on the left, the glacier front on the right
@@ -256,13 +257,13 @@ export class PaintedShore {
   }
 
   /** World positions of the puffins' spots on the rocks of the sections around the boat, per section. */
-  perches(): { key: number; spots: THREE.Vector3[] }[] {
-    const out: { key: number; spots: THREE.Vector3[] }[] = [];
+  perches(): Perch[] {
+    const out: Perch[] = [];
     for (const [k, g] of this.live) {
       const spots = g.userData.perch as number[][] | undefined;
       if (!spots?.length) continue;
       g.updateMatrixWorld();
-      out.push({ key: k, spots: spots.map(([x, y, z]) => new THREE.Vector3(x, y, z).applyMatrix4(g.matrixWorld)) });
+      out.push({ key: k, side: -1, spots: spots.map(([x, y, z]) => new THREE.Vector3(x, y, z).applyMatrix4(g.matrixWorld)) });
     }
     return out;
   }

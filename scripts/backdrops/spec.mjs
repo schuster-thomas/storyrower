@@ -26,10 +26,6 @@ export const LAYERS = [
     ref: 'assets/raw/concepts/frame-idyll.png',
     prompt: 'A very wide panoramic ridge of Icelandic mountains far away at the end of a fjord, seen from water level: jagged dark volcanic peaks with large snow fields, green mossy lower slopes on the left half, and on the right half a vast white-blue glacier ice cap flowing down between the peaks. A lower, hazier gap in the middle where the fjord continues. Soft atmospheric haze at the base. The ridge fills the lower 60% of the image; everything above the peaks is the flat magenta background. The bottom edge is a straight horizontal line of distant hazy slopes so it can sit on the horizon.',
   },
-  // the volcano is a painted set piece of its own: scripts/blender/volcano.py, scripts/painted/volcano.mjs
-  {
-    id: 'tidal-wave',
-    size: '1536x1024',
-    prompt: 'A massive towering tidal wave seen from the front, curling over at the top, deep teal-blue water with bright white foam and spray along the crest, spanning the full width. The bottom edge is a straight horizontal line of churning white foam. Transparent background above and around the wave.',
-  },
+  // the volcano is a painted set piece of its own (scripts/blender/volcano.py, scripts/painted/volcano.mjs),
+  // the tidal wave is built in 3D (src/game/scene/TidalWave.ts)
 ];
