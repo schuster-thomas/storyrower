@@ -1,5 +1,5 @@
 import { Emitter } from '../emitter';
-import { OPTIONAL_SERVICES, UUID, nameOf } from '../ftms';
+import { OPTIONAL_SERVICES, UUID, nameOf, normUuid } from '../ftms';
 import type { PacketSource, PacketSourceEvents, RawPacket } from '../types';
 
 export interface CharacteristicDescription { uuid: string; name: string; properties: string[] }
@@ -99,31 +99,34 @@ export class BluetoothSource implements PacketSource {
 
   private async setup(server: BluetoothRemoteGATTServer) {
     const services = await server.getPrimaryServices();
-    if (!services.some((s) => s.uuid === UUID.FTMS)) {
+    // (normUuid: Bluefy on iOS reports short upper-case UUIDs – "1826", "2AD1")
+    if (!services.some((s) => normUuid(s.uuid) === UUID.FTMS)) {
       this.log('No FTMS service found – the device probably uses a proprietary protocol.', 'error');
     }
     this.services = [];
     for (const svc of services) {
-      const desc: ServiceDescription = { uuid: svc.uuid, name: nameOf(svc.uuid), characteristics: [] };
+      const svcUuid = normUuid(svc.uuid);
+      const desc: ServiceDescription = { uuid: svcUuid, name: nameOf(svcUuid), characteristics: [] };
       this.services.push(desc);
       let chars: BluetoothRemoteGATTCharacteristic[] = [];
       try { chars = await svc.getCharacteristics(); } catch (e) { this.log(`Could not read characteristics of ${desc.name}: ${(e as Error).message}`, 'warn'); }
       for (const ch of chars) {
         const p = ch.properties;
+        const chUuid = normUuid(ch.uuid);
         desc.characteristics.push({
-          uuid: ch.uuid, name: nameOf(ch.uuid),
+          uuid: chUuid, name: nameOf(chUuid),
           properties: Object.entries({ read: p.read, write: p.write, writeNR: p.writeWithoutResponse, notify: p.notify, indicate: p.indicate })
             .filter(([, v]) => v).map(([k]) => k),
         });
-        if (ch.uuid === UUID.CONTROL_POINT) this.controlPoint = ch;
-        if (p.read && (AUTO_READ_SERVICES.includes(svc.uuid) || ch.uuid === UUID.FEATURE)) {
-          try { this.emitPacket(ch.uuid, await ch.readValue(), 'read'); }
-          catch (e) { this.log(`Reading ${nameOf(ch.uuid)} failed: ${(e as Error).message}`, 'warn'); }
+        if (chUuid === UUID.CONTROL_POINT) this.controlPoint = ch;
+        if (p.read && (AUTO_READ_SERVICES.includes(svcUuid) || chUuid === UUID.FEATURE)) {
+          try { this.emitPacket(chUuid, await ch.readValue(), 'read'); }
+          catch (e) { this.log(`Reading ${nameOf(chUuid)} failed: ${(e as Error).message}`, 'warn'); }
         }
-        if ((p.notify || p.indicate) && AUTO_SUBSCRIBE.includes(ch.uuid)) {
-          ch.addEventListener('characteristicvaluechanged', () => { if (ch.value) this.emitPacket(ch.uuid, ch.value, 'notify'); });
-          try { await ch.startNotifications(); this.log(`subscribed: ${nameOf(ch.uuid)}`); }
-          catch (e) { this.log(`Subscribing to ${nameOf(ch.uuid)} failed: ${(e as Error).message}`, 'warn'); }
+        if ((p.notify || p.indicate) && AUTO_SUBSCRIBE.includes(chUuid)) {
+          ch.addEventListener('characteristicvaluechanged', () => { if (ch.value) this.emitPacket(chUuid, ch.value, 'notify'); });
+          try { await ch.startNotifications(); this.log(`subscribed: ${nameOf(chUuid)}`); }
+          catch (e) { this.log(`Subscribing to ${nameOf(chUuid)} failed: ${(e as Error).message}`, 'warn'); }
         }
       }
     }

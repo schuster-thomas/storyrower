@@ -1,6 +1,18 @@
 // FTMS (Bluetooth Fitness Machine Service) – constants, decoder and encoder.
 // Spec: Bluetooth SIG "Fitness Machine Service 1.0".
 
+/**
+ * Bluetooth UUIDs in the full lower-case form ("0000180a-0000-1000-8000-00805f9b34fb"). Chrome
+ * reports them that way; Bluefy on iOS reports the short upper-case form ("180A", "2AD1"), so
+ * every UUID coming from a device goes through here before it is compared.
+ */
+export function normUuid(uuid: string): string {
+  const s = uuid.trim().toLowerCase().replace(/^0x/, '');
+  if (/^[0-9a-f]{4}$/.test(s)) return `0000${s}-0000-1000-8000-00805f9b34fb`;
+  if (/^[0-9a-f]{8}$/.test(s)) return `${s}-0000-1000-8000-00805f9b34fb`;
+  return s;
+}
+
 export const uuid16 = (n: number): string => `0000${n.toString(16).padStart(4, '0')}-0000-1000-8000-00805f9b34fb`;
 
 export const UUID = {
@@ -46,7 +58,7 @@ const NAMES: Record<string, string> = {
   [uuid16(0x2a28)]: 'Software Revision',
   [uuid16(0x2a29)]: 'Manufacturer Name',
 };
-export const nameOf = (uuid: string): string => NAMES[uuid] ?? uuid;
+export const nameOf = (uuid: string): string => NAMES[normUuid(uuid)] ?? uuid;
 
 // ---------- Hex helpers ----------
 export function toHex(dv: DataView): string {
