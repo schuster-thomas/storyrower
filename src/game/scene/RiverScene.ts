@@ -11,6 +11,7 @@ import { Volcano } from './Volcano';
 import { PaintedProps } from './PaintedProps';
 import { Puffins } from './Puffins';
 import { TidalWave } from './TidalWave';
+import { Calving } from './Calving';
 import { Post } from './Post';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
@@ -71,6 +72,9 @@ export class RiverScene {
   /** painted icebergs and rocks in the water */
   private props = new PaintedProps();
   private puffins = new Puffins();
+  private calving: Calving;
+  /** extra rocking of the boat (the calving swell), decays */
+  private rock = 0;
   /** the painted volcano with flowing lava, plume and fountain (the greybox `volcano` is its stand-in) */
   private setPiece: Volcano;
   private bufferSize = new THREE.Vector2();
@@ -138,6 +142,9 @@ export class RiverScene {
     this.buildVolcano();
     this.wave = new TidalWave(this.q.particles);
     this.scene.add(this.wave.group);
+    this.calving = new Calving(this.props);
+    this.calving.onSwell = () => { this.impulse = Math.max(this.impulse, 0.9); this.rock = 0.14; };
+    this.scene.add(this.calving.group);
     this.effects = new Effects(this.scene);
     this.effects.setParticleShare(this.q.particles);
     // Painted layers replace the greybox mountains once loaded
@@ -213,6 +220,7 @@ export class RiverScene {
   play(effect: EffectId) {
     switch (effect) {
       case 'tremor': this.impulse = Math.max(this.impulse, 1.1); break;
+      case 'calving': this.impulse = Math.max(this.impulse, 0.5); this.calving.start(this.z); break;
       case 'eruption':
         this.impulse = Math.max(this.impulse, 1.6);
         this.flash(0xffa040, 1);
@@ -261,7 +269,7 @@ export class RiverScene {
     this.painted.update(bankFrame);
     this.paintedIce.update(bankFrame);
     this.props.update({ time: this.time, swell: this.env.swell, tint: this.paintTint, light: bankFrame.light });
-    this.puffins.update({ dt, time: this.time, boatZ: this.z, birds: this.story.birds, light: this.light, perches: [...this.painted.perches(), ...this.chunks.flatMap((c) => (c.group.userData.perches ?? []) as Perch[])] });
+    this.puffins.update({ dt, time: this.time, boatZ: this.z, birds: this.story.birds, light: this.light, swell: this.env.swell, perches: [...this.painted.perches(), ...this.chunks.flatMap((c) => (c.group.userData.perches ?? []) as Perch[])] });
     this.mats.fall.uniforms.uTime.value = this.time;
     this.mats.fall.uniforms.uLight.value = Math.min(1.1, this.light);
     this.updateBoat(dt);
@@ -272,10 +280,12 @@ export class RiverScene {
     this.water.update({ time: this.time, boatZ: this.z, speed: this.speed, swell: this.env.swell, water: this.waterColor, sky: this.horizonColor, sunColor: this.sunColor, sunDir: this.sky.sunDir, light: this.light });
     this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, smoke: this.env.smoke });
     this.renderer.getDrawingBufferSize(this.bufferSize);
+    this.effects.setPixelHeight(this.bufferSize.y, this.camera.fov);
     this.setPiece.update({
       dt, time: this.time, boatZ: this.z, light: this.light, horizon: this.horizonColor, lava: this.env.lava, smoke: this.env.smoke,
       unrest: this.story.unrest, eruptionAge: this.story.eruptionAge, cooling: this.story.cooling, pixelHeight: this.bufferSize.y, camera: this.camera,
     });
+    this.calving.update({ dt, time: this.time, boatZ: this.z, light: this.light, pixelHeight: this.bufferSize.y, camera: this.camera });
     this.wave.update({
       time: this.time, boatZ: this.z, wave: this.env.wave, threat, light: this.light, tint: this.paintTint,
       sunDir: this.sky.sunDir, pixelHeight: this.bufferSize.y, camera: this.camera,
@@ -314,6 +324,7 @@ export class RiverScene {
     this.setPiece.dispose();
     this.puffins.dispose();
     this.wave.dispose();
+    this.calving.dispose();
     this.water.dispose();
     this.sky.dispose();
     this.renderer.dispose();
@@ -410,8 +421,10 @@ export class RiverScene {
     const left = at(-SPAN / 2, 0), right = at(SPAN / 2, 0);
     const y = (bow + stern + 2 * mid + left + right) / 6;
     this.boat.position.set(0, y + Math.sin(t * 1.7) * 0.02, z);
-    this.boat.rotation.x = Math.atan2(bow - stern, HULL) + Math.sin(t * 0.9) * 0.006;
-    this.boat.rotation.z = Math.atan2(right - left, SPAN) + Math.sin(t * 1.1) * 0.008;
+    // the calving swell rocks it hard for a few seconds
+    this.rock *= Math.exp(-dt * 0.6);
+    this.boat.rotation.x = Math.atan2(bow - stern, HULL) + Math.sin(t * 0.9) * 0.006 + Math.sin(t * 2.1) * this.rock * 0.5;
+    this.boat.rotation.z = Math.atan2(right - left, SPAN) + Math.sin(t * 1.1) * 0.008 + Math.sin(t * 2.6) * this.rock;
 
     // The real rower model: same phase convention as the clip (catch 0, finish 0.35)
     this.model.update(p);

@@ -103,9 +103,9 @@ const fallFragment = /* glsl */ `
   void main() {
     float along = vUv.y, across = vUv.x;   // along = 0 at the foot of the fall
     float streaks = noise(vec2(across * 12.0, along * 4.0 + uTime * 2.4)) * 0.6 + noise(vec2(across * 34.0, along * 10.0 + uTime * 3.6)) * 0.4;
-    float edge = smoothstep(0.0, 0.2, across) * smoothstep(1.0, 0.8, across);
-    float lip = smoothstep(1.0, 0.94, along);
-    float foamBottom = smoothstep(0.22, 0.0, along);
+    float edge = smoothstep(0.0, 0.2, across) * (1.0 - smoothstep(0.8, 1.0, across));
+    float lip = 1.0 - smoothstep(0.94, 1.0, along);
+    float foamBottom = 1.0 - smoothstep(0.0, 0.22, along);
     float alpha = clamp(edge * lip * (0.62 + streaks * 0.45) + foamBottom * 0.5 * edge, 0.0, 0.97);
     vec3 col = mix(vec3(0.74, 0.87, 0.95), vec3(1.0), streaks) * uLight;
     gl_FragColor = vec4(col, alpha * uAlpha);
@@ -218,7 +218,8 @@ function buildGlacier(z0: number, length: number, [rows, cols]: FjordDetail) {
 }
 
 /** Spots where puffins sit (world space), one group per rock or iceberg; side: −1 left bank, 1 glacier side. */
-export interface Perch { key: number; spots: THREE.Vector3[]; side: -1 | 1 }
+/** bob: the iceberg's position (x, z) – the birds rise and sink with its swaying (PaintedProps) */
+export interface Perch { key: number; spots: THREE.Vector3[]; side: -1 | 1; bob?: [number, number] }
 
 export interface FjordChunkOptions {
   kit: NatureKit | null; detail: FjordDetail; shadows: boolean;
@@ -289,7 +290,7 @@ export function buildFjordChunk(index: number, length: number, m: FjordMaterials
         const top = (model.size.y + model.minY) * scale * 0.9;
         const spots = [new THREE.Vector3(x, top, z)];
         if (id === 'Ice_A' && r() < 0.6) spots.push(new THREE.Vector3(x + 0.6, top, z - 0.9));
-        perches.push({ key: index * 16 + k + 1e6, spots, side: 1 });
+        perches.push({ key: index * 16 + k + 1e6, spots, side: 1, bob: [x, z] });
       }
     }
     // a rock now and then at the foot of the cliffs

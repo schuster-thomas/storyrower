@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import standingUrl from '../../assets/models/puffin-standing.glb?url';
 import flyingUrl from '../../assets/models/puffin-flying.glb?url';
-import { bakeGeometry } from './PaintedProps';
+import { PaintedProps, bakeGeometry } from './PaintedProps';
 import type { Perch } from './Fjord';
 
 /**
@@ -160,14 +160,14 @@ export class Puffins {
     });
   }
 
-  update(p: { dt: number; time: number; boatZ: number; birds: number; light: number; perches: Perch[] }) {
+  update(p: { dt: number; time: number; boatZ: number; birds: number; light: number; swell: number; perches: Perch[] }) {
     if (!this.ready || !this.sitting || !this.flying) return;
     this.time.value = p.time;
 
     // sitting birds: on the rocks of the sections around the boat, until they fly
     let n = 0;
     const scared = p.birds <= 0;   // the earth trembled: every bird is up
-    for (const { key, spots, side } of p.perches) {
+    for (const { key, spots, side, bob } of p.perches) {
       if (this.gone.has(key)) continue;
       const ahead = p.boatZ - spots[0].z;
       if (scared || (ahead > -4 && ahead < SHY)) {
@@ -179,7 +179,9 @@ export class Puffins {
       for (const [i, sp] of spots.entries()) {
         if (n >= MAX_SITTING) break;
         this.q.setFromAxisAngle(this.up, Puffins.yaw(key, i, side));
-        this.sitting.setMatrixAt(n++, this.m.compose(sp, this.q, this.s.setScalar(SIZE)));
+        // on an iceberg they ride its swaying
+        const at = bob ? this.tmp.copy(sp).setY(sp.y + PaintedProps.bob(bob[0], bob[1], p.time, p.swell)) : sp;
+        this.sitting.setMatrixAt(n++, this.m.compose(at, this.q, this.s.setScalar(SIZE)));
       }
     }
     // birds about to take off still sit where they were
@@ -207,8 +209,9 @@ export class Puffins {
       this.circling = false;
       for (const f of this.flyers) {
         if (!f.circle) continue;
-        f.vel.set(f.circle.cx > 0 ? 4 : -4, 2.5, -8);
-        f.circle = null; f.age = 0; f.life = 6;
+        f.vel.set(Math.sign(f.circle.cx) * 1.2, 3.2, -8);
+        f.side = Math.sign(f.circle.cx) || -1;
+        f.circle = null; f.age = 0; f.life = 7;
       }
     }
 
@@ -226,9 +229,12 @@ export class Puffins {
         f.pos.set(c.cx + Math.cos(c.a) * c.r, c.y + Math.sin(p.time * 0.9 + c.r) * 1.2, p.boatZ + c.cz + Math.sin(c.a) * c.r * 0.6);
         this.look.lookAt(prev, f.pos, this.up);
       } else {
-        // climb away ahead of the boat, then curve back over the bank they came from
-        f.vel.y = Math.max(0.3, f.vel.y - p.dt * 0.4);
-        f.vel.x += f.side * p.dt * 1.1;
+        // climb away ahead of the boat over the river; only above the cliffs and the ice (≈ 20 m)
+        // turn back over the bank they came from – lower down they would fly into the rock
+        f.vel.y = Math.max(2.4, f.vel.y - p.dt * 0.3);
+        const clear = THREE.MathUtils.smoothstep(f.pos.y, 16, 26);
+        f.vel.x += (f.side * clear - 0.25 * Math.sign(f.pos.x) * (1 - clear)) * p.dt * 1.4;
+        f.vel.x *= 1 - (1 - clear) * p.dt * 0.8;   // low down: no sideways drift towards the banks
         f.vel.z -= p.dt * 1.5;
         f.pos.addScaledVector(f.vel, p.dt);
         this.look.lookAt(f.pos, this.tmp.copy(f.pos).add(f.vel), this.up);

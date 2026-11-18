@@ -273,6 +273,18 @@ export class AudioEngine {
         this.thump(t + 0.2, 38, 0.6, 3);
         break;
       }
+      case 'calving': {
+        // the ice cracks, a moment later it crashes into the river
+        this.thump(t, 420, 0.5, 0.25, 90);
+        const crack = this.noiseSource(t, 0.6);
+        const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800;
+        crack.connect(hp).connect(this.envelope(t, 0.5, 0.5, 0.005)).connect(this.sfxBus);
+        this.thump(t + 2.4, 90, 1.0, 1.8, 30);
+        const splash = this.noiseSource(t + 2.4, 3);
+        const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
+        splash.connect(lp).connect(this.envelope(t + 2.4, 0.9, 2.6, 0.02)).connect(this.sfxBus);
+        break;
+      }
       case 'eruption': {
         this.thump(t, 140, 1.2, 2.2, 28);
         const src = this.noiseSource(t, 4);

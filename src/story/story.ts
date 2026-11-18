@@ -2,7 +2,7 @@ import type { Environment, Level } from '../game/levels/iceland';
 import { phaseSpans, type PhaseId, type Segment, type Workout } from '../workout/workout';
 
 /** One-shot effects the scene and the audio engine know how to play. */
-export type EffectId = 'calm' | 'birds' | 'tremor' | 'ash' | 'eruption' | 'wave' | 'escape' | 'sunset';
+export type EffectId = 'calm' | 'birds' | 'tremor' | 'calving' | 'ash' | 'eruption' | 'wave' | 'escape' | 'sunset';
 
 /**
  * Where a beat sits on the training curve. Anchors are resolved against the generated

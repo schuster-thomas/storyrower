@@ -34,9 +34,12 @@ const fallVertex = /* glsl */ `
   #include <common>
   #include <fog_pars_vertex>
   varying vec2 vUv;
+  varying float vFacing;
   void main() {
     vUv = uv;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    // seen edge-on (from up or down the river) the sheet would be a hard white sliver: fade it
+    vFacing = abs(dot(normalize(normalMatrix * normal), normalize(-mvPosition.xyz)));
     gl_Position = projectionMatrix * mvPosition;
     #include <fog_vertex>
   }
@@ -49,6 +52,7 @@ const fallFragment = /* glsl */ `
   uniform float uTime;
   uniform float uLight;
   varying vec2 vUv;
+  varying float vFacing;
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float noise(vec2 p) {
     vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
@@ -61,16 +65,18 @@ const fallFragment = /* glsl */ `
     float s2 = noise(vec2(across * 24.0, along * 5.5 + t * 3.3));
     float s3 = noise(vec2(across * 64.0, along * 13.0 + t * 5.2));
     float strands = s1 * 0.5 + s2 * 0.32 + s3 * 0.18;
-    float edge = smoothstep(0.0, 0.2, across) * smoothstep(1.0, 0.8, across);
+    // (edges in rising order: reversed smoothstep edges are undefined in GLSL)
+    float edge = smoothstep(0.0, 0.2, across) * (1.0 - smoothstep(0.8, 1.0, across));
     float ragged = smoothstep(0.22, 0.5, strands * (0.6 + 0.6 * edge) + edge * 0.35);
-    float lip = smoothstep(1.0, 0.95, along);
-    float foot = smoothstep(0.2, 0.0, along);
+    float lip = 1.0 - smoothstep(0.95, 1.0, along);
+    float foot = 1.0 - smoothstep(0.0, 0.2, along);
     vec3 deep = vec3(0.42, 0.62, 0.74);
     vec3 white = vec3(0.97, 0.99, 1.0);
     vec3 col = mix(deep, white, smoothstep(0.3, 0.75, strands));
     col = mix(col, white, smoothstep(0.86, 0.98, along) * 0.6 + foot);
     float alpha = edge * ragged * lip * (0.78 + 0.22 * strands);
     alpha = max(alpha, foot * edge * 0.92);
+    alpha *= smoothstep(0.1, 0.4, vFacing);
     gl_FragColor = vec4(col * uLight, clamp(alpha, 0.0, 0.97));
     #include <colorspace_fragment>
     #include <fog_fragment>
@@ -104,7 +110,7 @@ const foamFragment = /* glsl */ `
     float r = length(c) * 2.0;
     // foam rings pushed outwards from where the water hits the river
     float rings = noise(vec2(atan(c.y, c.x) * 3.0, r * 6.0 - uTime * 1.6)) * 0.7 + noise(vec2(c * 18.0 + uTime * 0.4)) * 0.3;
-    float a = smoothstep(1.0, 0.25, r) * (0.45 + rings * 0.6);
+    float a = (1.0 - smoothstep(0.25, 1.0, r)) * (0.45 + rings * 0.6);
     gl_FragColor = vec4(vec3(0.94, 0.98, 1.0) * uLight, clamp(a, 0.0, 0.9));
     #include <colorspace_fragment>
     #include <fog_fragment>

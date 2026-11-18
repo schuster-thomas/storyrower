@@ -13,7 +13,7 @@ import { ICELAND } from './levels/iceland';
 const STORAGE_KEY = 'storyrower.settings';
 /** Short names for the story moments you can jump to from the setup screen. */
 const BEAT_NAMES: Record<string, string> = {
-  calm: 'Calm morning', birds: 'Puffins', tremor: 'First tremor', ash: 'Ash rain', eruption: 'Eruption',
+  calm: 'Calm morning', birds: 'Puffins', tremor: 'First tremor', calving: 'Calving glacier', ash: 'Ash rain', eruption: 'Eruption',
   wave: 'Tidal wave', escape: 'Escape', sunset: 'Sunset',
 };
 const PHASE_COLORS = { idyll: '#5fae6b', omens: '#b3a26a', escalation: '#e0874f', finale: '#c4443a', winddown: '#e9a86b' };

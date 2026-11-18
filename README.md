@@ -31,7 +31,7 @@ npm run build    # typecheck + build to dist/
 
 Every push to `main` is tested, built and published to GitHub Pages by GitHub Actions.
 
-On the setup screen, **Start at** (or the dots on the workout preview) jumps straight to a story moment – the puffins, the eruption, the tidal wave … – and "Row again" starts there again. Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout), `#/play?beat=eruption` starts 5 s before a story beat (`calm`, `birds`, `tremor`, `ash`, `eruption`, `wave`, `escape`, `sunset`). The "Simulator (autopilot)" source rows by itself and follows the targets.
+On the setup screen, **Start at** (or the dots on the workout preview) jumps straight to a story moment – the puffins, the eruption, the tidal wave … – and "Row again" starts there again. Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout), `#/play?beat=eruption` starts 5 s before a story beat (`calm`, `birds`, `tremor`, `calving`, `ash`, `eruption`, `wave`, `escape`, `sunset`). The "Simulator (autopilot)" source rows by itself and follows the targets.
 
 ### Recording a session
 Everything is recorded automatically from the moment a rower (or simulator) is connected: every Bluetooth packet with a timestamp, plus game events (`game-start` with settings and all sections, `game-section` on every target change, `game-snapshot` every 5 s with values, zones, wave distance and fps, `visibility`, `error`, `game-finish`). Download it from the results screen, the in-game "i" overlay or **Device & diagnostics**. The recording lives in memory only – reloading the page loses it. Recordings can be replayed in Device & diagnostics.
@@ -43,7 +43,8 @@ Everything is recorded automatically from the moment a rower (or simulator) is c
 - `game/hud/Hud.ts` – HUD with phase progress and band bars
 - `app/connection.ts` – one shared rower session plus optional heart-rate monitor for setup, game and diagnostics
 - `story/story.ts` – story engine: places a level's beats on any training curve, derives ongoing effects (ash, lava bombs, birds) and a smoothly blended environment from the workout time
-- `game/scene/Effects.ts` – ash, embers, bow spray, lava bombs with splash rings
+- `game/scene/Effects.ts` – ash, embers, bow spray, lava bombs (glowing cracks, smoke trail, steam where they land) with splash rings
+- `game/scene/Calving.ts` – the glacier calves after the first tremor: an ice tower topples into the river, a fountain of spray, foam and a swell that rocks the boat
 - `game/scene/Puffins.ts` – puffins sitting on the rocks in the river (turning their heads), taking off when the boat comes close or the earth trembles, a few circling in the calm morning; wing beat and head turns in the vertex shader, two instanced draw calls
 - `game/scene/TidalWave.ts` – the tidal wave in the finale: a procedural 3D breaker (long back slope, curling crest over a hollow, foam streaks down the face, churning foot, spray thrown ahead of the lip); the break peels along the wave and the wall heaves
 - `game/scene/PaintedProps.ts` – icebergs and rocks in the water, painted from all sides; the icebergs bob on the swell

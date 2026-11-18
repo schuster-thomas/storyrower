@@ -87,6 +87,19 @@ for side, prefix in (((1, 'Right'), (-1, 'Left')) if SWAP else ((1, 'Left'), (-1
     t = pb[P + prefix + 'Foot'].constraints.new('DAMPED_TRACK')
     t.target = toe
     t.track_axis = 'TRACK_Y'
+    # …and keep the sole on the plate: without this the foot is free to spin about its own long
+    # axis and turns with the shin as the knees bend. Lock the long axis (Y) and point the sole's
+    # normal – the bone axis that points up in the rest pose – at a target above the plate.
+    rest = (arm.matrix_world @ pb[P + prefix + 'Foot'].bone.matrix_local).to_3x3()
+    up_axis = max((('TRACK_X', rest.col[0]), ('TRACK_NEGATIVE_X', -rest.col[0]),
+                   ('TRACK_Z', rest.col[2]), ('TRACK_NEGATIVE_Z', -rest.col[2])),
+                  key=lambda a: a[1].normalized().z)[0]
+    # the plate rises from the heels towards the toes (ankle → toe); its normal points up and forward
+    sole_up = empty(f'SoleUp{side}', boat, (side * 0.11, FEET_Y + 0.24 * 2.0, 0.16 + 0.3 * 2.0))
+    lt = pb[P + prefix + 'Foot'].constraints.new('LOCKED_TRACK')
+    lt.target = sole_up
+    lt.lock_axis = 'LOCK_Y'
+    lt.track_axis = up_axis
 
 # Body swing: lean from the hips (+ = towards the stern), the head stays level
 axis = (arm.matrix_world.inverted().to_3x3() @ Vector((1, 0, 0))).normalized()
@@ -349,6 +362,6 @@ for p in hands:
     print(f'twist {p}: wrist keeps at most {worst_wrist:.0f} deg')
 bpy.ops.object.mode_set(mode='OBJECT')
 for o in list(scene.objects):
-    if o.name.startswith(('ElbowPole', 'Ankle', 'KneePole', 'Wrist', 'Through', 'Toe')):
+    if o.name.startswith(('ElbowPole', 'Ankle', 'KneePole', 'Wrist', 'Through', 'Toe', 'SoleUp')):
         bpy.data.objects.remove(o, do_unlink=True)
 print('rower baked')

@@ -32,7 +32,90 @@ export interface EffectsContext {
   story: StoryState;
 }
 
-interface Bomb { mesh: THREE.Mesh; from: THREE.Vector3; to: THREE.Vector3; t: number; dur: number; active: boolean }
+interface Bomb { mesh: THREE.Mesh; from: THREE.Vector3; to: THREE.Vector3; t: number; dur: number; active: boolean; smoke: number }
+
+/** A lava bomb: dark crust with glowing cracks that pulse, glowing at the rim (object-space pattern). */
+const bombVertex = /* glsl */ `
+  varying vec3 vP;
+  varying vec3 vN;
+  varying vec3 vV;
+  void main() {
+    vP = position;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    vN = normalize(normalMatrix * normal);
+    vV = normalize(-mv.xyz);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+const bombFragment = /* glsl */ `
+  uniform float uTime;
+  varying vec3 vP;
+  varying vec3 vN;
+  varying vec3 vV;
+  void main() {
+    vec3 p = vP * 2.6;
+    float n = sin(p.x * 1.9 + sin(p.y * 1.7)) * sin(p.y * 2.1 + sin(p.z * 1.5)) * sin(p.z * 2.3 + sin(p.x * 1.6));
+    float crack = 1.0 - smoothstep(0.0, 0.14, abs(n));
+    float pulse = 0.75 + 0.25 * sin(uTime * 9.0 + vP.x * 3.0);
+    vec3 crust = vec3(0.09, 0.065, 0.06) * (0.6 + 0.5 * max(dot(vN, normalize(vec3(0.3, 0.8, 0.4))), 0.0));
+    vec3 col = mix(crust, vec3(1.0, 0.5, 0.12) * 2.2 * pulse, crack);
+    float rim = 1.0 - max(dot(vN, vV), 0.0);
+    col += vec3(1.0, 0.32, 0.06) * rim * rim * 0.9;
+    gl_FragColor = vec4(col, 1.0);
+    #include <colorspace_fragment>
+  }
+`;
+
+/** Smoke trailing the bombs (kind 0: glowing, then dark) and steam where they hit the water (kind 1). */
+const trailVertex = /* glsl */ `
+  attribute float aAge;
+  attribute float aKind;
+  uniform float uPx;
+  varying float vK;
+  varying float vKind;
+  void main() {
+    float life = aKind > 0.5 ? 2.2 : 1.4;
+    float k = aAge / life;
+    vK = k;
+    vKind = aKind;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * mv;
+    float size = aKind > 0.5 ? mix(0.8, 4.5, sqrt(clamp(k, 0.0, 1.0))) : mix(0.5, 2.6, sqrt(clamp(k, 0.0, 1.0)));
+    gl_PointSize = (aAge < 0.0 || k >= 1.0) ? 0.0 : size * uPx / -mv.z;
+  }
+`;
+const trailFragment = /* glsl */ `
+  varying float vK;
+  varying float vKind;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float r = length(c) * 2.0;
+    if (r > 1.0) discard;
+    vec3 smoke = mix(vec3(1.0, 0.5, 0.15) * 1.6, vec3(0.2, 0.18, 0.18), smoothstep(0.0, 0.18, vK));
+    vec3 col = vKind > 0.5 ? vec3(0.93, 0.95, 0.97) : smoke;
+    float fade = 1.0 - clamp(vK, 0.0, 1.0);
+    float a = (1.0 - r * r) * fade * sqrt(fade) * (vKind > 0.5 ? 0.55 : 0.7);
+    gl_FragColor = vec4(col, a);
+    #include <colorspace_fragment>
+  }
+`;
+const TRAIL = 260;
+
+/** a lumpy, faceted lava bomb (built once) */
+function bombGeometry() {
+  const g = new THREE.IcosahedronGeometry(0.8, 1);
+  const pos = g.attributes.position as THREE.BufferAttribute;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const r = 1 + 0.22 * Math.sin(v.x * 3.1 + 1.3) * Math.sin(v.y * 2.7 + 0.4) * Math.sin(v.z * 3.3 + 2.1) + 0.1 * Math.sin(v.x * 7 + v.z * 5);
+    v.multiplyScalar(r);
+    v.y *= 0.85;
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.computeVertexNormals();   // non-indexed: one normal per face, faceted on purpose
+  return g;
+}
 interface Ring { mesh: THREE.Mesh; age: number; active: boolean }
 
 /**
@@ -55,6 +138,12 @@ export class Effects {
   private bombTimer = 1;
   private rings: Ring[] = [];
   private puddles: Ring[] = [];
+  private bombMat: THREE.ShaderMaterial;
+  private trail: THREE.Points;
+  private trailMat: THREE.ShaderMaterial;
+  private trailAge = new Float32Array(TRAIL).fill(99);
+  private trailVel = new Float32Array(TRAIL * 3);
+  private trailNext = 0;
 
   constructor(scene: THREE.Scene) {
     const dot = dotTexture();
@@ -90,14 +179,25 @@ export class Effects {
     this.spray.frustumCulled = false;
 
     // Lava bombs and splash rings
-    const bombGeo = new THREE.IcosahedronGeometry(0.9, 0);
-    const bombMat = new THREE.MeshStandardMaterial({ color: 0x2a1a14, emissive: 0xff5a14, emissiveIntensity: 2.2, flatShading: true, fog: false });
+    const bombGeo = bombGeometry();
+    this.bombMat = new THREE.ShaderMaterial({ vertexShader: bombVertex, fragmentShader: bombFragment, uniforms: { uTime: { value: 0 } } });
     for (let i = 0; i < 8; i++) {
-      const mesh = new THREE.Mesh(bombGeo, bombMat);
+      const mesh = new THREE.Mesh(bombGeo, this.bombMat);
       mesh.visible = false;
-      this.bombs.push({ mesh, from: new THREE.Vector3(), to: new THREE.Vector3(), t: 0, dur: 1, active: false });
+      this.bombs.push({ mesh, from: new THREE.Vector3(), to: new THREE.Vector3(), t: 0, dur: 1, active: false, smoke: 0 });
       scene.add(mesh);
     }
+    const trailGeo = new THREE.BufferGeometry();
+    trailGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL * 3), 3));
+    trailGeo.setAttribute('aAge', new THREE.BufferAttribute(this.trailAge, 1));
+    trailGeo.setAttribute('aKind', new THREE.BufferAttribute(new Float32Array(TRAIL), 1));
+    this.trailMat = new THREE.ShaderMaterial({
+      vertexShader: trailVertex, fragmentShader: trailFragment, transparent: true, depthWrite: false,
+      uniforms: { uPx: { value: 700 } },
+    });
+    this.trail = new THREE.Points(trailGeo, this.trailMat);
+    this.trail.frustumCulled = false;
+    scene.add(this.trail);
     const ringGeo = new THREE.RingGeometry(0.8, 1.2, 24);
     ringGeo.rotateX(-Math.PI / 2);
     for (let i = 0; i < 8; i++) {
@@ -120,6 +220,34 @@ export class Effects {
     scene.add(this.ash, this.embers, this.spray);
   }
 
+  /** Height of the drawing buffer in pixels (the smoke puffs are sized in metres). */
+  setPixelHeight(h: number, fovDeg: number) { this.trailMat.uniforms.uPx.value = h / (2 * Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2)); }
+
+  private puff(at: THREE.Vector3, kind: number, vx = 0, vy = 0, vz = 0) {
+    const i = this.trailNext;
+    this.trailNext = (i + 1) % TRAIL;
+    const pos = this.trail.geometry.attributes.position as THREE.BufferAttribute;
+    pos.setXYZ(i, at.x + rnd(-0.2, 0.2), at.y + rnd(-0.2, 0.2), at.z + rnd(-0.2, 0.2));
+    (this.trail.geometry.attributes.aKind as THREE.BufferAttribute).setX(i, kind);
+    this.trailAge[i] = 0;
+    this.trailVel.set([vx, vy, vz], i * 3);
+  }
+
+  private updateTrail(dt: number) {
+    const pos = this.trail.geometry.attributes.position as THREE.BufferAttribute;
+    const a = pos.array as Float32Array;
+    for (let i = 0; i < TRAIL; i++) {
+      if (this.trailAge[i] > 3) continue;
+      this.trailAge[i] += dt;
+      a[i * 3] += this.trailVel[i * 3] * dt;
+      a[i * 3 + 1] += (this.trailVel[i * 3 + 1] + 0.6) * dt;   // smoke and steam drift up
+      a[i * 3 + 2] += this.trailVel[i * 3 + 2] * dt;
+    }
+    pos.needsUpdate = true;
+    (this.trail.geometry.attributes.aAge as THREE.BufferAttribute).needsUpdate = true;
+    (this.trail.geometry.attributes.aKind as THREE.BufferAttribute).needsUpdate = true;
+  }
+
   /** Draw only a share of the ash/ember/spray particles (graphics level). */
   setParticleShare(share: number) {
     for (const pts of [this.ash, this.embers, this.spray]) {
@@ -132,7 +260,9 @@ export class Effects {
     this.updateAsh(c);
     this.updateEmbers(c);
     this.updateSpray(c);
+    this.bombMat.uniforms.uTime.value = c.time;
     this.updateBombs(c);
+    this.updateTrail(c.dt);
     this.updateRings(c);
     this.updatePuddles(c.dt);
   }
@@ -238,6 +368,8 @@ export class Effects {
         b.active = false;
         b.mesh.visible = false;
         this.splash(b.to);
+        // hot rock in cold water: a burst of steam
+        for (let n = 0; n < 10; n++) this.puff(b.to, 1, rnd(-1.5, 1.5), rnd(1.5, 4), rnd(-1.5, 1.5));
         this.onBombLanded?.(Math.abs(b.to.z - c.boatZ));
         continue;
       }
@@ -246,6 +378,9 @@ export class Effects {
       b.mesh.position.y = b.from.y * (1 - k * k) + Math.sin(Math.PI * k) * 6;
       b.mesh.rotation.x += c.dt * 5;
       b.mesh.rotation.y += c.dt * 3;
+      // a trail of glowing, then dark smoke
+      b.smoke += c.dt;
+      while (b.smoke > 0.035) { b.smoke -= 0.035; this.puff(b.mesh.position, 0); }
     }
   }
 

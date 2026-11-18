@@ -37,7 +37,7 @@ const vertex = /* glsl */ `
     vec3 p = position;
     float f = aProfile.x, y = aProfile.y;
     // the ends sink into the banks
-    float ends = smoothstep(${(WIDTH / 2).toFixed(1)}, ${(WIDTH / 2 - 30).toFixed(1)}, abs(p.x));
+    float ends = 1.0 - smoothstep(${(WIDTH / 2 - 30).toFixed(1)}, ${(WIDTH / 2).toFixed(1)}, abs(p.x));
     // the break peels along the wave: the curl is further on here than there, and it rolls
     float peel = sin(p.x * 0.11 - uTime * 0.9) * 0.5 + sin(p.x * 0.27 + uTime * 0.6) * 0.25;
     float lip = smoothstep(4.0, 9.0, y) * smoothstep(1.0, 4.0, f);

@@ -3,7 +3,7 @@ import { ICELAND } from '../game/levels/iceland';
 import { DEFAULT_SETTINGS, generateWorkout, phaseSpans, segmentAt } from '../workout/workout';
 import { environmentAt, scheduleBeats, storyStateAt } from './story';
 
-const ORDER = ['calm', 'birds', 'tremor', 'ash', 'eruption', 'wave', 'escape', 'sunset'];
+const ORDER = ['calm', 'birds', 'tremor', 'calving', 'ash', 'eruption', 'wave', 'escape', 'sunset'];
 
 describe('story engine', () => {
   for (const durationMin of [10, 20, 30, 45, 60, 90]) {

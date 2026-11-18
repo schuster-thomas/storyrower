@@ -83,7 +83,13 @@ export class PaintedProps implements ModelSource {
     }
   }
 
-  /** unlit painted material; icebergs bob and sway a little, each with its own rhythm */
+  /** How far an iceberg at (x, z) has risen at time t – the same as its vertex shader (for the puffins on it). */
+  static bob(x: number, z: number, t: number, swell: number) {
+    const ph = x * 0.37 + z * 0.21;
+    return Math.sin(t * 0.9 + ph) * 0.06 * (0.5 + swell * 2);
+  }
+
+  /** unlit painted material; icebergs bob and sway a little, each with its own rhythm (see bob()) */
   private material(map: THREE.Texture | null, bob: boolean) {
     const mat = new THREE.MeshBasicMaterial({ map, fog: true });
     if (bob) {

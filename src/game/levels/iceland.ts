@@ -57,6 +57,7 @@ export const ICELAND: Level = {
     { id: 'calm', anchor: { at: 'phase-start', phase: 'idyll', offset: 3 }, effect: 'calm', caption: 'A calm morning on the fjord. Find your rhythm.' },
     { id: 'birds', anchor: { at: 'phase-fraction', phase: 'idyll', fraction: 0.5 }, effect: 'birds', caption: 'Puffins circle above the waterfalls.' },
     { id: 'tremor', anchor: { at: 'phase-start', phase: 'omens', offset: 0 }, effect: 'tremor', caption: 'The ground trembles…' },
+    { id: 'calving', anchor: { at: 'phase-fraction', phase: 'omens', fraction: 0.25 }, effect: 'calving', caption: 'The tremor breaks the glacier – ice crashes into the river!' },
     { id: 'ash', anchor: { at: 'phase-fraction', phase: 'omens', fraction: 0.5 }, effect: 'ash', caption: 'Ash drifts down from the volcano.' },
     { id: 'eruption', anchor: { at: 'first-section', kind: 'hard', offset: 0 }, effect: 'eruption', caption: 'ERUPTION! Row for your life!' },
     { id: 'wave', anchor: { at: 'phase-start', phase: 'finale', offset: 0 }, effect: 'wave', caption: 'A tidal wave! Give it everything!' },

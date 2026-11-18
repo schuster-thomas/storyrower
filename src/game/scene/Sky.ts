@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import puffsUrl from '../../assets/painted/ash-puffs.webp';
 
 const vertex = /* glsl */ `
   varying vec3 vDir;
@@ -58,7 +59,8 @@ export class Sky {
   readonly sunDir = new THREE.Vector3(-0.45, 0.35, -0.82).normalize();
   private dome: THREE.Mesh<THREE.SphereGeometry, THREE.ShaderMaterial>;
   private clouds: Cloud[] = [];
-  private cloudMat: THREE.SpriteMaterial;
+  /** one material per painted puff (the atlas has four); a soft canvas cloud until it is loaded */
+  private cloudMats: THREE.SpriteMaterial[] = [];
   private mountains = new THREE.Group();
   private mountainMat = new THREE.MeshStandardMaterial({ color: 0x7a8088, flatShading: true, fog: false, roughness: 1 });
   private snowMat = new THREE.MeshStandardMaterial({ color: 0xf4f7fb, flatShading: true, fog: false, roughness: 1 });
@@ -77,7 +79,21 @@ export class Sky {
     this.dome.renderOrder = -10;
     this.group.add(this.dome);
 
-    this.cloudMat = new THREE.SpriteMaterial({ map: cloudTexture(), transparent: true, depthWrite: false, fog: false, opacity: 0.9 });
+    const soft = cloudTexture();
+    for (let i = 0; i < 4; i++) this.cloudMats.push(new THREE.SpriteMaterial({ map: soft, transparent: true, depthWrite: false, fog: false, opacity: 0.9 }));
+    // the painted cumulus puffs (the same as in the volcano's plume, tinted white by the sky)
+    new THREE.TextureLoader().loadAsync(puffsUrl).then((atlas) => {
+      atlas.colorSpace = THREE.SRGBColorSpace;
+      this.cloudMats.forEach((m, i) => {
+        const t = atlas.clone();
+        t.repeat.set(0.25, 1);
+        t.offset.set(i * 0.25, 0);
+        t.needsUpdate = true;
+        m.map = t;
+        m.opacity = 0.95;
+        m.needsUpdate = true;
+      });
+    }).catch(() => { /* keep the soft canvas clouds */ });
     this.setCloudCount(cloudCount);
     this.buildMountains();
     this.group.add(this.mountains);
@@ -89,9 +105,9 @@ export class Sky {
   setCloudCount(n: number) {
     while (this.clouds.length > n) this.group.remove(this.clouds.pop()!.sprite);
     while (this.clouds.length < n) {
-      const sprite = new THREE.Sprite(this.cloudMat);
+      const sprite = new THREE.Sprite(this.cloudMats[this.clouds.length % 4]);
       const s = 90 + Math.random() * 110;
-      sprite.scale.set(s, s * 0.5, 1);
+      sprite.scale.set(s, s * 0.42, 1);   // the puffs are tall: spread out into wide, flat cumulus
       // drawn before the painted panorama and the volcano: the clouds hang behind the peaks
       // instead of veiling the volcano
       sprite.renderOrder = -6;
@@ -133,7 +149,8 @@ export class Sky {
     // Distant mountains fade into the haze; ash darkens the clouds
     this.mountainMat.color.set(0x6f757e).lerp(p.horizon, 0.45);
     this.snowMat.color.set(0xf4f7fb).lerp(p.horizon, 0.3);
-    this.cloudMat.color.set(0xffffff).lerp(new THREE.Color(0x5a5250), p.smoke * 0.7).lerp(p.horizon, 0.15);
+    // the painted puffs are shaded grey: lift them to bright white clouds (darker under the ash)
+    for (const m of this.cloudMats) m.color.setRGB(1.3, 1.3, 1.34).lerp(new THREE.Color(0x5a5250), p.smoke * 0.7).lerp(p.horizon, 0.15);
     for (const c of this.clouds) {
       c.x += c.speed * p.dt;
       if (c.x > 480) c.x = -480;
@@ -144,7 +161,6 @@ export class Sky {
   dispose() {
     this.dome.geometry.dispose();
     this.dome.material.dispose();
-    this.cloudMat.map?.dispose();
-    this.cloudMat.dispose();
+    for (const m of this.cloudMats) { m.map?.dispose(); m.dispose(); }
   }
 }
