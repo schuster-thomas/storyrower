@@ -129,11 +129,11 @@ for o in list(bpy.data.objects):
     bpy.data.objects.remove(o, do_unlink=True)
 scene = bpy.context.scene
 
-def terrain(y0=0.0, y1=LENGTH, cols=120):
+def terrain(y0=0.0, y1=LENGTH, cols=72):
     """the bank from y0 to y1; the blockout render uses a much longer stretch, so the painting shows
     land from edge to edge instead of an island with sky at both ends"""
     bm = bmesh.new()
-    ROWS, COLS = 100, cols               # inland × along
+    ROWS, COLS = 64, cols                # inland × along (dense near the water, coarse inland)
     grid = []
     for j in range(COLS + 1):
         y = y0 + (y1 - y0) * j / COLS

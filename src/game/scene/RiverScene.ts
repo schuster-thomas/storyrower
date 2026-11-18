@@ -241,7 +241,8 @@ export class RiverScene {
     this.updateChunks();
     // phase tint for the painted light: ash greys it, the eruption warms it
     this.paintTint.setRGB(1, 1, 1).lerp(new THREE.Color(0x9a948a), this.env.smoke * 0.45).lerp(new THREE.Color(1.1, 0.8, 0.62), this.env.lava * 0.35);
-    const bankFrame = { time: this.time, boatZ: this.z, ahead: this.q.chunksAhead * CHUNK, behind: CHUNKS_BEHIND * CHUNK, tint: this.paintTint, light: Math.min(1.1, this.light * 1.02) };
+    // in the narrow valley the banks further than ~600 m are lost in the haze anyway
+    const bankFrame = { time: this.time, boatZ: this.z, ahead: Math.min(600, this.q.chunksAhead * CHUNK), behind: 240, tint: this.paintTint, light: Math.min(1.1, this.light * 1.02) };
     this.painted.update(bankFrame);
     this.paintedIce.update(bankFrame);
     this.mats.fall.uniforms.uTime.value = this.time;
