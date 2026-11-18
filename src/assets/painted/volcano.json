@@ -1,0 +1,22 @@
+{
+  "size": [
+    3072,
+    1024
+  ],
+  "crater": [
+    0.5,
+    0.8086
+  ],
+  "craterLeft": [
+    0.4552,
+    0.8086
+  ],
+  "craterRight": [
+    0.5448,
+    0.8086
+  ],
+  "horizon": 0.1,
+  "widthAtAxis": 580.0,
+  "eye": 13.0,
+  "distance": 600.0
+}

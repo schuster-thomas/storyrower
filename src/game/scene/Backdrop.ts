@@ -1,11 +1,9 @@
 import * as THREE from 'three';
 import farUrl from '../../assets/backdrops/far-mountains.webp';
-import volcanoCalmUrl from '../../assets/backdrops/volcano-calm.webp';
-import volcanoEruptUrl from '../../assets/backdrops/volcano-erupting.webp';
 import waveUrl from '../../assets/backdrops/tidal-wave.webp';
 
-type Key = 'far' | 'volcanoCalm' | 'volcanoErupt' | 'wave';
-const URLS: Record<Key, string> = { far: farUrl, volcanoCalm: volcanoCalmUrl, volcanoErupt: volcanoEruptUrl, wave: waveUrl };
+type Key = 'far' | 'wave';
+const URLS: Record<Key, string> = { far: farUrl, wave: waveUrl };
 
 const RADIUS = 800;      // distance of the mountain panorama
 const SQUASH = 0.65;     // keep the peaks low on the horizon
@@ -18,7 +16,6 @@ export interface BackdropFrame {
   horizon: THREE.Color;
   /** 0–1 overall light level (darker under the ash cloud) */
   light: number;
-  lava: number;
   smoke: number;
   /** 0–1 how present the tidal wave is */
   wave: number;
@@ -28,7 +25,7 @@ export interface BackdropFrame {
 
 /**
  * Painted 2.5D layers: a mountain panorama all around the fjord (snowy peaks, green slopes on the
- * left, an ice cap on the right), the volcano (calm ↔ erupting) and the tidal wave.
+ * left, an ice cap on the right) and the tidal wave. The volcano has its own module (Volcano.ts).
  * Textures load in the background; until then the 3D greybox stand-ins stay visible.
  */
 export class Backdrop {
@@ -40,8 +37,6 @@ export class Backdrop {
   private tex = {} as Record<Key, THREE.Texture>;
   private far = new THREE.Group();            // follows the boat (horizon)
   private mountainMat!: THREE.MeshBasicMaterial;
-  private volcanoCalm!: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
-  private volcanoErupt!: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
   private wave!: THREE.Sprite;
   private tmp = new THREE.Color();
 
@@ -87,21 +82,6 @@ export class Backdrop {
     ring.renderOrder = -5;
     this.far.add(ring);
 
-    // Volcano: calm and erupting versions on top of each other, cross-faded by the lava level
-    const vw = 400;   // the volcano is the goal at the end of the valley: centred and big enough to show between the banks
-    const plane = (k: Key) => {
-      const mat = new THREE.MeshBasicMaterial({ map: this.tex[k], transparent: true, depthWrite: false, fog: false });
-      const h = vw / this.aspect(k);
-      const g = new THREE.PlaneGeometry(vw, h).translate(0, h / 2, 0);
-      const mesh = new THREE.Mesh(g, mat);
-      mesh.position.set(0, -10, -640);
-      mesh.renderOrder = -4;
-      this.far.add(mesh);
-      return mesh;
-    };
-    this.volcanoCalm = plane('volcanoCalm');
-    this.volcanoErupt = plane('volcanoErupt');
-
     // Tidal wave: always faces the camera
     this.wave = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tex.wave, transparent: true, depthWrite: false }));
     this.wave.center.set(0.5, 0.08);
@@ -120,15 +100,6 @@ export class Backdrop {
     const light = Math.max(0.35, f.light);
     this.tmp.setRGB(light, light, light).lerp(f.horizon, 0.3);
     this.mountainMat.color.copy(this.tmp).lerp(f.horizon, 0.15 + f.smoke * 0.35);
-    this.volcanoCalm.material.color.copy(this.tmp);
-    this.volcanoErupt.material.color.setRGB(1, 1, 1).lerp(this.tmp, 0.4);
-    const erupt = Math.min(1, Math.max(0, (f.lava - 0.35) / 0.4));
-    this.volcanoCalm.material.opacity = 1 - erupt;
-    this.volcanoErupt.material.opacity = erupt;
-    this.volcanoCalm.visible = erupt < 0.99;
-    this.volcanoErupt.visible = erupt > 0.01;
-    // the volcano looms closer as the story escalates
-    this.volcanoCalm.position.z = this.volcanoErupt.position.z = -640 + f.lava * 160;
 
     // Tidal wave sprite behind the boat
     this.wave.visible = f.wave > 0.02;

@@ -8,7 +8,7 @@
 - **Racing scull and oars:** modelled from scratch by `scripts/blender/boat.py`.
 
 ## Painted backdrops and concept art
-- The mountain panorama, volcano (calm/erupting) and the tidal wave in `src/assets/backdrops/`, and the style frames and model sheets in `docs/art/`, were generated for this project with the OpenAI image API (`gpt-image-1.5`, `gpt-image-2`), using the project's own UI mock-up as style reference. Prompts: `scripts/backdrops/spec.mjs`, `scripts/concepts/spec.mjs`.
+- The mountain panorama and the tidal wave in `src/assets/backdrops/`, the painted river banks, volcano, lupines and ash puffs in `src/assets/painted/`, and the style frames and model sheets in `docs/art/`, were generated for this project with the OpenAI image API (`gpt-image-1.5`, `gpt-image-2`), using the project's own UI mock-up as style reference. Prompts: `scripts/backdrops/spec.mjs`, `scripts/concepts/spec.mjs`.
 
 ## Earlier experiments (no longer in the game)
 - **Poly Haven** scans, textures and HDRIs (CC0) were used for the first photo-scanned river section (`scripts/blender/section_fjord.py`), dropped in the art rework.

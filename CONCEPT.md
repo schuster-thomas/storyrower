@@ -232,9 +232,9 @@ The first world look (photo scans + low-poly kit + paintings on a narrow river) 
 | A | Style frames + model sheets as the visual target; lower camera, glacier water; panorama layers; photo scans removed | ✅ |
 | B | Racing single scull and rigged rower, stroke clip driven by the real strokes, blade splashes | ✅ |
 | C | Left bank: painted basalt cliffs and open slopes (two section variants), real waterfall sheets with foam, spray and mist, lupine clumps as swaying 3D cards | ✅ |
-| D | Puffins: sit, look around, take off, fly; flee when the boat passes or the earth shakes | open – next but one |
+| D | Puffins: sit, look around, take off, fly; flee when the boat passes or the earth shakes | open – **next** |
 | E | Glacier front: painted ice (two variants) ✅; drifting, bobbing icebergs from the glacier and a calving event | partly |
-| F | 3D volcano: lava flows spreading down the flank, lava fountain, glowing plume, volcanic lightning | open – **next** |
+| F | Volcano: painted, with lava flowing down its grooves as the eruption goes on and cooling after the escape, a lava fountain, a plume of painted ash puffs lit from below, crater glow, volcanic lightning | ✅ |
 | G | Stylized 3D tidal wave; texture compression, tablet profiling | open |
 
 Each phase ends with an in-game screenshot next to the style frame. Tablet check (2026-11-18): smooth on "High".
@@ -261,15 +261,15 @@ Order by **impact on the workout's story**: the escalation and the finale take a
 
 | # | Step | Why now | What | Effort |
 |---|---|---|---|---|
-| 1 | **Volcano (art phase F)** | The central element and the climax; today a flat picture that only swaps calm ↔ erupting | Blockout of cone, crater and lava channels → painted and projected like the banks (seen from the river, so one painting from ahead is enough). Lava as an emissive shader on the channels that **flows down step by step** with the story (`lava` 0 → 1), lava fountain from the crater (particles), glowing plume with lightning flashes, glow tinting sky and water | 1–2 weekends |
+| 1 ✅ | **Volcano (art phase F)** – done 2026-11-18 | The central element and the climax; before, a flat picture that only swapped calm ↔ erupting | Blockout of cone, crater and lava channels → painted like the banks; at 700–780 m a plane with a pixel-aligned lava mask is enough (no visible parallax). Lava as an emissive shader on the channels that **flows down step by step** with the story (`lava` 0 → 1), lava fountain from the crater (particles), glowing plume with lightning flashes, glow tinting sky and water | 1–2 weekends |
 | 2 | **Puffins (art phase D)** | The signature of the idyll, in the mock-up and in a beat caption, but not yet in the world | Tripo3D model, wings as separate parts flapped in the vertex shader (instancing, cheap); sitting on the puffin rock and ledges (markers already in the sections), turning heads; **take off** when the boat comes close or at the tremor; small flocks crossing the river | 1 weekend |
 | 3 | **Tidal wave (art phase G)** | Fills the screen in the finale (camera looks back at it) | 3D wave mesh with a curling, translucent crest, foam and spray, distance driven by the threat value as today | 1 weekend |
-| 4 | Glacier life (rest of E) | Makes the right bank move | Icebergs that visibly come from the glacier front, a calving event as a story beat (splash + swell reaching the boat) | 1 evening – 1 weekend |
+| 4 | Glacier life and things in the water (rest of E) | Makes the right bank move; the rocks and ice blocks in the water are still CC0 kit models that don't match the painted banks | Rework the rocks and ice blocks in the water in the painted style; icebergs that visibly come from the glacier front, a calving event as a story beat (splash + swell reaching the boat) | 1 weekend |
 | 5 | Sound pass | Big for immersion, small effort | Real music stems per intensity, waterfall/bird/lava ambience placed in the world | 1 weekend + sourcing |
 | 6 | Results & PWA (milestone 5) | Everyday use: history, install on the tablet, offline | as in §8 | 1 weekend |
 | 7 | Level kit (milestone 6) | Before level 2 | §12.3 | 1 weekend |
 
-**My recommendation:** 1 → 2 → 3 in this order, then a tablet check of the whole run (frame rate in the eruption with lava, particles and reflections at the same time). Steps 4–6 can be swapped freely depending on what you miss most while rowing.
+**My recommendation:** 2 → 3 next (1 is done), then a tablet check of the whole run (frame rate in the eruption with lava, particles and reflections at the same time). Steps 4–6 can be swapped freely depending on what you miss most while rowing.
 
 ---
 

@@ -51,6 +51,12 @@ export interface StoryState {
   ashfall: number;
   /** 0–1 birds circling */
   birds: number;
+  /** 0–1 the volcano wakes up: from the first tremor to the eruption */
+  unrest: number;
+  /** seconds since the eruption began (-1 before it) – the lava flows down with it */
+  eruptionAge: number;
+  /** 0–1 the eruption dies down after the escape: the lava cools, the plume thins */
+  cooling: number;
 }
 
 export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number): StoryState {
@@ -65,6 +71,9 @@ export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number
     lavaBombs: erupted ? (seg.kind === 'easy' ? 0.35 : seg.kind === 'peak' ? 1 : 0.75) : 0,
     ashfall: Math.min(ramp(when('ash'), 30), fade(winddown + 60, 60)) * (t >= when('ash') ? 1 : 0),
     birds: t < when('tremor') ? 1 : 0,
+    unrest: Number.isFinite(when('tremor')) ? ramp(when('tremor'), Math.max(1, Math.min(when('eruption'), winddown) - when('tremor'))) : 0,
+    eruptionAge: t >= when('eruption') ? t - when('eruption') : -1,
+    cooling: ramp(winddown, 120),
   };
 }
 

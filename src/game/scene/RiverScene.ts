@@ -7,6 +7,7 @@ import { Effects } from './Effects';
 import { buildFjordChunk, createFjordMaterials, disposeFjordChunk } from './Fjord';
 import { NatureKit } from './NatureKit';
 import { PaintedShore } from './PaintedShore';
+import { Volcano } from './Volcano';
 import { Post } from './Post';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
@@ -51,7 +52,7 @@ export class RiverScene {
 
   /** Start loading every asset of the world early (setup screen), so a game starts in the final look. */
   static preload() {
-    return Promise.all([Boat.preload(), Backdrop.preload(), NatureKit.load(), PaintedShore.preload('cliffs'), PaintedShore.preload('glacier')]).then(() => {}, () => {});
+    return Promise.all([Boat.preload(), Backdrop.preload(), NatureKit.load(), PaintedShore.preload('cliffs'), PaintedShore.preload('glacier'), Volcano.preload()]).then(() => {}, () => {});
   }
   private topColor = new THREE.Color();
   private horizonColor = new THREE.Color();
@@ -62,6 +63,9 @@ export class RiverScene {
   private kit: NatureKit | null = null;
   /** painted banks (replace the generated slopes and glacier once loaded) */
   private painted: PaintedShore;
+  /** the painted volcano with flowing lava, plume and fountain (the greybox `volcano` is its stand-in) */
+  private setPiece = new Volcano();
+  private bufferSize = new THREE.Vector2();
   private paintedIce: PaintedShore;
   private paintTint = new THREE.Color();
   private post: Post;
@@ -90,7 +94,7 @@ export class RiverScene {
   private smokeBurst = 0;
   private viewDir = 1;
   private effects: Effects;
-  private story: StoryState = { lavaBombs: 0, ashfall: 0, birds: 0 };
+  private story: StoryState = { lavaBombs: 0, ashfall: 0, birds: 0, unrest: 0, eruptionAge: -1, cooling: 0 };
   /** Forwarded from the effects (for sound): a lava bomb hit the water at this distance. */
   set onBombLanded(fn: ((distance: number) => void) | null) { this.effects.onBombLanded = fn; }
 
@@ -133,9 +137,9 @@ export class RiverScene {
     this.scene.add(this.backdrop.group);
     this.backdrop.onReady = () => {
       this.sky.setMountainsVisible(false);
-      this.volcano.visible = false;
       this.wave.visible = false;
     };
+    this.scene.add(this.setPiece.group);
     // Icebergs and shore boulders come from the model kit; the chunks are rebuilt once it is loaded
     const kitReady = NatureKit.load().then((kit) => {
       this.kit = kit;
@@ -145,7 +149,7 @@ export class RiverScene {
     this.paintedIce = new PaintedShore('glacier', this.mats.mist);
     this.scene.add(this.painted.group, this.paintedIce.group);
     const paintedReady = Promise.all([this.painted.loaded, this.paintedIce.loaded]).then(() => this.dropChunks());
-    this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady, paintedReady]).then(() => {});
+    this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady, paintedReady, this.setPiece.loaded]).then(() => {});
     this.post = new Post(this.renderer, this.scene, this.camera);
     this.post.setQuality(quality);
     this.water.reflections = quality !== 'low';
@@ -254,7 +258,12 @@ export class RiverScene {
     this.effects.update({ dt, time: this.time, boatZ: this.z, speed: this.speed, viewDir: this.viewDir, threat, smoke: this.env.smoke, lava: this.env.lava, story: this.story });
     this.sky.update({ dt, time: this.time, camera: this.camera, boatZ: this.z, top: this.topColor, horizon: this.horizonColor, sunColor: this.sunColor, smoke: this.env.smoke, sunHeight: this.env.sunHeight });
     this.water.update({ time: this.time, boatZ: this.z, speed: this.speed, swell: this.env.swell, water: this.waterColor, sky: this.horizonColor, sunColor: this.sunColor, sunDir: this.sky.sunDir, light: this.light });
-    this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, lava: this.env.lava, smoke: this.env.smoke, wave: this.env.wave, threat });
+    this.backdrop.update({ dt, boatZ: this.z, camera: this.camera, horizon: this.horizonColor, light: this.light, smoke: this.env.smoke, wave: this.env.wave, threat });
+    this.renderer.getDrawingBufferSize(this.bufferSize);
+    this.setPiece.update({
+      dt, time: this.time, boatZ: this.z, light: this.light, horizon: this.horizonColor, lava: this.env.lava, smoke: this.env.smoke,
+      unrest: this.story.unrest, eruptionAge: this.story.eruptionAge, cooling: this.story.cooling, pixelHeight: this.bufferSize.y, camera: this.camera,
+    });
     // The visible sun sits ahead in the sky; the light comes from high right-behind so the mossy
     // slopes on the left and the rower's face are lit, the glacier walls glow blue in their own shade
     this.sun.position.set(55, 50 + this.env.sunHeight * 90, this.z + 45);
@@ -286,6 +295,7 @@ export class RiverScene {
     for (const c of this.chunks) disposeFjordChunk(c.group);
     this.post.dispose();
     this.backdrop.dispose();
+    this.setPiece.dispose();
     this.water.dispose();
     this.sky.dispose();
     this.renderer.dispose();
@@ -414,6 +424,8 @@ export class RiverScene {
   }
 
   private updateVolcano(_dt: number) {
+    this.volcano.visible = !this.setPiece.ready;
+    if (!this.volcano.visible) return;
     // Stays on the horizon, slowly drifting closer as the story escalates
     this.volcano.position.z = this.z - 700 + this.env.lava * 180;
     this.smokeBurst *= Math.exp(-_dt * 0.15);

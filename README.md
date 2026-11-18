@@ -17,7 +17,7 @@ What counts is not maximum effort but how well you stay inside the **target band
 | 1 – Data layer + simulator + diagnostics view | ✅ |
 | 2 – Greybox game (incl. heart rate display) | ✅ playable with rower or simulator |
 | 3 – Story engine + audio | ✅ story beats, reactive effects, placeholder soundtrack |
-| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain), ✅ painted horizon (mountains, volcano, wave), ✅ unified 3D props from a CC0 kit, ✅ shadows & colour grade · art rework ([CONCEPT.md §9.6](CONCEPT.md)): ✅ A – style frames, wide fjord with glacier, new camera · ✅ B – scull and rigged rower in time with the real strokes · next: C – shore kit |
+| 4 – Level "Iceland Volcano Run" | in progress: ✅ graphics levels & metrics, ✅ world look (water, sky, terrain), ✅ painted horizon (mountains, volcano, wave), ✅ unified 3D props from a CC0 kit, ✅ shadows & colour grade · art rework ([CONCEPT.md §9.6](CONCEPT.md)): ✅ A – style frames, new camera · ✅ B – scull and rigged rower in time with the real strokes · ✅ C – painted river banks · ✅ F – volcano with flowing lava · next: puffins, tidal wave ([§11](CONCEPT.md#11-next-steps)) |
 
 ## Development
 Requires Node.js 24.
@@ -47,6 +47,7 @@ Everything is recorded automatically from the moment a rower (or simulator) is c
 - `game/scene/quality.ts` – graphics levels (low/medium/high/auto), auto-adjustment by frame rate, frame statistics
 - `game/scene/RiverScene.ts` preloads boat, painted layers and model kit while the setup screen is open; the game view stays dark ("Loading the fjord…") until they and the first stretch of fjord are ready, and the workout clock only starts then
 - `game/scene/Fjord.ts` – the world layout: a narrow river built in 100 m chunks (water, icebergs, fallback banks); the bank lines are shared with the water shader and the painted sections
+- `game/scene/Volcano.ts` – the volcano at the end of the valley: a painted plane whose lava mask lets fresh lava run down the grooves with the story, a plume of painted ash puffs, a lava fountain, crater glow and volcanic lightning
 - `game/scene/PaintedShore.ts` – the painted river banks (basalt cliffs left, glacier right): 120 m sections in two variants, chained with mirroring, with lupine cards, waterfall sheets, foam and spray on top. How they are made: [CONCEPT.md §9.7](CONCEPT.md#97-how-a-levels-world-is-made-matte-painting-pipeline); how further levels reuse it: [§12](CONCEPT.md#12-building-further-levels)
 - `game/scene/Water.ts`, `Sky.ts` – water shader (waves, shallows, milky meltwater before the glacier, foam, wake, sky reflection), gradient sky with sun and clouds
 - `audio/AudioEngine.ts` – procedural placeholder soundtrack (Web Audio): music layers faded by intensity, splash per real stroke, ambience and story effects
@@ -80,7 +81,7 @@ npm run models:build   # selected models → src/assets/models/nature.glb (mesho
 `dev/models.html?m=Rock_Medium_1,Pine_1` (dev server) renders models side by side for picking. `src/game/scene/NatureKit.ts` loads the bundle and places models with instancing; `Post.ts` adds the colour grade, vignette and (on high) bloom.
 
 ### Painted backdrops (`scripts/backdrops/`, `src/assets/backdrops/`)
-The mountain panorama around the fjord, the volcano (calm and erupting) and the tidal wave are painted layers generated with the OpenAI image API. The panorama (`far-mountains`, 3072 px wide) is made with `gpt-image-2` on a flat magenta background and keyed out by `process.mjs`; the older layers use `gpt-image-1.5` with a transparent background. Prompts live in `scripts/backdrops/spec.mjs`.
+The mountain panorama around the fjord and the tidal wave are painted layers generated with the OpenAI image API. The panorama (`far-mountains`, 3072 px wide) is made with `gpt-image-2` on a flat magenta background and keyed out by `process.mjs`; the older layers use `gpt-image-1.5` with a transparent background. Prompts live in `scripts/backdrops/spec.mjs`.
 
 ```bash
 npm run backdrops:generate   # needs the API key in the environment variable gpt_api_key; skips existing images
@@ -88,6 +89,15 @@ npm run backdrops:process    # trim, resize and compress to WebP into src/assets
 npm run backdrops:sheet      # contact sheet for a quick visual check
 ```
 Raw images stay in `assets/raw/` (not committed). `src/game/scene/Backdrop.ts` places the layers and grades them with the phase light and haze.
+
+### Volcano (`scripts/blender/volcano.py`, `scripts/painted/volcano.mjs`)
+The volcano is made like the river banks ([CONCEPT.md §9.7](CONCEPT.md#97-how-a-levels-world-is-made-matte-painting-pipeline)), but stays a plane (it is 700–780 m away): Blender renders a blockout with hint colours on magenta and, pixel-aligned, a lava mask (R = lava channel, G = distance down the channel, B = crater). The image model paints the calm volcano over the blockout; the game's shader fills the grooves with lava as the eruption goes on and lets it cool after the escape.
+
+```bash
+"C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" --background --factory-startup --python scripts/blender/volcano.py -- assets/raw/painted/volcano
+node scripts/painted/paint.mjs volcano     # → assets/raw/painted/volcano/painted.png
+node scripts/painted/volcano.mjs           # keys the magenta, packs painting, mask and ash puffs into src/assets/painted/
+```
 
 ### Data layer (`src/rower/`)
 ```

@@ -51,6 +51,21 @@ describe('story engine', () => {
     expect(storyStateAt(beats, w, w.duration - 1).ashfall).toBeLessThan(0.5);
   });
 
+  it('wakes the volcano, lets it erupt and cools it down again', () => {
+    const w = generateWorkout(DEFAULT_SETTINGS);
+    const beats = scheduleBeats(ICELAND, w);
+    const at = (id: string) => beats.find((b) => b.id === id)!.t;
+    const calm = storyStateAt(beats, w, 10);
+    expect(calm).toMatchObject({ unrest: 0, eruptionAge: -1, cooling: 0 });
+    // unrest builds from the tremor up to the eruption
+    const mid = storyStateAt(beats, w, (at('tremor') + at('eruption')) / 2);
+    expect(mid.unrest).toBeGreaterThan(0.3);
+    expect(mid.unrest).toBeLessThan(0.7);
+    expect(storyStateAt(beats, w, at('eruption') + 30).eruptionAge).toBeCloseTo(30);
+    expect(storyStateAt(beats, w, at('wave')).cooling).toBe(0);
+    expect(storyStateAt(beats, w, w.duration - 1).cooling).toBeGreaterThan(0.5);
+  });
+
   it('blends the environment smoothly instead of jumping at phase borders', () => {
     const w = generateWorkout(DEFAULT_SETTINGS);
     const omens = phaseSpans(w).find((p) => p.phase === 'omens')!;

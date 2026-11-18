@@ -20,7 +20,7 @@ async function keyMagenta(src) {
   return sharp(data, { raw: info }).png().toBuffer();
 }
 
-const MAX_WIDTH = { 'far-mountains': 3072, 'volcano-calm': 1024, 'volcano-erupting': 1024, 'tidal-wave': 1280 };
+const MAX_WIDTH = { 'far-mountains': 3072, 'tidal-wave': 1280 };
 mkdirSync(OUT, { recursive: true });
 
 let total = 0;

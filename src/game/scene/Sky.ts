@@ -92,6 +92,9 @@ export class Sky {
       const sprite = new THREE.Sprite(this.cloudMat);
       const s = 90 + Math.random() * 110;
       sprite.scale.set(s, s * 0.5, 1);
+      // drawn before the painted panorama and the volcano: the clouds hang behind the peaks
+      // instead of veiling the volcano
+      sprite.renderOrder = -6;
       const cloud = { sprite, x: (Math.random() - 0.5) * 900, y: 90 + Math.random() * 120, dz: -150 - Math.random() * 650, speed: 2 + Math.random() * 3 };
       this.clouds.push(cloud);
       this.group.add(sprite);

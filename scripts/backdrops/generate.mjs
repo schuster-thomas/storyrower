@@ -1,6 +1,6 @@
 // Generates the painted backdrop layers with the OpenAI image API.
 //   node scripts/backdrops/generate.mjs            – generate all missing layers
-//   node scripts/backdrops/generate.mjs volcano-calm --force
+//   node scripts/backdrops/generate.mjs tidal-wave --force
 // Raw PNGs go to assets/raw/backdrops/ (not committed); run process.mjs afterwards.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { openAiKey } from '../openai-key.mjs';

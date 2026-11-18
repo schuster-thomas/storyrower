@@ -5,6 +5,8 @@
 //     side (default): the view across the river   → assets/raw/painted/<kind>/painted.png
 //     up / down: views along the river (for the faces pointing up- or downstream; they get the
 //     side painting as a reference for materials and colours) → painted-up.png / painted-down.png
+//   node scripts/painted/paint.mjs volcano   the volcano at the end of the valley
+//     (blockout from scripts/blender/volcano.py, flat magenta background that is keyed out later)
 //   STYLE_REF=<png> adds another painting as a style reference
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { openAiKey } from '../openai-key.mjs';
@@ -28,7 +30,16 @@ const VIEW = {
   along: 'The first image is a flat-coloured 3D blockout render of a river bank in Iceland, seen from a boat on the river looking ALONG the river: the bank recedes into the distance in strong perspective. The last reference image shows the SAME bank painted from the side – match its materials, colours, rock and moss details and light exactly, but NOT its composition: the composition must be the one of the blockout.',
 }[view === 'side' ? 'side' : 'along'];
 
-const prompt = [
+const VOLCANO = [
+  'The first image is a flat-coloured 3D blockout render of a large Icelandic stratovolcano, seen from a boat on a river far away at the end of a valley.',
+  'Repaint it as a finished, richly detailed background painting for a premium stylised console game (in the spirit of Mario Kart 8), in exactly the style, palette and lighting of the reference images.',
+  'CRITICAL: keep the composition pixel-accurate – the silhouette, the crater rim, every groove and the position of every feature must stay exactly where it is. Same perspective, same framing, nothing added, nothing moved. Only replace the flat colours with painted detail.',
+  'Meaning of the colours: dark red at the top = the inside of the crater rim; dark grey-brown near the top = ash and dark volcanic rock; brown and ochre = rust-coloured volcanic rock and scree with clear ridges and gullies; green = moss and grass on the lower slopes; white = snow patches in the upper gullies; the very dark, almost black bands running down from the crater = deep grooves of old, black, solidified lava with rough crusty texture – keep them dark and clearly readable as channels, they will glow with fresh lava later.',
+  'The volcano is calm and dormant: NO fire, NO glowing lava, NO smoke plume, NO steam, no clouds around it. Bright fresh morning light from the upper left, soft shadows on the right flanks.',
+  'The background is a flat pure magenta (#FF00FF) – keep it exactly that flat magenta everywhere around the volcano, with a clean, sharp silhouette edge. No sky, no other mountains, no water, no text.',
+].join(' ');
+
+const prompt = base === 'volcano' ? VOLCANO : [
   VIEW,
   'Repaint it as a finished, richly detailed background painting for a premium stylised console game (in the spirit of Mario Kart 8), in exactly the style, palette and lighting of the reference images.',
   'CRITICAL: keep the composition pixel-accurate – every silhouette, edge, the skyline, the waterline and the position of every feature must stay exactly where it is. Same perspective, same framing, nothing added in front, nothing moved. Only replace the flat colours with painted detail.',
@@ -41,6 +52,8 @@ form.append('model', 'gpt-image-2');
 form.append('prompt', prompt);
 form.append('image[]', img(view === 'side' ? `${DIR}/blockout.png` : `${DIR}/blockout-${view}.png`), 'blockout.png');
 form.append('image[]', img('assets/raw/concepts/frame-idyll.png'), 'style.png');
+// the first painted volcano (an older backdrop layer) as a look reference, if it is still around
+if (base === 'volcano' && existsSync('assets/raw/backdrops/volcano-calm.png')) form.append('image[]', img('assets/raw/backdrops/volcano-calm.png'), 'volcano-style.png');
 form.append('image[]', img('screenshots/Vulkanrudern im isländischen Abenteuerland.png'), 'mockup.png');
 const ref = process.env.STYLE_REF ?? (view !== 'side' && existsSync(`${DIR}/painted.png`) ? `${DIR}/painted.png` : null);
 if (ref) form.append('image[]', img(ref), 'same-bank.png');
