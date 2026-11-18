@@ -3,6 +3,8 @@ import paintUrl from '../../assets/painted/volcano.webp';
 import maskUrl from '../../assets/painted/volcano-mask.webp';
 import puffsUrl from '../../assets/painted/ash-puffs.webp';
 import meta from '../../assets/painted/volcano.json';
+import type { QualityLevel } from './quality';
+import { NO_REFLECTION } from './Water';
 
 /**
  * The volcano at the end of the valley – the set piece the story revolves around.
@@ -26,6 +28,9 @@ const BOTTOM = EYE_Y - meta.horizon * HEIGHT;
 /** where the crater sits in the group (x, y) */
 const CRATER = new THREE.Vector3((meta.crater[0] - 0.5) * WIDTH, BOTTOM + meta.crater[1] * HEIGHT, 1);
 const CRATER_HALF = ((meta.craterRight[0] - meta.craterLeft[0]) / 2) * WIDTH;
+/** puffs in the plume per graphics level – the plume is mostly fill rate (big see-through quads) */
+const PUFFS: Record<QualityLevel, number> = { low: 18, medium: 28, high: 40 };
+const MAX_PUFFS = PUFFS.high;
 
 export interface VolcanoFrame {
   dt: number;
@@ -190,6 +195,25 @@ const dropFragment = /* glsl */ `
   }
 `;
 
+/**
+ * The painting only covers the cone; a plain rectangle would run the lava shader over all the empty
+ * sky around it. The cone's flanks are concave (scripts/blender/volcano.py), so a trapezoid from the
+ * image's bottom corners to just outside the crater rim contains the whole silhouette – and halves
+ * the shaded area.
+ */
+function coneGeometry() {
+  const top = meta.crater[1] + 0.05;
+  const half = (meta.craterRight[0] - meta.craterLeft[0]) / 2 + 0.035;
+  const uv = [0, 0, 1, 0, meta.crater[0] + half, top, meta.crater[0] - half, top];
+  const pos: number[] = [];
+  for (let i = 0; i < 4; i++) pos.push((uv[i * 2] - 0.5) * WIDTH, BOTTOM + uv[i * 2 + 1] * HEIGHT, 0);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex([0, 1, 2, 0, 2, 3]);
+  return g;
+}
+
 interface Textures { paint: THREE.Texture; mask: THREE.Texture; puffs: THREE.Texture }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -210,6 +234,8 @@ export class Volcano {
   private boltLife = 0;
   private flash = 0;
   private distance = 780;
+  private quality: QualityLevel;
+  private plume: THREE.Mesh<THREE.InstancedBufferGeometry, THREE.ShaderMaterial> | null = null;
   private s = { amount: 0.3, height: 70, size: 34, spread: 30, dark: 0, glow: 0, speed: 0.05, opacity: 0.9, power: 0, rate: 0, heat: 1, flow: 0, craterGlow: 0 };
 
   private static loading: Promise<Textures> | null = null;
@@ -228,7 +254,8 @@ export class Volcano {
     return this.loading;
   }
 
-  constructor() {
+  constructor(quality: QualityLevel) {
+    this.quality = quality;
     this.loaded = Volcano.preload().then((t) => { this.build(t); this.ready = true; })
       .catch((e) => console.warn('The painted volcano could not be loaded, keeping the stand-in', e));
   }
@@ -242,7 +269,7 @@ export class Volcano {
         uGlow: { value: 0 }, uTint: { value: new THREE.Color(1, 1, 1) }, uCrater: { value: new THREE.Vector2(meta.crater[0], meta.crater[1]) },
       },
     });
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(WIDTH, HEIGHT).translate(0, BOTTOM + HEIGHT / 2, 0), this.cone);
+    const plane = new THREE.Mesh(coneGeometry(), this.cone);
     plane.renderOrder = -4;
     plane.frustumCulled = false;
     this.group.add(plane);
@@ -277,10 +304,8 @@ export class Volcano {
     this.group.add(drops);
 
     // plume: painted puffs as camera-facing quads, one draw call
-    const N_PUFFS = 60;
     const pg = new THREE.InstancedBufferGeometry().copy(new THREE.PlaneGeometry(1, 1) as unknown as THREE.InstancedBufferGeometry);
-    pg.instanceCount = N_PUFFS;
-    pg.setAttribute('seed', new THREE.InstancedBufferAttribute(Float32Array.from({ length: N_PUFFS * 4 }, Math.random), 4));
+    pg.setAttribute('seed', new THREE.InstancedBufferAttribute(Float32Array.from({ length: MAX_PUFFS * 4 }, Math.random), 4));
     this.puffs = new THREE.ShaderMaterial({
       vertexShader: puffVertex, fragmentShader: puffFragment, transparent: true, depthWrite: false,
       uniforms: {
@@ -294,6 +319,8 @@ export class Volcano {
     plume.frustumCulled = false;
     plume.renderOrder = -1;
     this.group.add(plume);
+    this.plume = plume;
+    this.setQuality(this.quality);
 
     // volcanic lightning: a jagged ribbon in the plume, rebuilt for every strike
     const bg = new THREE.BufferGeometry();
@@ -304,6 +331,14 @@ export class Volcano {
     this.bolt.visible = false;
     this.bolt.renderOrder = 0;
     this.group.add(this.bolt);
+    // the cone (with its lava) shows in the water; plume, fountain, glow and lightning don't
+    for (const o of [plume, drops, this.glow, this.bolt]) o.layers.set(NO_REFLECTION);
+  }
+
+  /** Fewer, slightly bigger puffs on the lower graphics levels. */
+  setQuality(level: QualityLevel) {
+    this.quality = level;
+    if (this.plume) this.plume.geometry.instanceCount = PUFFS[level];
   }
 
   /** a branching zig-zag from the plume down towards the crater */
@@ -382,7 +417,7 @@ export class Volcano {
     this.phase += f.dt * s.speed;
     const pu = this.puffs.uniforms;
     pu.uPhase.value = this.phase;
-    pu.uHeight.value = s.height; pu.uSize.value = s.size; pu.uSpread.value = s.spread; pu.uAmount.value = s.amount;
+    pu.uHeight.value = s.height; pu.uSize.value = s.size * Math.pow(MAX_PUFFS / PUFFS[this.quality], 0.25); pu.uSpread.value = s.spread; pu.uAmount.value = s.amount;
     pu.uDark.value = s.dark; pu.uGlow.value = s.glow; pu.uDrift.value = 50 + 110 * live;
     pu.uTint.value.setRGB(light, light, light);
     pu.uOpacity.value = 0.75 + 0.2 * Math.max(f.unrest, live);

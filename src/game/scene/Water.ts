@@ -123,6 +123,9 @@ const fragment = /* glsl */ `
  * deep/shallow colours, a mirror image of the banks (medium/high), sun glint and foam on banks,
  * crests and the wake.
  */
+/** Objects on this layer are seen by the camera but left out of the water's reflection. */
+export const NO_REFLECTION = 1;
+
 export class Water {
   readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private uniforms: Record<string, THREE.IUniform>;
@@ -196,6 +199,9 @@ export class Water {
     const m = this.mirror;
     camera.updateMatrixWorld();
     m.copy(camera, false);
+    // big see-through effects high in the sky (the volcano's plume) would cost a lot of fill rate
+    // in the reflection for little gain
+    m.layers.disable(NO_REFLECTION);
     m.position.set(camera.position.x, -camera.position.y, camera.position.z);
     this.tmp.set(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
     this.target3.set(this.tmp.x, -this.tmp.y, this.tmp.z);

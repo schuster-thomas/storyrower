@@ -11,7 +11,7 @@ import { Volcano } from './Volcano';
 import { Post } from './Post';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
-import { Water } from './Water';
+import { NO_REFLECTION, Water } from './Water';
 
 const CHUNK = 100;         // length of one fjord chunk (m)
 const CHUNKS_BEHIND = 3;   // the finale camera looks back at the wave
@@ -64,7 +64,7 @@ export class RiverScene {
   /** painted banks (replace the generated slopes and glacier once loaded) */
   private painted: PaintedShore;
   /** the painted volcano with flowing lava, plume and fountain (the greybox `volcano` is its stand-in) */
-  private setPiece = new Volcano();
+  private setPiece: Volcano;
   private bufferSize = new THREE.Vector2();
   private paintedIce: PaintedShore;
   private paintTint = new THREE.Color();
@@ -139,7 +139,10 @@ export class RiverScene {
       this.sky.setMountainsVisible(false);
       this.wave.visible = false;
     };
+    this.setPiece = new Volcano(quality);
     this.scene.add(this.setPiece.group);
+    // the main camera sees everything; the water's mirror camera leaves out the NO_REFLECTION layer
+    this.camera.layers.enable(NO_REFLECTION);
     // Icebergs and shore boulders come from the model kit; the chunks are rebuilt once it is loaded
     const kitReady = NatureKit.load().then((kit) => {
       this.kit = kit;
@@ -175,6 +178,7 @@ export class RiverScene {
     this.sun.castShadow = level !== 'low';
     this.model.setShadows(this.sun.castShadow);
     this.post.setQuality(level);
+    this.setPiece.setQuality(level);
     this.post.setSize(size.x, size.y);
     this.resizeReflection();
     // rebuild the landscape with the new detail – chunk by chunk, so the sky never shows through
