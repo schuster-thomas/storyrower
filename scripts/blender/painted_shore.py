@@ -26,7 +26,7 @@ os.makedirs(OUT, exist_ok=True)
 LENGTH = 120.0
 DEPTH = 230.0             # how far inland the terrain goes
 # distance from the boat's lane to the waterline (left bank: cliffs, right bank: glacier front)
-BASE = {'cliffs': 24.0, 'glacier': 28.0}[KIND]
+BASE = {'cliffs': 14.0, 'glacier': 16.0}[KIND]
 
 def bank(y):
     """symmetric about every multiple of LENGTH, almost straight so every face looks onto the river"""
@@ -109,7 +109,7 @@ def glacier_colour(cx, cy, cz, ny, d):
         return COL['iceTop']
     if ny < 0.35 and n1(cx, cy, 0.3, 8.0) > 0.35:
         return COL['crevasse']
-    return COL['ice'] if cz > 6 else COL['iceDeep']
+    return COL['ice'] if cz > 2.0 else COL['iceDeep']
 
 height = cliffs_height if KIND == 'cliffs' else glacier_height
 face_colour = cliffs_colour if KIND == 'cliffs' else glacier_colour
@@ -119,12 +119,14 @@ for o in list(bpy.data.objects):
     bpy.data.objects.remove(o, do_unlink=True)
 scene = bpy.context.scene
 
-def terrain():
+def terrain(y0=0.0, y1=LENGTH, cols=120):
+    """the bank from y0 to y1; the blockout render uses a much longer stretch, so the painting shows
+    land from edge to edge instead of an island with sky at both ends"""
     bm = bmesh.new()
-    ROWS, COLS = 100, 120                # inland × along
+    ROWS, COLS = 100, cols               # inland × along
     grid = []
     for j in range(COLS + 1):
-        y = LENGTH * j / COLS
+        y = y0 + (y1 - y0) * j / COLS
         row = []
         for i in range(ROWS + 1):
             d = -6 + (DEPTH + 6) * (i / ROWS) ** 1.8      # dense near the water
@@ -150,7 +152,7 @@ def rock():
     me = bpy.data.meshes.new('PuffinRock')
     bm.to_mesh(me); bm.free()
     o = bpy.data.objects.new('PuffinRock', me)
-    o.location = (-bank(ROCK_Y) + 8, ROCK_Y, -0.4)
+    o.location = (-bank(ROCK_Y) + 6, ROCK_Y, -0.4)
     scene.collection.objects.link(o)
     return o
 
@@ -169,7 +171,7 @@ def paint_hints(o, is_rock=False):
             attr.data[li].color = col
     for p in me.polygons: p.use_smooth = False
 
-bank_obj = terrain()
+bank_obj = terrain() if PAINT else terrain(-260.0, LENGTH + 260.0, 360)
 paint_hints(bank_obj)
 projected = [bank_obj]
 if KIND == 'cliffs':

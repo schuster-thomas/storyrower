@@ -247,7 +247,7 @@ export class Effects {
     // The worse you row (low threat value), the closer they land.
     const dist = 12 + c.threat * 35 + rnd(0, 15);
     const landZ = c.boatZ - c.viewDir * dist;
-    b.to.set(rnd(-13, 13), 0, landZ);
+    b.to.set(rnd(-9, 9), 0, landZ);
     b.from.set(b.to.x + rnd(20, 50), rnd(45, 70), landZ - c.viewDir * rnd(40, 80));
     b.t = -delay;
     b.dur = rnd(1.8, 2.6);

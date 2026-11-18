@@ -148,6 +148,7 @@ export class RiverScene {
     this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady, paintedReady]).then(() => {});
     this.post = new Post(this.renderer, this.scene, this.camera);
     this.post.setQuality(quality);
+    this.water.reflections = quality !== 'low';
     this.applyEnvironment(1);
   }
 
@@ -164,17 +165,25 @@ export class RiverScene {
     const size = this.renderer.getSize(new THREE.Vector2());
     this.renderer.setSize(size.x, size.y, false);
     this.water.setSegments(this.q.waterSegments);
+    this.water.reflections = level !== 'low';
     this.sky.setCloudCount(this.q.clouds);
     this.effects.setParticleShare(this.q.particles);
     this.sun.castShadow = level !== 'low';
     this.model.setShadows(this.sun.castShadow);
     this.post.setQuality(level);
     this.post.setSize(size.x, size.y);
+    this.resizeReflection();
     // rebuild the landscape with the new detail – chunk by chunk, so the sky never shows through
     this.chunkGen++;
   }
 
   private dropChunks() { this.chunkGen++; }
+
+  /** The mirror image is rendered at half the drawing-buffer resolution (it is rippled anyway). */
+  private resizeReflection() {
+    const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+    this.water.setReflectionSize(size.x / 2, size.y / 2);
+  }
 
   /** Blend the world towards another phase look (smoothly over a few seconds). */
   setEnvironment(env: Environment, immediate = false) {
@@ -256,6 +265,7 @@ export class RiverScene {
     const t0 = performance.now();
     // phase tint for the colour grade: warm at sunset, orange under the eruption, cool in the idyll
     this.tint.setRGB(1, 1, 1).lerp(new THREE.Color(1.08, 0.92, 0.82), this.env.lava * 0.6).lerp(new THREE.Color(1.06, 0.98, 0.9), Math.max(0, 0.3 - this.env.sunHeight) * 2);
+    this.water.renderReflection(this.renderer, this.scene, this.camera);
     this.post.render(this.scene, this.camera, this.tint, this.env.lava * 0.6 + this.flashLevel);
     const info = this.renderer.info.render;
     this.stats.calls = info.calls;
@@ -266,6 +276,7 @@ export class RiverScene {
   resize(width: number, height: number) {
     this.renderer.setSize(width, height, false);
     this.post.setSize(width, height);
+    this.resizeReflection();
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
   }

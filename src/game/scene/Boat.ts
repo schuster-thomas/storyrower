@@ -40,8 +40,9 @@ export class Boat {
         const mesh = o as THREE.Mesh;
         if (!mesh.isMesh) return;
         mesh.castShadow = shadows;
-        // skinned meshes keep their bind-pose bounds, which don't match the seated pose
-        if ((mesh as THREE.SkinnedMesh).isSkinnedMesh) mesh.frustumCulled = false;
+        // the boat is always in view, and the bounds of the quantised (meshopt) parts and of the
+        // skinned rower don't match what is drawn – never cull it
+        mesh.frustumCulled = false;
       });
       this.blades = ['BladeR', 'BladeL'].map((n) => root.getObjectByName(n)).filter((o): o is THREE.Object3D => !!o);
       // Blender exports one clip per animated object (oars, feathering, seat, rig) – play them as one

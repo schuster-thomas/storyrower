@@ -88,13 +88,13 @@ export class Backdrop {
     this.far.add(ring);
 
     // Volcano: calm and erupting versions on top of each other, cross-faded by the lava level
-    const vw = 250;
+    const vw = 400;   // the volcano is the goal at the end of the valley: centred and big enough to show between the banks
     const plane = (k: Key) => {
       const mat = new THREE.MeshBasicMaterial({ map: this.tex[k], transparent: true, depthWrite: false, fog: false });
       const h = vw / this.aspect(k);
       const g = new THREE.PlaneGeometry(vw, h).translate(0, h / 2, 0);
       const mesh = new THREE.Mesh(g, mat);
-      mesh.position.set(95, -14, -640);
+      mesh.position.set(0, -10, -640);
       mesh.renderOrder = -4;
       this.far.add(mesh);
       return mesh;

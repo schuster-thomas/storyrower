@@ -18,6 +18,7 @@ const MEANING = {
 const prompt = [
   'The first image is a flat-coloured 3D blockout render of a river bank in Iceland, seen from a boat on the river.',
   'Repaint it as a finished, richly detailed background painting for a premium stylised console game (in the spirit of Mario Kart 8), in exactly the style, palette and lighting of the other reference images.',
+  'The bank is a continuous stretch of a long river: it runs out of the picture at BOTH the left and the right edge. Fill the full width with land exactly as in the blockout – no sky, no water and no end of the land at the left or right side, it is not an island.',
   'CRITICAL: keep the composition pixel-accurate – every silhouette, edge, the skyline, the waterline and the position of every feature must stay exactly where it is. Same perspective, same framing, nothing added in front, nothing moved. Only replace the flat colours with painted detail.',
   MEANING,
   'Calm turquoise river water with soft reflections. Bright fresh morning light, soft shadows. Keep the sky plain and light. No people, no boats, no birds, no text.',

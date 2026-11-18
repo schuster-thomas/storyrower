@@ -8,6 +8,8 @@ const vertex = /* glsl */ `
   #include <fog_pars_vertex>
   uniform float uTime;
   uniform float uSwell;
+  uniform mat4 uTextureMatrix;
+  varying vec4 vReflect;
   varying vec3 vWorld;
   varying float vHeight;
   varying vec3 vNormal;
@@ -21,6 +23,7 @@ const vertex = /* glsl */ `
 
   void main() {
     vec4 world = modelMatrix * vec4(position, 1.0);
+    vReflect = uTextureMatrix * vec4(world.x, 0.0, world.z, 1.0);   // where the flat mirror sees this point
     float amp = 0.06 + uSwell * 0.45;
     float h = waves(world.xz, uTime) * amp;
     // smooth normal from the wave slope (finite differences)
@@ -50,6 +53,9 @@ const fragment = /* glsl */ `
   uniform vec3 uSunDir;
   uniform vec3 uSunColor;
   uniform float uLight;
+  uniform sampler2D tReflect;
+  uniform float uReflect;
+  varying vec4 vReflect;
   varying vec3 vWorld;
   varying float vHeight;
   varying vec3 vNormal;
@@ -71,12 +77,23 @@ const fragment = /* glsl */ `
     float toLeft = vWorld.x + leftShore(vWorld.z);        // 0 at the left shore, > 0 on the water
     float toIce = glacierFront(vWorld.z) - vWorld.x;      // 0 at the glacier front
     float shore = min(toLeft, toIce);
-    vec3 col = mix(uShallow, uDeep, smoothstep(1.0, 10.0, toLeft));
-    col = mix(col, uMilk, (1.0 - smoothstep(0.0, 30.0, toIce)) * 0.6);
+    vec3 col = mix(uShallow, uDeep, smoothstep(0.5, 6.0, toLeft));
+    col = mix(col, uMilk, (1.0 - smoothstep(0.0, 16.0, toIce)) * 0.55);
 
     // Sky reflection at grazing angles
     float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 5.0);
     col = mix(col, uSky * 0.9, clamp(fresnel * 0.35, 0.0, 0.35));
+
+    // follow the scene lighting (darker under the ash cloud)
+    col *= uLight;
+
+    // Mirror image of the banks, the glacier and the sky, rippled by the waves (already lit)
+    if (uReflect > 0.0) {
+      vec2 ruv = vReflect.xy / vReflect.w + n.xz * 0.035;
+      vec3 refl = texture2D(tReflect, ruv).rgb;
+      float k = uReflect * (0.38 + 0.5 * pow(1.0 - max(dot(n, viewDir), 0.0), 3.0));
+      col = mix(col, refl, clamp(k, 0.0, 0.85));
+    }
 
     // Sun glint
     vec3 r = reflect(-uSunDir, n);
@@ -93,10 +110,7 @@ const fragment = /* glsl */ `
     float wake = behind > 0.0 ? wakeLine * smoothstep(30.0, 2.0, behind) * clamp(uSpeed / 6.0, 0.0, 1.0) : 0.0;
     wake *= 0.6 + 0.4 * noise(vWorld.xz * 2.0 + t);
     float foam = clamp(max(max(bankFoam, crest * 0.7), wake), 0.0, 1.0);
-    col = mix(col, vec3(0.95, 0.98, 1.0), foam * 0.8);
-
-    // follow the scene lighting (darker under the ash cloud)
-    col *= uLight;
+    col = mix(col, vec3(0.95, 0.98, 1.0) * uLight, foam * 0.8);
     gl_FragColor = vec4(col, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
@@ -105,20 +119,31 @@ const fragment = /* glsl */ `
 `;
 
 /**
- * Stylised fjord water:GPU waves (no per-frame vertex work on the CPU), faceted shading,
- * deep/shallow colours, sky reflection, sun glint and foam on banks, crests and the wake.
+ * Stylised river water: GPU waves (no per-frame vertex work on the CPU), faceted shading,
+ * deep/shallow colours, a mirror image of the banks (medium/high), sun glint and foam on banks,
+ * crests and the wake.
  */
 export class Water {
   readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private uniforms: Record<string, THREE.IUniform>;
   private segLen = 1;
+  // planar reflection (see renderReflection)
+  private target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
+  private mirror = new THREE.PerspectiveCamera();
+  private clip = new THREE.Vector4();
+  private plane = new THREE.Plane();
+  private tmp = new THREE.Vector3();
+  private target3 = new THREE.Vector3();
+  reflections = false;
 
   constructor(segments: [number, number]) {
     this.uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
       uTime: { value: 0 }, uSwell: { value: 0.1 }, uMilk: { value: new THREE.Color(0x5cc3c8) }, uBoatZ: { value: 0 }, uSpeed: { value: 0 },
       uDeep: { value: new THREE.Color(0x1f6390) }, uShallow: { value: new THREE.Color(0x4fa3c0) }, uSky: { value: new THREE.Color(0xbfe2f2) },
       uSunDir: { value: new THREE.Vector3(-0.4, 0.5, -0.75).normalize() }, uSunColor: { value: new THREE.Color(0xfff3d6) }, uLight: { value: 1 },
+      tReflect: { value: null }, uReflect: { value: 0 }, uTextureMatrix: { value: new THREE.Matrix4() },
     }]);
+    this.uniforms.tReflect.value = this.target.texture;
     const mat = new THREE.ShaderMaterial({ vertexShader: vertex, fragmentShader: fragment, uniforms: this.uniforms, fog: true });
     this.mesh = new THREE.Mesh(this.geometry(segments), mat);
     this.mesh.frustumCulled = false;
@@ -155,5 +180,50 @@ export class Water {
     (u.uSunDir.value as THREE.Vector3).copy(p.sunDir);
   }
 
-  dispose() { this.mesh.geometry.dispose(); this.mesh.material.dispose(); }
+  /** Reflection texture at a fraction of the screen resolution. */
+  setReflectionSize(width: number, height: number) {
+    this.target.setSize(Math.max(1, Math.round(width)), Math.max(1, Math.round(height)));
+  }
+
+  /**
+   * Render the scene seen in the water surface (y = 0) into the reflection texture: the camera is
+   * mirrored at the surface and everything below it is clipped with an oblique near plane
+   * (technique of three.js' Reflector). Call before the main render.
+   */
+  renderReflection(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
+    this.uniforms.uReflect.value = this.reflections ? 0.6 : 0;
+    if (!this.reflections) return;
+    const m = this.mirror;
+    camera.updateMatrixWorld();
+    m.copy(camera, false);
+    m.position.set(camera.position.x, -camera.position.y, camera.position.z);
+    this.tmp.set(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
+    this.target3.set(this.tmp.x, -this.tmp.y, this.tmp.z);
+    m.up.set(0, 1, 0).applyQuaternion(camera.quaternion);
+    m.up.y = -m.up.y;
+    m.lookAt(this.target3);
+    m.updateMatrixWorld();
+    m.projectionMatrix.copy(camera.projectionMatrix);
+    // texture matrix: world → reflection texture coordinates (before the oblique clip)
+    (this.uniforms.uTextureMatrix.value as THREE.Matrix4).set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1)
+      .multiply(m.projectionMatrix).multiply(m.matrixWorldInverse);
+    // oblique near plane = the water surface
+    this.plane.set(new THREE.Vector3(0, 1, 0), 0).applyMatrix4(m.matrixWorldInverse);
+    this.clip.set(this.plane.normal.x, this.plane.normal.y, this.plane.normal.z, this.plane.constant);
+    const e = m.projectionMatrix.elements;
+    const q = new THREE.Vector4((Math.sign(this.clip.x) + e[8]) / e[0], (Math.sign(this.clip.y) + e[9]) / e[5], -1, (1 + e[10]) / e[14]);
+    this.clip.multiplyScalar(2 / this.clip.dot(q));
+    e[2] = this.clip.x; e[6] = this.clip.y; e[10] = this.clip.z + 1 - 0.003; e[14] = this.clip.w;
+    m.projectionMatrixInverse.copy(m.projectionMatrix).invert();
+
+    const prevTarget = renderer.getRenderTarget();
+    this.mesh.visible = false;
+    renderer.setRenderTarget(this.target);
+    renderer.clear();
+    renderer.render(scene, m);
+    renderer.setRenderTarget(prevTarget);
+    this.mesh.visible = true;
+  }
+
+  dispose() { this.mesh.geometry.dispose(); this.mesh.material.dispose(); this.target.dispose(); }
 }

@@ -5,18 +5,18 @@ import { type NatureKit, Scatter } from './NatureKit';
 
 /** Painted bank sections are 120 m long and alternate normal / mirrored, so both bank lines are
  * symmetric about every multiple of 120 m (same functions in scripts/blender/painted_shore.py).
- * The river is narrow – about 50 m – so the landscape is close to the boat. */
+ * The river is narrow – about 30 m – so the landscape is right beside the boat. */
 export const SHORE_SECTION = 120;
 const bankWave = (z: number) => { const w = (2 * Math.PI * z) / (2 * SHORE_SECTION); return 1.5 * Math.cos(w) + 0.8 * Math.cos(3 * w); };
 /** Distance from the boat's lane (x = 0) to the left bank (basalt cliffs). */
-export const leftShore = (z: number) => 24 + bankWave(z);
+export const leftShore = (z: number) => 14 + bankWave(z);
 /** Distance from the boat's lane to the glacier front on the right. */
-export const glacierFront = (z: number) => 28 + bankWave(z);
+export const glacierFront = (z: number) => 16 + bankWave(z);
 /** The same two functions in GLSL, for the water shader (shallows, glacier milk, foam). */
 export const FJORD_GLSL = /* glsl */ `
   float bankWave(float z) { float w = 6.2831853 * z / 240.0; return 1.5 * cos(w) + 0.8 * cos(3.0 * w); }
-  float leftShore(float z) { return 24.0 + bankWave(z); }
-  float glacierFront(float z) { return 28.0 + bankWave(z); }
+  float leftShore(float z) { return 14.0 + bankWave(z); }
+  float glacierFront(float z) { return 16.0 + bankWave(z); }
 `;
 
 // ---------- deterministic noise ----------
@@ -266,7 +266,7 @@ export function buildFjordChunk(index: number, length: number, m: FjordMaterials
     const bergs = 2 + Math.floor(r() * 3);
     for (let k = 0; k < bergs; k++) {
       const z = z0 - r() * length;
-      const x = glacierFront(z) - 3 - r() * 8;
+      const x = glacierFront(z) - 2.5 - r() * 5;
       const big = r();
       s.add(r() < 0.5 ? 'Iceberg_1' : 'Iceberg_2', x, -0.4 - big * 0.3, z, 0.6 + big * big * 2.2, r() * Math.PI * 2, 0.5 + r() * 0.3);
     }
