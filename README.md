@@ -31,13 +31,15 @@ npm run build    # typecheck + build to dist/
 
 Every push to `main` is tested, built and published to GitHub Pages by GitHub Actions.
 
-On the setup screen, **Start at** (or the dots on the workout preview) jumps straight to a story moment – the puffins, the eruption, the tidal wave … – and "Row again" starts there again. Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout), `#/play?beat=eruption` starts 5 s before a story beat (`calm`, `birds`, `tremor`, `calving`, `ash`, `eruption`, `wave`, `escape`, `sunset`). The "Simulator (autopilot)" source rows by itself and follows the targets.
+On the setup screen, **Start at** (or the dots on the workout preview) jumps straight to a story moment – the puffins, the eruption, the tidal wave … – and "Row again" starts there again. Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout), `#/play?beat=eruption` starts 5 s before a story beat (`calm`, `birds`, `tremor`, `calving`, `ash`, `eruption`, `wave`, `escape`, `sunset`). The "Simulator" source rows by itself and follows the targets (the diagnostics page still has manual power control for testing).
 
 ### Recording a session
 Everything is recorded automatically from the moment a rower (or simulator) is connected: every Bluetooth packet with a timestamp, plus game events (`game-start` with settings and all sections, `game-section` on every target change, `game-snapshot` every 5 s with values, zones, wave distance and fps, `visibility`, `error`, `game-finish`). Download it from the results screen, the in-game "i" overlay or **Device & diagnostics**. The recording lives in memory only – reloading the page loses it. Recordings can be replayed in Device & diagnostics.
 
 ### Game (`src/game/`, `src/workout/`)
 - `workout/workout.ts` – turns the settings (min/max watts and stroke rate, duration) into the training curve and its five story phases
+- `workout/trace.ts` – one point per second of rowing (power, stroke rate, heart rate, target bands, phase) and the end-of-workout summary
+- `game/hud/ResultsChart.ts` – the end screen chart: power, stroke rate and heart rate as small multiples on one time axis, target bands shaded, story phases on top, crosshair tooltip, table view of minute averages
 - `workout/scoring.ts` – target-band zones, time in band, coins, stars and the distance to the tidal wave (no game over)
 - `game/scene/RiverScene.ts` – Three.js greybox world: endless river, boat with stroke-synced oars, volcano, tidal wave, camera
 - `game/hud/Hud.ts` – HUD with phase progress and band bars

@@ -6,6 +6,8 @@ import { formatDuration, formatPace } from '../rower/ftms';
 import { SimulatorSource } from '../rower/sources/simulator';
 import type { RowerEvent, RowerSample } from '../rower/types';
 import { accuracy, isIn, isLow, newScore, stars, updateScore, type Zone } from '../workout/scoring';
+import { WorkoutTrace, summarize } from '../workout/trace';
+import { mountResultsChart } from './hud/ResultsChart';
 import { nextSegment, segmentAt, type Segment, type Workout } from '../workout/workout';
 import { Hud } from './hud/Hud';
 import type { Level } from './levels/iceland';
@@ -90,6 +92,11 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   let zones: { power: Zone; spm: Zone } | null = null;
   let startDistance: number | null = null;
   let startStrokes: number | null = null;
+  let startEnergy: number | null = null;
+  const startT = t;
+  /** one point per second of rowing, for the chart at the end */
+  const trace = new WorkoutTrace();
+  let unmountChart: (() => void) | null = null;
   const strokesRowed = () => (sample && startStrokes != null ? Math.max(0, sample.strokeCount - startStrokes) : 0);
   let powerSum = 0;
   let envSet = false;
@@ -112,13 +119,6 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       return finished ? 0 : Math.max(20, mid * (1 + 0.12 * Math.sin(s / 9) + 0.06 * Math.sin(s / 2.3)));
     };
   }
-  const onKey = (ev: KeyboardEvent) => {
-    if (!sim || opts.autopilot) return;
-    if (ev.key === 'ArrowUp') { sim.targetPower = Math.min(300, sim.targetPower + 10); ev.preventDefault(); }
-    else if (ev.key === 'ArrowDown') { sim.targetPower = Math.max(0, sim.targetPower - 10); ev.preventDefault(); }
-    else if (ev.key === ' ') { sim.targetPower = sim.targetPower > 0 ? 0 : 80; ev.preventDefault(); }
-  };
-  window.addEventListener('keydown', onKey);
 
   // ---------- recording: game events go into the same file as the rower packets ----------
   const fmtBand = (b: { lo: number; hi: number }) => [Math.round(b.lo), Math.round(b.hi)];
@@ -138,7 +138,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     if (e.type === 'sample') {
       sample = e.sample;
       if (!started && shown && e.sample.rowing) { started = true; session.logEvent('game-rowing-started', { gameT: t }); }
-      if (started && startDistance == null) startDistance = e.sample.distance;
+      if (started && startDistance == null) { startDistance = e.sample.distance; startEnergy = e.sample.energy; }
       // rowing starts with a stroke, and that one counts
       if (started && startStrokes == null) startStrokes = Math.max(0, e.sample.strokeCount - 1);
     } else if (e.type === 'stroke') { scene.stroke(e.intervalMs); audio?.stroke(); }
@@ -161,20 +161,28 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     const dist = sample && startDistance != null ? sample.distance - startDistance : 0;
     session!.logEvent('game-finish', {
       early, gameT: Math.round(t), stars: st, accuracy: +accuracy(score).toFixed(3), powerInS: Math.round(score.powerIn), spmInS: Math.round(score.spmIn),
-      distance: Math.round(dist), strokes: strokesRowed(), avgPower: t > 0 ? Math.round(powerSum / t) : 0, coins: Math.floor(score.coins),
+      distance: Math.round(dist), strokes: strokesRowed(), avgPower: t > startT ? Math.round(powerSum / (t - startT)) : 0, coins: Math.floor(score.coins),
     });
+    const energy = sample?.energy != null && startEnergy != null ? sample.energy - startEnergy : null;
+    const sum = summarize(trace.points, { time: t - startT, distance: dist, strokes: strokesRowed(), energy });
+    const tile = (value: string, label: string, extra = '') => `<div><b>${value}</b><small>${label}</small>${extra ? `<em>${extra}</em>` : ''}</div>`;
     overlay.className = 'game-overlay show';
     overlay.innerHTML = `
-      <div class="card-big">
+      <div class="card-big results-card">
         <h2>${early ? 'Workout ended' : `${level.phases.winddown.name} – you made it!`}</h2>
         <div class="stars">${'★'.repeat(st)}<span>${'★'.repeat(3 - st)}</span></div>
         <div class="results">
-          <div><b>${Math.round(accuracy(score) * 100)}%</b><small>in band</small></div>
-          <div><b>${formatDuration(t)}</b><small>time</small></div>
-          <div><b>${Math.round(dist)} m</b><small>distance</small></div>
-          <div><b>${t > 0 ? Math.round(powerSum / t) : 0} W</b><small>avg power</small></div>
-          <div><b>${strokesRowed()}</b><small>strokes</small></div>
+          ${tile(`${Math.round(dist)} m`, 'distance')}
+          ${tile(formatDuration(sum.time), 'time')}
+          ${tile(String(sum.strokes), 'strokes')}
+          ${tile(`${sum.avgPower} W`, 'avg power', `max ${sum.maxPower} W`)}
+          ${tile(sum.avgPace ? formatPace(sum.avgPace) : '–', 'avg split /500 m')}
+          ${tile(`${sum.avgSpm}`, 'avg strokes/min')}
+          ${sum.avgHr != null ? tile(`${sum.avgHr}`, 'avg heart rate', `max ${sum.maxHr}`) : ''}
+          ${sum.energy != null ? tile(`${sum.energy}`, 'kcal') : ''}
+          ${tile(`${Math.round(accuracy(score) * 100)}%`, 'in target band')}
         </div>
+        <div class="results-chart"></div>
         <div class="row" style="justify-content:center">
           <button class="primary" data-a="again">Row again</button>
           <button data-a="back">Back to setup</button>
@@ -186,6 +194,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     overlay.querySelector<HTMLButtonElement>('[data-a="again"]')!.onclick = opts.onRestart;
     overlay.querySelector<HTMLButtonElement>('[data-a="back"]')!.onclick = opts.onExit;
     overlay.querySelector<HTMLButtonElement>('[data-a="rec"]')!.onclick = () => downloadRecording(session!);
+    unmountChart = mountResultsChart(overlay.querySelector<HTMLElement>('.results-chart')!, trace.points, (p) => level.phases[p].name);
   }
 
   hud.onExit(() => (finished || t < 1 ? opts.onExit() : finish(true)));
@@ -243,6 +252,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       beatT = t;
     }
     if (active && sample) {
+      trace.add(t, sample.powerSmoothed, sample.strokeRate, sample.heartRate, seg);
       zones = updateScore(score, gdt, seg, sample.powerSmoothed, sample.strokeRate);
       powerSum += sample.powerSmoothed * gdt;
     }
@@ -312,12 +322,12 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     scene.onBombLanded = null;
     off();
     ro.disconnect();
-    window.removeEventListener('keydown', onKey);
     document.removeEventListener('visibilitychange', onVisibility);
     window.removeEventListener('error', onError);
     if (!finished && started) session.logEvent('game-exit', { gameT: Math.round(t) });
     if (sim && opts.autopilot) sim.profile = null;
     wakeLock?.release().catch(() => {});
+    unmountChart?.();
     scene.dispose();
   };
 }

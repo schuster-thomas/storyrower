@@ -121,3 +121,37 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .hud-fps.meh { color: #ffd166; }
 .hud-fps.bad { color: #ff8a7a; }
 .sound-row select { min-height: 40px; padding: 6px 8px; }
+
+/* ---------- results: summary tiles and the workout chart ---------- */
+.results-card { max-width: 980px; min-width: 0; text-align: left; }
+.results-card h2, .results-card .stars { text-align: center; }
+.results-card .results { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); text-align: center; }
+.results em { display: block; font-style: normal; font-size: 12px; color: var(--muted); }
+.game-overlay.show { overflow-y: auto; }
+.rc {
+  /* one hue per measure (validated against the panel surface #172633, dark mode) */
+  --s-power: #3987e5; --s-spm: #199e70; --s-hr: #e66767;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 12px 12px 6px; min-width: 0;
+}
+.rc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.rc-title { font-weight: 600; }
+.rc-toggle { padding: 4px 12px; font-size: 13px; }
+.rc-plot { position: relative; touch-action: pan-y; overflow: hidden; }
+.rc-svg { display: block; }
+.rc-grid { stroke: var(--line); stroke-width: 1; }
+.rc-tick { fill: var(--muted); font-size: 11px; }
+.rc-ptitle { fill: var(--text); font-size: 12px; }
+.rc-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.rc-key { stroke-width: 3; stroke-linecap: round; }
+.rc-dot { stroke: var(--bg); stroke-width: 2; }
+.rc-cross { position: absolute; top: 0; bottom: 20px; width: 1px; background: var(--muted); pointer-events: none; opacity: 0.7; }
+.rc-tip { position: absolute; top: 18px; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 10px; font-size: 12px; line-height: 1.5; white-space: nowrap; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); }
+.rc-tip i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.rc-tip span { color: var(--muted); }
+.rc-note { color: var(--muted); font-size: 13px; margin: 6px 0; }
+.rc-table { max-height: 260px; overflow: auto; }
+.rc-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rc-table th, .rc-table td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.rc-table th:nth-child(-n+2), .rc-table td:nth-child(-n+2) { text-align: left; }
+.rc-table th { color: var(--muted); font-weight: 500; position: sticky; top: 0; background: var(--bg); }

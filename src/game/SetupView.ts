@@ -9,6 +9,7 @@ import { DEFAULT_SETTINGS, generateWorkout, phaseSpans, type WorkoutSettings } f
 import { mountGame } from './GameView';
 import { RiverScene } from './scene/RiverScene';
 import { ICELAND } from './levels/iceland';
+import { PHASE_COLORS } from './phaseColors';
 
 const STORAGE_KEY = 'storyrower.settings';
 /** Short names for the story moments you can jump to from the setup screen. */
@@ -16,7 +17,6 @@ const BEAT_NAMES: Record<string, string> = {
   calm: 'Calm morning', birds: 'Puffins', tremor: 'First tremor', calving: 'Calving glacier', ash: 'Ash rain', eruption: 'Eruption',
   wave: 'Tidal wave', escape: 'Escape', sunset: 'Sunset',
 };
-const PHASE_COLORS = { idyll: '#5fae6b', omens: '#b3a26a', escalation: '#e0874f', finale: '#c4443a', winddown: '#e9a86b' };
 
 function loadSettings(): WorkoutSettings {
   try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') }; } catch { return { ...DEFAULT_SETTINGS }; }
@@ -92,8 +92,7 @@ function mountSetup(root: HTMLElement, initialJump: string | null, onStart: (o: 
           <div class="notice" data-id="noBt" hidden>No Web Bluetooth in this browser – use Chrome or Edge, or try the simulator.</div>
           <div class="row">
             <button class="primary" data-id="btBtn">Connect rower</button>
-            <button data-id="simAuto" title="The simulator follows the targets on its own">Simulator (autopilot)</button>
-            <button data-id="simManual" title="Control the simulated power with ↑ ↓ and Space">Simulator (keyboard)</button>
+            <button data-id="simAuto" title="A simulated rower that follows the targets on its own">Simulator</button>
           </div>
           <p class="muted" data-id="srcInfo"></p>
           <h2 style="margin-top:16px">Sound</h2>
@@ -128,7 +127,6 @@ function mountSetup(root: HTMLElement, initialJump: string | null, onStart: (o: 
     </main>`;
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>(`[data-id="${id}"]`)!;
-  let autopilot = true;
 
   // ---------- sound ----------
   const snd = loadAudioSettings();
@@ -198,7 +196,7 @@ function mountSetup(root: HTMLElement, initialJump: string | null, onStart: (o: 
     pill.className = `pill ${connected ? 'ok' : s ? 'warn' : ''}`;
     $<HTMLButtonElement>('startBtn').disabled = !connected;
     $('srcInfo').textContent = !s ? 'Turn on the rower and close e-Connected/Kinomap before connecting.'
-      : s.source instanceof SimulatorSource ? (autopilot ? 'Simulator rows by itself and follows the targets.' : 'Simulator: ↑/↓ change power, Space pauses.')
+      : s.source instanceof SimulatorSource ? 'Simulator rows by itself and follows the targets.'
       : connected ? 'Ready. The workout starts with your first stroke.' : `State: ${s.state}`;
     const hr = connection.heartRate;
     $('hrBtn').textContent = hr.state === 'connected' ? 'Disconnect heart-rate monitor' : 'Connect heart-rate monitor';
@@ -214,11 +212,10 @@ function mountSetup(root: HTMLElement, initialJump: string | null, onStart: (o: 
     $('noBt').hidden = false;
     $<HTMLButtonElement>('btBtn').disabled = true;
   }
-  $('btBtn').onclick = () => { autopilot = false; connection.use(new BluetoothSource(false)); };
-  $('simAuto').onclick = () => { autopilot = true; connection.use(new SimulatorSource({ power: 0, heartRate: true, seed: Date.now() })); };
-  $('simManual').onclick = () => { autopilot = false; connection.use(new SimulatorSource({ power: 0, heartRate: true, seed: Date.now() })); };
+  $('btBtn').onclick = () => connection.use(new BluetoothSource(false));
+  $('simAuto').onclick = () => connection.use(new SimulatorSource({ power: 0, heartRate: true, seed: Date.now() }));
   $('hrBtn').onclick = () => (connection.heartRate.state === 'connected' ? connection.disconnectHeartRate() : connection.connectHeartRate());
-  $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource ? autopilot : false, jump });
+  $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource, jump });
 
   return () => { offConn(); offSession?.(); };
 }
