@@ -137,6 +137,63 @@ describe('RowerSession with the real 10-minute recording', () => {
   });
 });
 
+describe('Smoothing over strokes', () => {
+  /** Feeds strokes like the Woodrower: counter step first, the stroke's watts ~1.5 s later. */
+  function rowStrokes(watts: number[]) {
+    const session = new RowerSession(nullSource());
+    let t = 0, count = 0, power = 0;
+    const send = () => session.handlePacket({
+      t, uuid: UUID.ROWER_DATA, kind: 'notify',
+      data: encodeWoodrowerData({ strokeRate: 26, strokeCount: count, avgStrokeRate: 26, totalDistance: count * 8, pace: power ? paceFromPower(power) : 0,
+        power, resistance: 7, totalEnergy: 0, energyPerHour: 0, energyPerMinute: 0, heartRate: 0, elapsedTime: Math.floor(t / 1000) }),
+    });
+    // smoothed[i] = value once stroke i is complete (read at the next counter step)
+    const smoothed: number[] = [];
+    for (const [i, w] of watts.entries()) {
+      count++; send(); t += 1600;
+      if (i > 0) smoothed.push(session.sample!.powerSmoothed);
+      power = w; send(); t += 700;
+    }
+    count++; send();
+    smoothed.push(session.sample!.powerSmoothed);
+    return smoothed;
+  }
+
+  it('ignores outlier strokes, also two of them one stroke apart', () => {
+    expect(Math.max(...rowStrokes([90, 92, 88, 91, 212, 90, 89, 92]).slice(2))).toBeLessThanOrEqual(92);
+    expect(Math.max(...rowStrokes([92, 92, 92, 92, 174, 93, 174, 92, 92]).slice(2))).toBeLessThanOrEqual(93);
+  });
+
+  it('accepts a real sprint once the second hard stroke confirms it', () => {
+    const s = rowStrokes([90, 90, 90, 90, 160, 160, 160]);
+    expect(s[4]).toBe(90);
+    expect(s[5]).toBe(160);
+  });
+
+  it('follows a real change of pace after two strokes', () => {
+    const s = rowStrokes([90, 90, 90, 90, 120, 120, 120]);
+    expect(s[5]).toBe(120);
+    const down = rowStrokes([110, 110, 110, 110, 75, 75]);
+    expect(down[5]).toBe(75);
+  });
+
+  it('counts a stroke with the same watts as the one before', () => {
+    // 4 × 100 W in a row → the console sends no new watts after the first one
+    const s = rowStrokes([60, 60, 60, 100, 100, 100]);
+    expect(s[4]).toBe(100);
+  });
+
+  it('keeps the 20-minute session free of outlier jumps', () => {
+    const r = runRecording('storyrower-2026-11-18-06-58-14-20min.json');
+    const samples = r.of('sample').map((e) => e.sample);
+    const spike = samples.find((s) => s.power === 212)!;
+    expect(spike).toBeDefined();
+    expect(spike.powerSmoothed).toBeLessThan(110);
+    // the console reported single strokes up to 212 W; the smoothed value never got near that
+    expect(Math.max(...samples.map((s) => s.powerSmoothed))).toBeLessThan(150);
+  });
+});
+
 describe('Short recording: auto-pause', () => {
   it('detects when rowing stops', () => {
     const r = runRecording(SHORT);

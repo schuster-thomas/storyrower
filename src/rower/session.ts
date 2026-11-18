@@ -7,8 +7,8 @@ import { Recorder } from './recording';
 import type { ConnectionState, PacketSource, RawPacket, RowerEvent, RowerSample } from './types';
 
 export interface SessionOptions {
-  /** Time window for smoothed watts/pace (ms). */
-  smoothingWindowMs?: number;
+  /** Number of recent strokes the smoothed watts/pace are the median of. */
+  smoothingStrokes?: number;
   /** No stroke for this long → paused, even if the device sends no pause event (ms). */
   idleTimeoutMs?: number;
 }
@@ -26,17 +26,23 @@ export class RowerSession {
   private heartRateMonitor: number | null = null;
   private lastStrokeT: number | null = null;
   private lastStrokeCount: number | null = null;
-  private powerHistory: { t: number; power: number }[] = [];
+  /** Watts of the last few strokes, newest last (the console reports one value per stroke). */
+  private strokePowers: number[] = [];
+  private lastPower = 0;
+  /** Whether the console reported new watts since the last stroke-counter step. */
+  private powerReported = true;
+  /** A stroke far above the current level, waiting for the next stroke to confirm it. */
+  private pendingSpike: number | null = null;
   private rowing = false;
   private lastT = 0;
   private deviceInfo: Record<string, unknown> = {};
   private _state: ConnectionState = 'idle';
   private _sample: RowerSample | null = null;
-  private readonly smoothingWindowMs: number;
+  private readonly smoothingStrokes: number;
   private readonly idleTimeoutMs: number;
 
   constructor(readonly source: PacketSource, opts: SessionOptions = {}) {
-    this.smoothingWindowMs = opts.smoothingWindowMs ?? 6000;
+    this.smoothingStrokes = Math.max(1, opts.smoothingStrokes ?? 3);
     this.idleTimeoutMs = opts.idleTimeoutMs ?? 4000;
     this.recorder = new Recorder(source.info.kind);
     this.unsub.push(
@@ -158,10 +164,21 @@ export class RowerSession {
     const { flags: _flags, error: _e, warning: _w, ...values } = parsed;
     Object.assign(this.data, values);
 
+    // Watts arrive ~1.5 s after the stroke counter steps, once per stroke
+    const power = this.data.power ?? 0;
+    if (power !== this.lastPower) {
+      if (power > 0) this.pushStrokePower(power);
+      this.lastPower = power;
+      this.powerReported = true;
+    }
+
     // Detect strokes
     const count = this.data.strokeCount;
     if (count != null) {
       if (this.lastStrokeCount != null && count > this.lastStrokeCount) {
+        // No new watts since the previous stroke → that stroke had exactly the same value
+        if (!this.powerReported && power > 0 && this.strokePowers.length) this.pushStrokePower(power);
+        this.powerReported = false;
         const n = count - this.lastStrokeCount;
         for (let i = 1; i <= n; i++) {
           const interval = this.lastStrokeT != null ? p.t - this.lastStrokeT : null;
@@ -176,7 +193,6 @@ export class RowerSession {
       this.lastStrokeCount = count;
     }
 
-    this.pushPower(p.t, this.data.power ?? 0);
     this.checkIdle(p.t);
     this.emitSample(p.t);
   }
@@ -193,34 +209,44 @@ export class RowerSession {
   private setRowing(on: boolean, t: number) {
     if (on === this.rowing) return;
     this.rowing = on;
+    if (!on) { this.strokePowers = []; this.pendingSpike = null; }
     this.emit({ type: on ? 'resumed' : 'paused', t });
   }
 
-  private pushPower(t: number, power: number) {
-    this.powerHistory.push({ t, power });
-    const cutoff = t - this.smoothingWindowMs;
-    // keep one point before the window – it holds until the next sample
-    while (this.powerHistory.length > 2 && this.powerHistory[1].t <= cutoff) this.powerHistory.shift();
+  /**
+   * The Woodrower reports a single stroke at about twice the real watts every 20–30 strokes
+   * (sometimes two of them, one stroke apart). A stroke well above the current level is held
+   * back and only counted if the next stroke is high as well – then it was a real sprint.
+   */
+  private pushStrokePower(power: number) {
+    const ref = this.strokePowers.length ? this.smoothedPower() : 0;
+    if (this.pendingSpike != null) {
+      const confirmed = power > ref * 1.3;
+      if (confirmed) this.addStrokePower(this.pendingSpike);
+      this.pendingSpike = null;
+      this.addStrokePower(power);
+      return;
+    }
+    if (ref > 0 && power > ref * 1.4) { this.pendingSpike = power; return; }
+    this.addStrokePower(power);
   }
 
-  /** Time-weighted mean of the (piecewise constant) power within the window. */
-  private smoothedPower(t: number): number {
-    const h = this.powerHistory;
-    if (h.length === 0) return 0;
-    const start = Math.max(t - this.smoothingWindowMs, h[0].t);
-    if (t <= start) return h[h.length - 1].power;
-    let sum = 0;
-    for (let i = 0; i < h.length; i++) {
-      const a = Math.max(h[i].t, start);
-      const b = i + 1 < h.length ? h[i + 1].t : t;
-      if (b > a) sum += h[i].power * (b - a);
-    }
-    return sum / (t - start);
+  private addStrokePower(power: number) {
+    this.strokePowers.push(power);
+    if (this.strokePowers.length > this.smoothingStrokes) this.strokePowers.shift();
+  }
+
+  /** Median of the last few strokes: a real change of pace shows up after two strokes. */
+  private smoothedPower(): number {
+    const v = [...this.strokePowers].sort((a, b) => a - b);
+    const n = v.length;
+    if (n === 0) return 0;
+    return n % 2 ? v[n >> 1] : (v[n / 2 - 1] + v[n / 2]) / 2;
   }
 
   private emitSample(t: number) {
     const d = this.data;
-    const powerSmoothed = this.rowing ? this.smoothedPower(t) : 0;
+    const powerSmoothed = this.rowing ? this.smoothedPower() : 0;
     // A separate monitor wins over a strap paired with the console
     const hr = this.heartRateMonitor ?? (d.heartRate ? d.heartRate : null);
     const heartRateSource = this.heartRateMonitor != null ? 'monitor' : d.heartRate ? 'console' : null;

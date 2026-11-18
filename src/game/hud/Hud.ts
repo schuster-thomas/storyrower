@@ -15,6 +15,8 @@ export interface HudState {
   zones: { power: Zone; spm: Zone } | null;
   score: ScoreState;
   distance: number;
+  /** strokes since the workout started */
+  strokes: number;
   message: { text: string; tone: 'info' | 'warn' | 'ok' } | null;
 }
 
@@ -55,9 +57,7 @@ export class Hud {
       <div class="hud-target" data-h="target" aria-live="polite"></div>
       <div class="hud-caption" data-h="caption" aria-live="polite"></div>
       <div class="hud-side glass">
-        <div><span data-h="coins">0</span><small>coins</small></div>
         <div><span data-h="acc">–</span><small>in band</small></div>
-        <div class="threat"><small>wave</small><div class="threat-bar"><i data-h="threat"></i></div></div>
       </div>
       <div class="hud-bottom glass">
         <div class="hud-tile" data-h="dist"><div class="lbl">Distance</div><div class="val"><b>–</b><span>m</span></div><div class="sub"></div></div>
@@ -165,7 +165,7 @@ export class Hud {
     msg.className = `hud-message ${showMsg ? `show ${s.message!.tone}` : ''}`;
 
     const smp = s.sample;
-    this.tile('dist', String(Math.round(s.distance)), '');
+    this.tile('dist', String(Math.round(s.distance)), `${s.strokes} ${s.strokes === 1 ? 'stroke' : 'strokes'}`);
     this.tile('power', smp ? String(Math.round(smp.powerSmoothed)) : '–', `${s.segment.power.lo}–${s.segment.power.hi} W`);
     this.band('power', s.segment.power, smp?.powerSmoothed ?? null, s.zones?.power ?? null);
     this.tile('spm', smp ? smp.strokeRate.toFixed(0) : '–', `${s.segment.spm.lo}–${s.segment.spm.hi} spm`);
@@ -176,11 +176,7 @@ export class Hud {
     this.band('pace', { lo: -s.segment.pace.hi, hi: -s.segment.pace.lo }, smp?.paceSmoothed ? -smp.paceSmoothed : null, pz);
     this.tile('hr', smp?.heartRate != null ? String(smp.heartRate) : '–', smp?.heartRate != null ? '' : 'not connected');
 
-    this.q('coins').textContent = String(Math.floor(s.score.coins));
     this.q('acc').textContent = s.score.time > 5 ? `${Math.round(accuracy(s.score) * 100)}%` : '–';
-    const th = this.q('threat');
-    th.style.width = `${Math.round((1 - s.score.threat) * 100)}%`;
-    th.className = s.score.threat < 0.35 ? 'danger' : s.score.threat < 0.7 ? 'warn' : '';
   }
 
   private tile(id: string, value: string, sub: string) {

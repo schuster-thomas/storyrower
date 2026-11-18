@@ -37,10 +37,6 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .hud-side { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); padding: 12px; display: grid; gap: 12px; text-align: center; min-width: 92px; }
 .hud-side span { font-size: 24px; font-weight: 800; display: block; font-variant-numeric: tabular-nums; }
 .hud-side small { color: #b9c9d6; font-size: 12px; }
-.threat-bar { height: 8px; background: rgba(255, 255, 255, .2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
-.threat-bar i { display: block; height: 100%; background: var(--ok); transition: width .3s; }
-.threat-bar i.warn { background: var(--warn); }
-.threat-bar i.danger { background: var(--err); }
 .hud-bottom { margin-top: auto; align-self: center; display: flex; gap: 6px; padding: 10px 14px; width: min(1100px, 100%); }
 .hud-tile { flex: 1; padding: 0 12px; border-left: 1px solid rgba(255, 255, 255, .15); min-width: 0; }
 .hud-tile:first-child { border-left: 0; }
@@ -79,10 +75,9 @@ button.big { font-size: 18px; padding: 14px 22px; }
   .hud-progress { display: none; }
   .hud-timer { padding: 8px 10px; font-size: 16px; }
   .hud-btn { width: 44px; height: 44px; min-height: 44px; }
-  /* Coins / in band / wave as a compact row under the top bar instead of a side column */
+  /* "In band" as a compact chip under the top bar instead of a side column */
   .hud-side { order: 1; position: static; transform: none; align-self: flex-end; margin-top: 8px; grid-auto-flow: column; gap: 14px; padding: 6px 12px; min-width: 0; }
   .hud-side span { font-size: 18px; }
-  .hud-side .threat { min-width: 56px; }
   .hud-next { order: 2; font-size: 13px; }
   .hud-message { order: 3; margin-top: 6vh; }
   .hud-bottom { order: 4; flex-wrap: wrap; padding: 8px; gap: 4px 0; }

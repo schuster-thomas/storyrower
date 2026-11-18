@@ -78,6 +78,8 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   let sample: RowerSample | null = session.sample;
   let zones: { power: Zone; spm: Zone } | null = null;
   let startDistance: number | null = null;
+  let startStrokes: number | null = null;
+  const strokesRowed = () => (sample && startStrokes != null ? Math.max(0, sample.strokeCount - startStrokes) : 0);
   let powerSum = 0;
   let envSet = false;
   const audio = opts.audio ?? null;
@@ -126,6 +128,8 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       sample = e.sample;
       if (!started && e.sample.rowing) { started = true; session.logEvent('game-rowing-started', { gameT: t }); }
       if (started && startDistance == null) startDistance = e.sample.distance;
+      // rowing starts with a stroke, and that one counts
+      if (started && startStrokes == null) startStrokes = Math.max(0, e.sample.strokeCount - 1);
     } else if (e.type === 'stroke') { scene.stroke(e.intervalMs); audio?.stroke(); }
   });
 
@@ -146,7 +150,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     const dist = sample && startDistance != null ? sample.distance - startDistance : 0;
     session!.logEvent('game-finish', {
       early, gameT: Math.round(t), stars: st, accuracy: +accuracy(score).toFixed(3), powerInS: Math.round(score.powerIn), spmInS: Math.round(score.spmIn),
-      distance: Math.round(dist), avgPower: t > 0 ? Math.round(powerSum / t) : 0, coins: Math.floor(score.coins),
+      distance: Math.round(dist), strokes: strokesRowed(), avgPower: t > 0 ? Math.round(powerSum / t) : 0, coins: Math.floor(score.coins),
     });
     overlay.className = 'game-overlay show';
     overlay.innerHTML = `
@@ -158,7 +162,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
           <div><b>${formatDuration(t)}</b><small>time</small></div>
           <div><b>${Math.round(dist)} m</b><small>distance</small></div>
           <div><b>${t > 0 ? Math.round(powerSum / t) : 0} W</b><small>avg power</small></div>
-          <div><b>${Math.floor(score.coins)}</b><small>coins</small></div>
+          <div><b>${strokesRowed()}</b><small>strokes</small></div>
         </div>
         <div class="row" style="justify-content:center">
           <button class="primary" data-a="again">Row again</button>
@@ -237,6 +241,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     hud.update({
       level, workout, t, segment: seg, next: nextSegment(workout, t), sample, zones, score,
       distance: sample && startDistance != null ? sample.distance - startDistance : 0,
+      strokes: strokesRowed(),
       message: finished ? null : messageFor(),
     });
 

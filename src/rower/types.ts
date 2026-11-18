@@ -46,7 +46,7 @@ export interface RowerSample {
   distance: number;          // m
   pace: number | null;       // s/500m, null when the device reports 0
   power: number;             // W, raw value (jumps from stroke to stroke)
-  powerSmoothed: number;     // W, time-weighted mean over the last seconds
+  powerSmoothed: number;     // W, median of the last 3 strokes (ignores single outlier strokes)
   paceSmoothed: number | null;
   avgStrokeRate: number | null;
   resistance: number | null;
