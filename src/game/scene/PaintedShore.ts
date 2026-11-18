@@ -110,7 +110,7 @@ export class PaintedShore {
   readonly loaded: Promise<void>;
 
   private template: THREE.Object3D | null = null;
-  private material: THREE.MeshBasicMaterial | null = null;
+  private materials = new Map<THREE.Material, THREE.MeshBasicMaterial>();
   private lupineMat: THREE.MeshBasicMaterial | null = null;
   private lupineTime = { value: 0 };
   private live = new Map<number, THREE.Object3D>();
@@ -187,8 +187,13 @@ export class PaintedShore {
         if (!mesh.isMesh) return;
         const src = mesh.material as THREE.MeshStandardMaterial;
         // the light is painted in: unlit, but fogged and tinted with the phase
-        this.material ??= new THREE.MeshBasicMaterial({ map: src.map, fog: true, side: THREE.DoubleSide });
-        mesh.material = this.material;
+        // one material per painting (side view and the two views along the river)
+        let mat = this.materials.get(src);
+        if (!mat) {
+          mat = new THREE.MeshBasicMaterial({ map: src.map, fog: true, side: THREE.DoubleSide });
+          this.materials.set(src, mat);
+        }
+        mesh.material = mat;
       });
       root.updateMatrixWorld(true);
       this.addWaterfalls(root);
@@ -308,7 +313,7 @@ export class PaintedShore {
       this.group.add(g);
       this.live.set(k, g);
     }
-    this.material?.color.copy(p.tint).multiplyScalar(p.light);
+    for (const m of this.materials.values()) m.color.copy(p.tint).multiplyScalar(p.light);
     this.lupineMat?.color.copy(p.tint).multiplyScalar(p.light);
     this.lupineTime.value = p.time;
     this.updateSpray(Math.min(0.1, Math.max(0, p.time - this.lastTime)));

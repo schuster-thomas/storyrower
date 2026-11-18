@@ -214,21 +214,32 @@ water.scale = (400, 800, 1)
 wa = water.data.color_attributes.new('Hint', 'FLOAT_COLOR', 'CORNER')
 for li in range(len(water.data.loops)): wa.data[li].color = lin(0x2a8fb0)
 
-# painting camera: across the river, looking at the whole section (it may stand inside the far
-# bank – only this bank is rendered)
+# painting cameras: one across the river looking at the whole section (it may stand inside the far
+# bank – only this bank is rendered), and two on the river looking along it, for the faces that
+# point up- or downstream (the side camera sees those edge-on, which smeared the painting)
 DIST, CAM_Z, TILT = 52.0, 8.0, 6.5
-cam = bpy.data.objects.new('PaintCam', bpy.data.cameras.new('PaintCam'))
-scene.collection.objects.link(cam)
-cam.location = (DIST - BASE, LENGTH / 2, CAM_Z)
-look = Vector((-BASE - 40, LENGTH / 2, CAM_Z + (DIST + 40) * math.tan(math.radians(TILT))))
-cam.rotation_mode = 'QUATERNION'
-cam.rotation_quaternion = (look - cam.location).to_track_quat('-Z', 'Y')
-cam.data.sensor_fit = 'HORIZONTAL'
-half = math.atan((LENGTH / 2 + 4) / DIST)
-cam.data.lens = 18 / math.tan(half)
-cam.data.clip_end = 2000
-scene.camera = cam
-scene.render.resolution_x, scene.render.resolution_y = 3072, 1024
+def make_cam(name, loc, look, res, hfov):
+    c = bpy.data.objects.new(name, bpy.data.cameras.new(name))
+    scene.collection.objects.link(c)
+    c.location = loc
+    c.rotation_mode = 'QUATERNION'
+    c.rotation_quaternion = (Vector(look) - Vector(loc)).to_track_quat('-Z', 'Y')
+    c.data.sensor_fit = 'HORIZONTAL'
+    c.data.lens = 18 / math.tan(hfov / 2)
+    c.data.clip_end = 2000
+    c['res'] = res
+    return c
+CAMS = {
+    'side': make_cam('PaintCam', (DIST - BASE, LENGTH / 2, CAM_Z),
+                     (-BASE - 40, LENGTH / 2, CAM_Z + (DIST + 40) * math.tan(math.radians(TILT))),
+                     (3072, 1024), 2 * math.atan((LENGTH / 2 + 4) / DIST)),
+    'up': make_cam('PaintCamUp', (-4.0, -32.0, 4.0), (-BASE - 14, 52.0, 11.0), (1536, 1024), math.radians(64)),
+    'down': make_cam('PaintCamDown', (-4.0, LENGTH + 32.0, 4.0), (-BASE - 14, LENGTH - 52.0, 11.0), (1536, 1024), math.radians(64)),
+}
+cam = CAMS['side']
+def use_cam(c):
+    scene.camera = c
+    scene.render.resolution_x, scene.render.resolution_y = c['res'][0], c['res'][1]
 scene.render.resolution_percentage = 100
 
 world = bpy.data.worlds.new('Sky'); scene.world = world
@@ -240,60 +251,115 @@ bpy.context.view_layer.update()
 
 if not PAINT:
     scene.display.shading.color_type = 'VERTEX'
-    scene.render.filepath = f'{OUT}/blockout.png'
-    bpy.ops.render.render(write_still=True)
-    print('blockout rendered')
+    for name, c in CAMS.items():
+        use_cam(c)
+        scene.render.filepath = f'{OUT}/blockout.png' if name == 'side' else f'{OUT}/blockout-{name}.png'
+        bpy.ops.render.render(write_still=True)
+    print('blockouts rendered')
     sys.exit(0)
 
-# ---------------------------------------------------------------- project the painting
-img = bpy.data.images.load(PAINT)
-mat = bpy.data.materials.new('Painted')
-mat.use_nodes = True
-nt = mat.node_tree
-bsdf = nt.nodes['Principled BSDF']
-tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = img; tex.extension = 'EXTEND'
-nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
-bsdf.inputs['Roughness'].default_value = 1.0
-for o in projected:
-    me = o.data
-    me.materials.clear(); me.materials.append(mat)
-    uv = me.uv_layers.new(name='UVMap')
-    mw = o.matrix_world
-    for loop in me.loops:
-        co = mw @ me.vertices[loop.vertex_index].co
-        # the top of the ledge at the water is seen almost edge-on by the painting camera, so the
-        # painting's thin lupine strip sits a little above it: sample there, not the water below
-        if KIND == 'cliffs' and o is bank_obj and co.z > 0.3 and 0.05 < -co.x - bank(co.y) < LEDGE + 0.3:
-            co = co + Vector((0, 0, LEDGE_LIFT))
-        p = world_to_camera_view(scene, cam, co)
-        uv.data[loop.index].uv = (p.x, p.y)
-    for a in list(me.color_attributes): me.color_attributes.remove(a)
-
-# Cut the terrain at the painted skyline: where the painting shows sky, the geometry rises above
-# what was painted and would be smeared with sky colour (pale streaks above the cliffs). Those
-# faces go, so the real panorama and sky show behind the bank. Cliffs only – the glacier's blue
-# ice would read as sky.
-if KIND == 'cliffs':
-    import numpy as np
+# ---------------------------------------------------------------- project the paintings
+import numpy as np
+from mathutils.bvhtree import BVHTree
+paint_files = {'side': PAINT}
+for name in ('up', 'down'):
+    f = os.path.join(os.path.dirname(PAINT), f'painted-{name}.png')
+    if os.path.exists(f): paint_files[name] = f
+names = list(paint_files)
+mats, pixels = [], {}
+for name in names:
+    img = bpy.data.images.load(paint_files[name])
+    m = bpy.data.materials.new(f'Painted_{name}')
+    m.use_nodes = True
+    nt = m.node_tree
+    bsdf = nt.nodes['Principled BSDF']
+    tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = img; tex.extension = 'EXTEND'
+    nt.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+    bsdf.inputs['Roughness'].default_value = 1.0
+    mats.append(m)
     W, H = img.size
     px = np.empty(W * H * 4, dtype=np.float32)
     img.pixels.foreach_get(px)
-    px = px.reshape(H, W, 4)
-    def sky(u, v):
-        r, g, b = px[min(H - 1, max(0, int(v * (H - 1)))), min(W - 1, max(0, int(u * (W - 1)))), :3]
-        return b > 0.55 and b - r > 0.12 and g - r > 0.02
-    me = bank_obj.data
-    uvl = me.uv_layers['UVMap']
-    vert_sky = {}
-    for loop in me.loops:
-        if loop.vertex_index in vert_sky: continue
-        co = bank_obj.matrix_world @ me.vertices[loop.vertex_index].co
-        vert_sky[loop.vertex_index] = co.z > 6.0 and sky(*uvl.data[loop.index].uv)
-    bm = bmesh.new(); bm.from_mesh(me)
-    gone = [f for f in bm.faces if all(vert_sky.get(v.index, False) for v in f.verts)]
-    bmesh.ops.delete(bm, geom=gone, context='FACES')
-    bm.to_mesh(me); bm.free()
-    print(f'cut {len(gone)} faces above the painted skyline')
+    pixels[name] = px.reshape(H, W, 4)
+print('paintings:', ', '.join(names))
+
+def sky(name, u, v):
+    px = pixels[name]; H, W = px.shape[:2]
+    r, g, b = px[min(H - 1, max(0, int(v * (H - 1)))), min(W - 1, max(0, int(u * (W - 1)))), :3]
+    return b > 0.55 and b - r > 0.12 and g - r > 0.02
+
+# the neighbouring stretches are in the paintings' foreground (they were in the blockout), so
+# they count as occluders in the visibility test; they are not exported
+occluders = [terrain(-260.0, 0.0, 144), terrain(LENGTH, LENGTH + 260.0, 144)]
+bpy.context.view_layer.update()
+depsgraph = bpy.context.evaluated_depsgraph_get()
+def bvh_of(obj):
+    mw = obj.matrix_world
+    return BVHTree.FromPolygons([mw @ v.co for v in obj.data.vertices], [list(p.vertices) for p in obj.data.polygons])
+occluder_bvh = [bvh_of(oc) for oc in occluders]
+usage = {n: 0 for n in names}
+for o in projected:
+    me = o.data
+    me.materials.clear()
+    for m in mats: me.materials.append(m)
+    mw = o.matrix_world
+    nm = mw.to_3x3().inverted().transposed()
+    bvh = bvh_of(o)
+    centres = [mw @ p.center for p in me.polygons]
+    normals = [(nm @ p.normal).normalized() for p in me.polygons]
+    # score every face for every painting: how squarely it faces that camera, if it is in view
+    # and not hidden behind other terrain; the side painting wins ties (it has the most detail)
+    best = [(-1.0, 'side')] * len(me.polygons)
+    for name in names:
+        c = CAMS[name]; use_cam(c)
+        cl = c.matrix_world.translation
+        for i, p in enumerate(me.polygons):
+            ctr, n = centres[i], normals[i]
+            to = cl - ctr; dist = to.length; d = to / dist
+            facing = n.dot(d)
+            if facing < 0.08: continue
+            q = world_to_camera_view(scene, c, ctr)
+            if not (0.0 < q.x < 1.0 and 0.0 < q.y < 1.0 and q.z > 0): continue
+            hidden = False
+            for tree in [bvh] + occluder_bvh:
+                hit = tree.ray_cast(ctr + n * 0.05, d, dist)
+                if hit[0] is not None and hit[3] < dist - 0.5: hidden = True; break
+            if hidden: continue
+            score = facing * (1.15 if name == 'side' else 1.0)
+            if score > best[i][0]: best[i] = (score, name)
+    uv = me.uv_layers.new(name='UVMap')
+    for name in names:
+        use_cam(CAMS[name])
+        idx = names.index(name)
+        for i, p in enumerate(me.polygons):
+            if best[i][1] != name: continue
+            p.material_index = idx
+            usage[name] += 1
+            for li in p.loop_indices:
+                co = mw @ me.vertices[me.loops[li].vertex_index].co
+                # the top of the ledge at the water is seen almost edge-on by the side camera, so
+                # its painted lupine/grass strip sits a little above it: sample there
+                if name == 'side' and KIND == 'cliffs' and o is bank_obj and co.z > 0.3 and 0.05 < -co.x - bank(co.y) < LEDGE + 0.3:
+                    co = co + Vector((0, 0, LEDGE_LIFT))
+                q = world_to_camera_view(scene, CAMS[name], co)
+                uv.data[li].uv = (q.x, q.y)
+    for a in list(me.color_attributes): me.color_attributes.remove(a)
+    # cut the terrain at the painted skyline: faces whose painting shows sky rise above what was
+    # painted and would be smeared with sky colour; the panorama shows behind instead.
+    # Cliffs only – the glacier's blue ice would read as sky.
+    if KIND == 'cliffs' and o is bank_obj:
+        sky_face = set()
+        for i, p in enumerate(me.polygons):
+            if centres[i].z <= 6.0: continue
+            name = best[i][1]
+            if all(sky(name, *uv.data[li].uv) for li in p.loop_indices): sky_face.add(i)
+        bm = bmesh.new(); bm.from_mesh(me); bm.faces.ensure_lookup_table()
+        bmesh.ops.delete(bm, geom=[bm.faces[i] for i in sky_face], context='FACES')
+        bm.to_mesh(me); bm.free()
+        print(f'cut {len(sky_face)} faces above the painted skyline')
+print('faces per painting:', usage)
+for oc in occluders: bpy.data.objects.remove(oc, do_unlink=True)
+use_cam(cam)
 
 bpy.data.objects.remove(water, do_unlink=True)
 for o in list(scene.objects):
