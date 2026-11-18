@@ -46,7 +46,8 @@ Everything is recorded automatically from the moment a rower (or simulator) is c
 - `game/scene/Effects.ts` – ash, embers, bow spray, lava bombs with splash rings, puffins
 - `game/scene/quality.ts` – graphics levels (low/medium/high/auto), auto-adjustment by frame rate, frame statistics
 - `game/scene/RiverScene.ts` preloads boat, painted layers and model kit while the setup screen is open; the game view stays dark ("Loading the fjord…") until they and the first stretch of fjord are ready, and the workout clock only starts then
-- `game/scene/Fjord.ts` – the world layout: a wide glacier lagoon built in 100 m chunks, with angular moss-and-basalt terraces (snow on top, a column cliff at the water, waterfalls with mist) on the left and a blue glacier front with seracs on the right; the shore lines are shared with the water shader
+- `game/scene/Fjord.ts` – the world layout: a narrow river built in 100 m chunks (water, icebergs, fallback banks); the bank lines are shared with the water shader and the painted sections
+- `game/scene/PaintedShore.ts` – the painted river banks (basalt cliffs left, glacier right): 120 m sections in two variants, chained with mirroring, with lupine cards, waterfall sheets, foam and spray on top. How they are made: [CONCEPT.md §9.7](CONCEPT.md#97-how-a-levels-world-is-made-matte-painting-pipeline); how further levels reuse it: [§12](CONCEPT.md#12-building-further-levels)
 - `game/scene/Water.ts`, `Sky.ts` – water shader (waves, shallows, milky meltwater before the glacier, foam, wake, sky reflection), gradient sky with sun and clouds
 - `audio/AudioEngine.ts` – procedural placeholder soundtrack (Web Audio): music layers faded by intensity, splash per real stroke, ambience and story effects
 

@@ -1,8 +1,8 @@
-# StoryRower – Concept (draft v0.2)
+# StoryRower – Concept (draft v0.3)
 
 > Rowing as a story you live through: live data from the **Domyos Woodrower** drives a boat through a level with a dramatic arc – idyllic start, escalation (volcano, kaiju, earthquake …), escape, calm cool-down.
 
-Last updated: 2026-11-16 · Status: milestone 3 done (story engine, effects, placeholder audio)
+Last updated: 2026-11-18 · Status: milestone 4 in progress – painted river banks, boat and rower done; volcano, puffins and tidal wave next (see [§11](#11-next-steps)). Further levels follow the pattern in [§12](#12-building-further-levels).
 
 ---
 
@@ -122,6 +122,8 @@ The main target device, a **Samsung Galaxy Tab S9 (SM-X710, Snapdragon 8 Gen 2)*
 - Backdrops (volcano, skyline, kaiju silhouette) partly as **2D billboards/skybox layers** – very effective, very cheap
 - Assets: free CC0 packs (e.g. Kenney, Quaternius, Poly Pizza) to start, later custom or AI-assisted models
 
+**What actually got us close to the mock-up (2026-11-18):** not hand-built models, but **matte painting**: simple Blender geometry for each river-bank section, painted over by the image model in the game's style and projected back onto the geometry. The banks keep real depth and parallax, the painting brings the detail and light. Things that must stand upright (flowers, falling water) are added on top as 3D cards and shaders. Details in [§9.7](#97-how-a-levels-world-is-made-matte-painting-pipeline); it is the pattern for all further levels ([§12](#12-building-further-levels)).
+
 **Legal:** no "Godzilla" – an **original kaiju** with its own name and design (homage, not a copy). Same for music and logos.
 
 ---
@@ -174,9 +176,11 @@ Kept from the BLE PoC on purpose:
 | 1 ✅ | Data layer + simulator | `RowerSession` with Bluetooth/replay/simulator sources, diagnostics view | 1–2 evenings |
 | 2 ✅ | Greybox game | Boat on an endless river, speed = pace, HUD with target bands, workout generator, **heart-rate source (Fitbit/strap, display only)** | 1–2 weekends |
 | 3 ✅ | Story engine | Beats, intensity levels, camera/light/weather react, **audio engine with music layers** | 1–2 weekends |
-| 4 | First polished level | "Iceland Volcano Run" with assets, effects, music and sounds | several weeks |
+| 4 🔶 | First polished level | "Iceland Volcano Run" with assets, effects, music and sounds – banks, boat and rower done; volcano, puffins, wave, sound open ([§11](#11-next-steps)) | several weeks |
 | 5 | Results & PWA | Results screen, **local workout history (IndexedDB)**, JSON export, installable, offline | 1 weekend |
-| 6 | iPad | Capacitor build + BLE plugin | 1–2 weekends |
+| 6 | Level kit | Iceland split into engine + level content, level registry and level choice on the setup screen, scripts take `--level` ([§12](#12-building-further-levels)) | 1 weekend |
+| 7 | Second level | Built with the kit, as the test that the pattern carries | 2–3 weekends |
+| 8 | iPad | Capacitor build + BLE plugin | 1–2 weekends |
 
 ---
 
@@ -221,20 +225,103 @@ The first world look (photo scans + low-poly kit + paintings on a narrow river) 
 - **Rower:** realistic – sits facing the stern; the chase camera behind the boat sees the rower's face. The stroke animation follows the real stroke rate.
 - **Tools:** OpenAI image API (concepts, textures, panorama), Tripo3D image-to-3D (organic models), Blender (cleanup, rigging, animation, level building). Performance target: Samsung Galaxy Tab S9 (SM-X710).
 
-| Phase | Content |
-|---|---|
-| A | Style frames + model sheets as the visual target; wide fjord, lower camera, glacier-lagoon water; new transparent panorama layers; photo scans and reed grass removed |
-| B | Racing single scull and rigged rower, stroke clip driven by the real strokes, blade splashes |
-| C | Left shore kit: basalt steps with moss and snow, animated waterfalls with mist, readable lupine fields, puffin rocks |
-| D | Puffins: sit, look around, waddle, take off, fly; flee when the boat passes or the earth shakes |
-| E | Glacier front with stylized ice shader; drifting, bobbing icebergs and brash ice; calving event |
-| F | 3D volcano: lava flows spreading down the flank, lava fountain, glowing plume, volcanic lightning, steam where lava meets the sea |
-| G | Stylized 3D tidal wave; KTX2 textures, LODs, tablet profiling |
+**Revised later the same day after playing it:** the wide lagoon felt empty. The river is now **narrow (~30 m)** so you row *through* the landscape; the banks are **not tall everywhere** (open, low stretches with slopes between the cliffs) so it doesn't feel oppressive; the **volcano stays in view** straight ahead as the central element; camera swings are kept small and inside the river.
 
-Each phase ends with an in-game screenshot next to the style frame.
+| Phase | Content | Status |
+|---|---|---|
+| A | Style frames + model sheets as the visual target; lower camera, glacier water; panorama layers; photo scans removed | ✅ |
+| B | Racing single scull and rigged rower, stroke clip driven by the real strokes, blade splashes | ✅ |
+| C | Left bank: painted basalt cliffs and open slopes (two section variants), real waterfall sheets with foam, spray and mist, lupine clumps as swaying 3D cards | ✅ |
+| D | Puffins: sit, look around, take off, fly; flee when the boat passes or the earth shakes | open – next but one |
+| E | Glacier front: painted ice (two variants) ✅; drifting, bobbing icebergs from the glacier and a calving event | partly |
+| F | 3D volcano: lava flows spreading down the flank, lava fountain, glowing plume, volcanic lightning | open – **next** |
+| G | Stylized 3D tidal wave; texture compression, tablet profiling | open |
+
+Each phase ends with an in-game screenshot next to the style frame. Tablet check (2026-11-18): smooth on "High".
+
+### 9.7 How a level's world is made (matte-painting pipeline)
+The river runs along −z; the world around it is built from **120 m bank sections**, one kind per side (Iceland: `cliffs` left, `glacier` right, mirrored onto the right bank).
+
+1. **Blockout** (`scripts/blender/painted_shore.py --kind <kind> --variant a|b`): the bank's height profile as a mesh, coloured with flat hint colours (dark grey = basalt columns, green = moss, blue = ice …), plus named marker empties where 3D things go (`Fall_Lower`, `Fall_Upper`, the puffin rock). Three cameras render it: across the river (3072×1024) and up/down the river (1536×1024).
+2. **Paint-over** (`scripts/painted/paint.mjs <kind>[-b] side|up|down`): `gpt-image-2` repaints each blockout in the game's style with the style frame and the mock-up as references, keeping the composition pixel-accurate. The prompt says what each hint colour means – and what *not* to paint (flowers and waterfalls come as 3D).
+3. **Projection** (same Blender script with `--paint`): each face takes the painting that sees it most squarely (and unhidden), the terrain is cut where the painting shows sky, exported as glTF.
+4. **Build** (`scripts/painted/build.mjs <name>`): meshopt + WebP, markers kept → `src/assets/painted/<name>.glb` (~1 MB per section).
+5. **In the game** (`src/game/scene/PaintedShore.ts`): sections chained **a, a mirrored, b, b mirrored** (same profile at the joints, so no seams; repeats every 480 m), unlit but fogged and tinted with the story phase. On top: lupine cards (`scripts/painted/sprites.mjs`, transparent sprites), waterfall sheets, foam and spray at the markers.
+
+Rules that keep it working: bank lines are one shared function (`Fjord.ts`, also used by the water shader); every section is painted edge to edge (never an "island"); faces that point along the river get their own paintings (no smears).
 
 ## 10. Open questions
-- None right now.
+- Which level comes second? To decide once Iceland is complete (ideas in §12.5).
+- Real music and sounds for Iceland (the soundtrack is still a procedural placeholder): licensed library, AI-generated with a public licence, or commissioned?
+
+---
+
+## 11. Next steps
+Order by **impact on the workout's story**: the escalation and the finale take about half of every workout, and that is exactly where the world is still flat (volcano and wave are painted billboards). Each new piece is built straight against the level-kit interfaces from §12.3 (set piece, fauna, threat), so the later split costs little.
+
+| # | Step | Why now | What | Effort |
+|---|---|---|---|---|
+| 1 | **Volcano (art phase F)** | The central element and the climax; today a flat picture that only swaps calm ↔ erupting | Blockout of cone, crater and lava channels → painted and projected like the banks (seen from the river, so one painting from ahead is enough). Lava as an emissive shader on the channels that **flows down step by step** with the story (`lava` 0 → 1), lava fountain from the crater (particles), glowing plume with lightning flashes, glow tinting sky and water | 1–2 weekends |
+| 2 | **Puffins (art phase D)** | The signature of the idyll, in the mock-up and in a beat caption, but not yet in the world | Tripo3D model, wings as separate parts flapped in the vertex shader (instancing, cheap); sitting on the puffin rock and ledges (markers already in the sections), turning heads; **take off** when the boat comes close or at the tremor; small flocks crossing the river | 1 weekend |
+| 3 | **Tidal wave (art phase G)** | Fills the screen in the finale (camera looks back at it) | 3D wave mesh with a curling, translucent crest, foam and spray, distance driven by the threat value as today | 1 weekend |
+| 4 | Glacier life (rest of E) | Makes the right bank move | Icebergs that visibly come from the glacier front, a calving event as a story beat (splash + swell reaching the boat) | 1 evening – 1 weekend |
+| 5 | Sound pass | Big for immersion, small effort | Real music stems per intensity, waterfall/bird/lava ambience placed in the world | 1 weekend + sourcing |
+| 6 | Results & PWA (milestone 5) | Everyday use: history, install on the tablet, offline | as in §8 | 1 weekend |
+| 7 | Level kit (milestone 6) | Before level 2 | §12.3 | 1 weekend |
+
+**My recommendation:** 1 → 2 → 3 in this order, then a tablet check of the whole run (frame rate in the eruption with lava, particles and reflections at the same time). Steps 4–6 can be swapped freely depending on what you miss most while rowing.
+
+---
+
+## 12. Building further levels
+Iceland is the template. Every further level follows the same pattern: **a story arc on the training curve + a painted river world + a few animated hero elements.** Building the second level should mean writing content and prompts, not engine code.
+
+### 12.1 What every level shares (engine – unchanged per level)
+- Rower data, workout generator, target bands, scoring, HUD, results, diagnostics
+- Story engine: beats anchored to phases, environment blended per phase
+- Boat and rower with stroke sync, chase camera (small swings, always inside the river)
+- River and water: runs along −z, ~30 m wide, bank lines from the shared function, planar reflections, quality levels
+- Painted-section system: 120 m sections, variants a/b chained with mirroring, markers in the glTF, tint by phase
+- Preloading, loading screen, auto quality
+
+### 12.2 What a level brings (content)
+| Part | Iceland | Made with |
+|---|---|---|
+| Story | 5 phases, beats + captions, environment per phase (sky, fog, light, water, swell) | `level.ts` (data) |
+| Bank kinds | `cliffs` (left), `glacier` (right), two variants each | blockout profile + hint colours + paint prompt → pipeline §9.7 |
+| Pop-outs | lupine cards, waterfall sheets | sprite script (`gpt-image-1.5`, transparent) / shaders at markers |
+| Backdrop | far mountain panorama | `scripts/backdrops/` |
+| Set piece | volcano (calm → erupting) | blockout + painting + shader (step 1 of §11) |
+| Fauna / props | puffins, icebergs | Tripo3D + Blender, instancing |
+| Threat | tidal wave, lava bombs, ash | effect modules driven by threat/intensity |
+| Sound | music stems + ambience | audio files per level |
+
+### 12.3 Refactor before level 2 (milestone 6)
+Today Iceland is wired into the engine. To split it:
+- `src/levels/<id>/level.ts`: story **plus a world manifest**, e.g. `{ banks: { left: 'cliffs', right: 'glacier' }, backdrop, setPiece: 'volcano', fauna: ['puffins'], props: ['lupines'], threat: 'tidal-wave', loadingText }`; a level registry and a level choice on the setup screen.
+- `RiverScene` builds the world from the manifest instead of hard-coding `PaintedShore('cliffs' | 'glacier')`, the volcano, Iceland backdrops and "Loading the fjord…".
+- Generic channels in the environment instead of Iceland names: `lava`/`smoke`/`wave` become e.g. `setPiece` (0–1 activity), `haze`, `threat`; the level maps them to its effects.
+- Bank kinds become data: profile, hint colours, markers and paint prompt per kind in `levels/<id>/banks.*`, read by `painted_shore.py` and `paint.mjs` (`--level <id> --kind <kind>`); Iceland-specific bits (milky meltwater by the glacier, waterfall markers) become options of a kind.
+- Assets per level: `src/assets/levels/<id>/`, raw files in `assets/raw/levels/<id>/` (not committed); a level is loaded only when chosen (lazy import), so more levels don't slow down the start.
+
+### 12.4 Recipe for a new level
+1. **Mock-up and arc** – a concept image like `screenshots/` plus the five phases with their mood (idyll → omens → escalation → finale → wind-down) and the beats.
+2. **Style frames** – 2–3 frames from the game camera (`scripts/concepts/`) as the visual target and reference for every paint-over.
+3. **Bank kinds** – one per side (or the same mirrored), each with variants a/b: profile (where tall, where open), hint colours, markers, prompt. Look at the blockouts before painting.
+4. **Paint and project** – side/up/down per section, build, check in the game at several distances; repaint single views if needed.
+5. **Pop-outs** – everything that must stand up (plants, trees, lanterns, falling water) as cards or shader sheets at markers.
+6. **Backdrop and set piece** – the panorama and the one element the story revolves around.
+7. **Fauna and threat** – a few animated models (Tripo3D → Blender) and the threat effect for the finale.
+8. **Sound** – stems for the intensities, ambience.
+9. **Check** – an in-game screenshot per beat next to the style frame; on the tablet on "High": smooth frame rate, level download ≲ 10 MB.
+
+Rough effort per level with the kit: **2–3 weekends** plus image/model API costs.
+
+### 12.5 Level ideas (all original – no protected characters, places only as inspiration)
+- **Kaiju Harbour** – canals of a neon harbour city; an original sea monster rises from the bay, buildings collapse, finale through the closing flood gate.
+- **Jungle Rapids** – a river through the rainforest with parrots and ruins; a thunderstorm, the current gets wild, finale before a huge waterfall edge.
+- **Canyon Flash Flood** – red rock canyon in the evening sun; storm clouds, flash flood chasing you through the narrows.
+- **Arctic Night** – sea ice and northern lights; the ice breaks up, orcas surface, finale between moving floes.
 
 ---
 
