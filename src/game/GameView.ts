@@ -60,6 +60,17 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   const scene = new RiverScene(canvas, level.phases.idyll.env, auto ? auto.level : graphics.quality === 'auto' ? 'medium' : graphics.quality);
   if (import.meta.env.DEV) (window as unknown as { __scene: RiverScene }).__scene = scene; // debugging aid in dev builds only
   const hud = new Hud(wrap);
+  // Show the world only once boat, painted layers and model kit are in (preloaded on the setup
+  // screen, so usually at once) and the first stretch of fjord is built – never a greybox frame.
+  let worldReady = false;
+  let shown = false;
+  let readyFrames = 0;
+  wrap.classList.add('loading');
+  const loading = document.createElement('div');
+  loading.className = 'game-loading';
+  loading.textContent = 'Loading the fjord…';
+  wrap.appendChild(loading);
+  scene.ready.then(() => { worldReady = true; });
   const overlay = document.createElement('div');
   overlay.className = 'game-overlay';
   wrap.appendChild(overlay);
@@ -126,7 +137,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   const off = session.on((e: RowerEvent) => {
     if (e.type === 'sample') {
       sample = e.sample;
-      if (!started && e.sample.rowing) { started = true; session.logEvent('game-rowing-started', { gameT: t }); }
+      if (!started && shown && e.sample.rowing) { started = true; session.logEvent('game-rowing-started', { gameT: t }); }
       if (started && startDistance == null) startDistance = e.sample.distance;
       // rowing starts with a stroke, and that one counts
       if (started && startStrokes == null) startStrokes = Math.max(0, e.sample.strokeCount - 1);
@@ -183,6 +194,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
 
   // ---------- loop ----------
   let last = performance.now();
+  const startedAt = last;
   let frame = 0;
   let diagTimer = 0;
   let snapTimer = 0;
@@ -201,6 +213,11 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     if (seg !== lastSeg) {
       lastSeg = seg;
       session.logEvent('game-section', { index: workout.segments.indexOf(seg), gameT: Math.round(t), phase: seg.phase, kind: seg.kind, power: fmtBand(seg.power), spm: fmtBand(seg.spm), pace: fmtBand(seg.pace) });
+    }
+    if (worldReady && !shown && ++readyFrames > 4) {
+      shown = true;
+      wrap.classList.remove('loading');
+      session.logEvent('game-world-ready', { ms: Math.round(now - startedAt) });
     }
     frames++; fpsTimer += dt;
     if (auto && started) {

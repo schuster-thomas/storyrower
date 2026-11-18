@@ -45,19 +45,29 @@ export class Backdrop {
   private wave!: THREE.Sprite;
   private tmp = new THREE.Color();
 
-  constructor() {
-    this.group.add(this.far);
-    const loader = new THREE.TextureLoader();
-    const keys = Object.keys(URLS) as Key[];
-    let loaded = 0;
-    for (const k of keys) {
-      loader.load(URLS[k], (t) => {
+  /** Resolves once the layers are built (also when loading failed, so nothing waits forever). */
+  readonly loaded: Promise<void>;
+
+  private static loading: Promise<Record<Key, THREE.Texture>> | null = null;
+  /** Start loading the textures early (setup screen); every game shares them. */
+  static preload(): Promise<Record<Key, THREE.Texture>> {
+    if (!this.loading) {
+      const loader = new THREE.TextureLoader();
+      const keys = Object.keys(URLS) as Key[];
+      this.loading = Promise.all(keys.map((k) => loader.loadAsync(URLS[k]).then((t) => {
         t.colorSpace = THREE.SRGBColorSpace;
         t.anisotropy = 4;
-        this.tex[k] = t;
-        if (++loaded === keys.length) this.build();
-      });
+        return [k, t] as const;
+      }))).then((pairs) => Object.fromEntries(pairs) as Record<Key, THREE.Texture>);
+      this.loading.catch(() => { this.loading = null; }); // allow a retry
     }
+    return this.loading;
+  }
+
+  constructor() {
+    this.group.add(this.far);
+    this.loaded = Backdrop.preload().then((tex) => { this.tex = tex; this.build(); })
+      .catch((e) => console.warn('Painted layers could not be loaded, keeping the greybox stand-ins', e));
   }
 
   private aspect(k: Key) { const img = this.tex[k].image as { width: number; height: number }; return img.width / img.height; }
@@ -133,7 +143,7 @@ export class Backdrop {
   }
 
   dispose() {
-    for (const t of Object.values(this.tex)) t.dispose();
+    // the textures are shared by every game (see preload) and stay loaded
     this.group.traverse((o) => {
       const m = o as THREE.Mesh;
       m.geometry?.dispose?.();

@@ -99,6 +99,48 @@ for phase, lean in LEAN:
         b.rotation_quaternion = Quaternion((b.bone.matrix_local.to_3x3().inverted() @ axis), lean * share)
         b.keyframe_insert('rotation_quaternion', frame=f)
 
+# The body moves the handles, as in real rowing: per frame the oar angle is solved so the grip is
+# exactly ARM_EXT arm lengths in front of the shoulder – straight arms through the catch, the leg
+# drive and the recovery, arms drawn in only around the finish (docs/art/stroke-side.jpg).
+ARM_EXT = [(0, 1.0), (0.18, 1.0), (0.27, 0.82), (0.35, 0.52), (0.4, 0.72), (0.46, 1.0), (1.0, 1.0)]
+def ext_at(ph):
+    for (p0, v0), (p1, v1) in zip(ARM_EXT, ARM_EXT[1:]):
+        if p0 <= ph <= p1:
+            t = (ph - p0) / (p1 - p0); t = t * t * (3 - 2 * t)
+            return v0 + (v1 - v0) * t
+    return 1.0
+hold_dist = INBOARD - 0.07
+def grip_at(side, sweep, pitch, z0):
+    yaw = sweep if side > 0 else math.pi - sweep
+    r = hold_dist
+    return Vector((side * PIN_X - r * math.cos(pitch) * math.cos(yaw), PIN_Y - r * math.cos(pitch) * math.sin(yaw), z0 + r * math.sin(pitch)))
+for p, (side, _, _) in hands.items():
+    bones = [arm.data.bones[P + p + n] for n in ('Arm', 'ForeArm')]
+    reach = sum(b.length for b in bones) * s + 0.09     # shoulder to the middle of the fist, arm straight
+    pivot = oars[side][0]
+    for f in range(FRAMES + 1):
+        scene.frame_set(f)
+        ev = arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        sh = ev.matrix_world @ ev.pose.bones[P + p + 'Arm'].head
+        want = reach * 0.98 * ext_at(f / FRAMES)
+        pitch, z0 = pivot.rotation_euler[1], pivot.location.z
+        d = lambda sw: (grip_at(side, sw, pitch, z0) - sh).length
+        lo = min((k / 100 for k in range(-80, 111)), key=d)   # handle closest to the shoulder
+        hi = 1.1
+        if d(hi) < want:
+            sw = hi
+        elif d(lo) > want:
+            sw = lo
+        else:
+            for _ in range(30):
+                mid = (lo + hi) / 2
+                if d(mid) < want: lo = mid
+                else: hi = mid
+            sw = (lo + hi) / 2
+        pivot.rotation_euler[2] = sw if side > 0 else math.pi - sw
+        pivot.keyframe_insert('rotation_euler', index=2, frame=f)
+    print(f'oar {p}: sweep solved from the body (reach {reach:.2f} m)')
+
 # Wrist targets, first guess: the wrist FIST hand lengths before the grip along the hand (pointing
 # from the shoulder to the grip, then along the solved hand). The precise grip is set further down.
 GRIP_Z = float(os.environ.get('GRIP_Z', '-0.05'))
@@ -201,7 +243,7 @@ for p in hands:
 # wrist (up to MAX_TILT, a natural range) so the handle runs across the fist, then the IK target is
 # corrected until the centre of the fist sits on the handle axis, just far enough in that the end
 # of the handle shows on the thumb side as in docs/art/stroke-front.jpg.
-MAX_TILT = math.radians(float(os.environ.get('MAX_TILT', '20')))
+MAX_TILT = math.radians(float(os.environ.get('MAX_TILT', '10')))
 GRIP_OUT = float(os.environ.get('GRIP_OUT', '0.012'))
 TILT_SIGN = float(os.environ.get('TILT_SIGN', '1'))
 TWIST = {p: pb[P + p + 'Hand'].rotation_quaternion.copy() for p in hands}
@@ -256,6 +298,23 @@ for f in range(FRAMES + 1):
         worst[p] = max(worst[p], off.length)
         if os.environ.get('DEBUG_HANDS') and f % 6 == 0:
             print(f'GRIP f{f} {p}: fist centre {off.length * 100:.1f} cm off the handle, twist {math.degrees(twist[p]):.0f} deg, tilt {math.degrees(tilt[p]):.0f} deg, knuckles vs handle {mis:.0f} deg, palm {n.z:+.2f}')
+gap = 9.0
+for f in range(FRAMES + 1):
+    scene.frame_set(f)
+    cs = [fist_world(p)[0] for p in hands]
+    gap = min(gap, (cs[0] - cs[1]).length)
+elbows = []
+for f in range(0, FRAMES + 1, 5):
+    scene.frame_set(f)
+    angs = []
+    for p in hands:
+        ev, up = evaluated(p + 'Arm'); _, lo = evaluated(p + 'ForeArm')
+        u = (ev.matrix_world @ up.tail - ev.matrix_world @ up.head).normalized()
+        l = (ev.matrix_world @ lo.tail - ev.matrix_world @ lo.head).normalized()
+        angs.append(180 - math.degrees(u.angle(l)))
+    elbows.append(f'{f}:{min(angs):.0f}')
+print('elbow angle (180 = straight):', ' '.join(elbows))
+print(f'fists: closest centres {gap * 100:.0f} cm apart (fist width {FISTS["Left"][3] * 2 * s * HAND_SCALE * 100:.0f} cm)')
 for p in hands:
     print(f'grip {p}: fist width {FISTS[p][3] * 2 * s * HAND_SCALE * 100:.0f} cm, worst offset {worst[p] * 100:.1f} cm, largest wrist tilt {math.degrees(worst_tilt[p]):.0f} deg')
 
@@ -263,6 +322,31 @@ for p in hands:
 bpy.ops.pose.select_all(action='SELECT')
 bpy.ops.nla.bake(frame_start=0, frame_end=FRAMES, only_selected=True, visual_keying=True,
                  clear_constraints=True, use_current_action=True, bake_types={'POSE'})
+# Forearm rotation (pronation) happens along the whole forearm, not in the wrist. The rig has no
+# twist bone, so move TWIST_SHARE of each hand's twist into the forearm bone and take it back out of
+# the hand: the hand ends up exactly where it was, but the wrist skin no longer gets pinched.
+TWIST_SHARE = float(os.environ.get('TWIST_SHARE', '0.65'))
+def twist_about(q, axis):
+    v = Vector((q.x, q.y, q.z))
+    t = Quaternion((q.w, *(axis * v.dot(axis)))).normalized()
+    ang = 2 * math.atan2(Vector((t.x, t.y, t.z)).dot(axis), t.w)
+    return (ang + math.pi) % (2 * math.pi) - math.pi
+for p in hands:
+    fore, hand = pb[P + p + 'ForeArm'], pb[P + p + 'Hand']
+    rel = (fore.bone.matrix_local.inverted() @ hand.bone.matrix_local).to_3x3()
+    fore_y_in_hand = (rel.inverted() @ Vector((0, 1, 0))).normalized()
+    worst_wrist = 0.0
+    for f in range(FRAMES + 1):
+        scene.frame_set(f)
+        hq = hand.rotation_quaternion.copy()
+        alpha = TWIST_SHARE * twist_about(hq, Vector((0, 1, 0)))
+        fore.rotation_mode = 'QUATERNION'
+        fore.rotation_quaternion = fore.rotation_quaternion @ Quaternion((0, 1, 0), alpha)
+        hand.rotation_quaternion = Quaternion(fore_y_in_hand, -alpha) @ hq
+        fore.keyframe_insert('rotation_quaternion', frame=f)
+        hand.keyframe_insert('rotation_quaternion', frame=f)
+        worst_wrist = max(worst_wrist, abs(math.degrees(twist_about(hand.rotation_quaternion, Vector((0, 1, 0))))))
+    print(f'twist {p}: wrist keeps at most {worst_wrist:.0f} deg')
 bpy.ops.object.mode_set(mode='OBJECT')
 for o in list(scene.objects):
     if o.name.startswith(('ElbowPole', 'Ankle', 'KneePole', 'Wrist', 'Through', 'Toe')):

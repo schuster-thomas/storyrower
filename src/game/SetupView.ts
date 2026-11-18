@@ -7,6 +7,7 @@ import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluet
 import { SimulatorSource } from '../rower/sources/simulator';
 import { DEFAULT_SETTINGS, generateWorkout, phaseSpans, type WorkoutSettings } from '../workout/workout';
 import { mountGame } from './GameView';
+import { RiverScene } from './scene/RiverScene';
 import { ICELAND } from './levels/iceland';
 
 const STORAGE_KEY = 'storyrower.settings';
@@ -27,6 +28,8 @@ export function mountPlay(root: HTMLElement): () => void {
   let audio: AudioEngine | null = null;
 
   const showSetup = () => {
+    // load the 3D world while the settings are on screen, so the game starts in its final look
+    void RiverScene.preload();
     cleanupGame?.(); cleanupGame = null;
     audio?.ctx.suspend().catch(() => {});
     cleanupSetup = mountSetup(root, (opts) => { autopilot = opts.autopilot; startGame(); });

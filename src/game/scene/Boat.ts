@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import boatUrl from '../../assets/models/boat.glb?url';
 
 /**
@@ -11,18 +12,30 @@ import boatUrl from '../../assets/models/boat.glb?url';
 export class Boat {
   readonly group = new THREE.Group();
   ready = false;
-  onReady: (() => void) | null = null;
+  /** Resolves once the model is in the group (also when loading failed, so nothing waits forever). */
+  readonly loaded: Promise<void>;
 
   private mixer: THREE.AnimationMixer | null = null;
   private duration = 1;
   /** blade centres (right, left) for splashes */
   private blades: THREE.Object3D[] = [];
 
+  private static loading: Promise<GLTF> | null = null;
+  /** Start downloading the model early (setup screen); every game reuses it. */
+  static preload(): Promise<GLTF> {
+    if (!this.loading) {
+      const loader = new GLTFLoader();
+      loader.setMeshoptDecoder(MeshoptDecoder);
+      this.loading = loader.loadAsync(boatUrl);
+      this.loading.catch(() => { this.loading = null; }); // allow a retry
+    }
+    return this.loading;
+  }
+
   constructor(shadows: boolean) {
-    const loader = new GLTFLoader();
-    loader.setMeshoptDecoder(MeshoptDecoder);
-    loader.loadAsync(boatUrl).then((gltf) => {
-      const root = gltf.scene;
+    this.loaded = Boat.preload().then((gltf) => {
+      // each game gets its own copy (the skeleton must be cloned with the skinned mesh)
+      const root = cloneSkinned(gltf.scene);
       root.traverse((o) => {
         const mesh = o as THREE.Mesh;
         if (!mesh.isMesh) return;
@@ -41,8 +54,7 @@ export class Boat {
       }
       this.group.add(root);
       this.ready = true;
-      this.onReady?.();
-    }).catch((e) => console.warn('Boat model could not be loaded, keeping the greybox boat', e));
+    }).catch((e) => console.warn('Boat model could not be loaded', e));
   }
 
   setShadows(on: boolean) {

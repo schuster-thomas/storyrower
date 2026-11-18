@@ -19,10 +19,10 @@ FPS = 60
 FRAMES = 60                  # one stroke cycle
 LENGTH = 8.0                 # hull length (m)
 BEAM = 0.36                  # max hull width – a bit wider than real so it reads from the camera
-PIN_X = 0.80                 # half the sculling span (pin to centreline)
-PIN_Y = -0.38                # pin position along the boat: straight arms at the catch, hands at the ribs at the finish
-PIN_Z = 0.44                 # oarlock height above the waterline (handles at about knee height at the catch)
-INBOARD = 0.88               # pin to the handle end
+PIN_X = 0.92                 # half the span: a little wide, so long inboards still leave the fists apart
+PIN_Y = -0.49                # pin position along the boat: straight arms at the catch, hands at the ribs at the finish
+PIN_Z = 0.48                 # oarlock height above the waterline (handles at about knee height at the catch)
+INBOARD = 0.92               # pin to the handle end; with the span the fists stay ~13 cm apart at mid-drive
 OUTBOARD = 2.00              # pin to the blade tip
 SEAT_Z = 0.20
 FEET_Y = -0.66               # ankles on the foot stretcher
@@ -197,14 +197,14 @@ oars = {side: build_oar(side) for side in (1, -1)}
 
 # ------------------------------------------------------------------ stroke animation
 # (phase, value) keys; phase 0 = catch, 0.35 = finish
-SWEEP = [(0, 0.92), (0.12, 0.6), (0.25, -0.1), (0.35, -0.62), (0.45, -0.3), (0.6, 0.2), (0.75, 0.45), (0.88, 0.72), (1.0, 0.92)]
+SWEEP = [(0, 0.72), (0.12, 0.46), (0.25, -0.12), (0.35, -0.62), (0.45, -0.33), (0.6, 0.12), (0.75, 0.36), (0.88, 0.57), (1.0, 0.72)]
 # + = blade down. Buried: blade centre just under the surface; recovery: ~15 cm above it
 BURIED = math.atan2(PIN_Z + 0.06, OUTBOARD - 0.25)
 CARRY = math.atan2(PIN_Z - 0.16, OUTBOARD - 0.25)
 PITCH = [(0, BURIED * 0.75), (0.04, BURIED), (0.33, BURIED), (0.39, CARRY), (0.92, CARRY), (1.0, BURIED * 0.75)]
 FEATHER = [(0, 0), (0.36, 0), (0.43, math.pi / 2), (0.85, math.pi / 2), (0.95, 0), (1.0, 0)]
 SEAT = [(0, -0.28), (0.08, -0.22), (0.2, 0.06), (0.28, 0.16), (0.35, 0.17), (0.55, 0.14), (0.75, -0.06), (1.0, -0.28)]
-LEAN = [(0, 0.6), (0.15, 0.45), (0.3, -0.25), (0.35, -0.35), (0.42, -0.25), (0.52, 0.2), (0.62, 0.5), (1.0, 0.6)]
+LEAN = [(0, 0.6), (0.15, 0.45), (0.3, -0.18), (0.35, -0.25), (0.42, -0.18), (0.52, 0.2), (0.62, 0.5), (1.0, 0.6)]
 
 def key(o, path, index, keys, base=0.0, scale=1.0):
     for p, v in keys:

@@ -45,6 +45,13 @@ export class RiverScene {
   private _quality: QualityLevel;
   /** frame time, render time, draw calls and triangles – for the diagnostics overlay and recordings */
   readonly stats = new FrameStats();
+  /** Resolves once the boat, the painted layers and the model kit are in place (show the game then). */
+  readonly ready: Promise<void>;
+
+  /** Start loading every asset of the world early (setup screen), so a game starts in the final look. */
+  static preload() {
+    return Promise.all([Boat.preload(), Backdrop.preload(), NatureKit.load()]).then(() => {}, () => {});
+  }
   private topColor = new THREE.Color();
   private horizonColor = new THREE.Color();
   private sunColor = new THREE.Color();
@@ -56,13 +63,10 @@ export class RiverScene {
   private tint = new THREE.Color(1, 1, 1);
 
   private boat = new THREE.Group();
-  /** the real scull and rower; the greybox boat stays until it is loaded */
+  /** the scull and the rigged rower */
   private model: Boat;
-  private greybox = new THREE.Group();
   private prevPhase = 1;
   private bladePos: THREE.Vector3[] = [];
-  private torso!: THREE.Group;
-  private oars: { pivot: THREE.Group; side: 1 | -1 }[] = [];
   private volcano = new THREE.Group();
   private lavaMat = new THREE.MeshStandardMaterial({ color: 0x3a2a24, emissive: 0xff4a10, emissiveIntensity: 0, roughness: 1, flatShading: true, fog: false });
   private smoke: THREE.Mesh[] = [];
@@ -115,7 +119,6 @@ export class RiverScene {
     this.buildBoat();
     this.model = new Boat(this.sun.castShadow);
     this.boat.add(this.model.group);
-    this.model.onReady = () => { this.greybox.visible = false; };
     this.buildVolcano();
     this.wave = this.buildWave();
     this.effects = new Effects(this.scene);
@@ -129,10 +132,11 @@ export class RiverScene {
       this.wave.visible = false;
     };
     // Icebergs and shore boulders come from the model kit; the chunks are rebuilt once it is loaded
-    NatureKit.load().then((kit) => {
+    const kitReady = NatureKit.load().then((kit) => {
       this.kit = kit;
       this.dropChunks();
     }).catch((e) => console.warn('Model kit could not be loaded, the fjord stays without icebergs', e));
+    this.ready = Promise.all([this.model.loaded, this.backdrop.loaded, kitReady]).then(() => {});
     this.post = new Post(this.renderer, this.scene, this.camera);
     this.post.setQuality(quality);
     this.applyEnvironment(1);
@@ -336,46 +340,6 @@ export class RiverScene {
   // ---------- boat ----------
 
   private buildBoat() {
-    const hullMat = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4 });
-    const stripeMat = new THREE.MeshStandardMaterial({ color: 0xd8333b, roughness: 0.5 });
-    const oarMat = new THREE.MeshStandardMaterial({ color: 0x222831, roughness: 0.6 });
-    const bladeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xe0b48f, roughness: 0.8 });
-    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.7 });
-
-    const hull = new THREE.Mesh(new THREE.CapsuleGeometry(0.45, 6.5, 4, 10), hullMat);
-    hull.rotation.x = Math.PI / 2;
-    hull.scale.set(1, 1, 0.45);
-    hull.position.y = 0.15;
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 5.5), stripeMat);
-    stripe.position.set(0, 0.36, 0);
-    this.greybox.add(hull, stripe);
-    this.boat.add(this.greybox);
-
-    // Rower: torso pivots at the hips to lean with the stroke
-    this.torso = new THREE.Group();
-    this.torso.position.set(0, 0.55, 0.4);
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.6, 4, 8), shirtMat);
-    body.position.y = 0.45;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), skinMat);
-    head.position.y = 1.05;
-    this.torso.add(body, head);
-    this.greybox.add(this.torso);
-
-    // Oars on riggers
-    for (const side of [-1, 1] as const) {
-      const pivot = new THREE.Group();
-      pivot.position.set(side * 0.75, 0.75, 0.1);
-      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 3.6, 6), oarMat);
-      shaft.rotation.z = Math.PI / 2;
-      shaft.position.x = side * 1.2;
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.22, 0.03), bladeMat);
-      blade.position.x = side * 2.95;
-      pivot.add(shaft, blade);
-      this.greybox.add(pivot);
-      this.oars.push({ pivot, side });
-    }
-    this.greybox.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.castShadow = true; });
     this.scene.add(this.boat);
   }
 
@@ -383,16 +347,6 @@ export class RiverScene {
     // Advance the stroke cycle; hold at the catch until the next real stroke arrives
     if (this.strokePhase < 1) this.strokePhase = Math.min(1, this.strokePhase + dt / this.strokeCycle);
     const p = this.strokePhase;
-    const drive = p < 0.35;
-    const k = drive ? p / 0.35 : (p - 0.35) / 0.65;           // progress within drive/recovery
-    const sweep = drive ? lerp(0.75, -0.55, easeInOut(k)) : lerp(-0.55, 0.75, easeInOut(k)); // + = towards the bow
-    const lift = drive ? -0.12 : 0.18 * Math.sin(Math.PI * k);
-    for (const o of this.oars) {
-      o.pivot.rotation.y = -o.side * sweep * 0.9;
-      o.pivot.rotation.z = o.side * (lift - 0.08);
-    }
-    this.torso.rotation.x = drive ? lerp(0.45, -0.35, easeInOut(k)) : lerp(-0.35, 0.45, easeInOut(k));
-    this.torso.position.z = drive ? lerp(0.0, 0.5, k) : lerp(0.5, 0.0, k);
 
     this.boat.position.set(0, Math.sin(this.time * 1.7) * 0.04 * (1 + this.env.swell * 3), this.z);
     this.boat.rotation.z = Math.sin(this.time * 1.1) * 0.015 * (1 + this.env.swell * 4);
@@ -491,4 +445,4 @@ export class RiverScene {
   }
 }
 
-function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2; }
+
