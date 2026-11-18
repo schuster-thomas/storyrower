@@ -167,13 +167,13 @@ for o in OBJS: hint(o)
 
 # ---------------------------------------------------------------- views
 # side views look at the row from 15° above (the boat sees the props from a few metres up),
-# the top view from 60° for the flat tops
+# the top view straight down, so every flat top gets a painting that sees it squarely
 VIEWS = {
     'w': (Vector((1, 0, 0)), 15),     # camera east of the row, looking west (−x)
     'e': (Vector((-1, 0, 0)), 15),
     'n': (Vector((0, -1, 0)), 15),    # camera south, looking north (+y)
     's': (Vector((0, 1, 0)), 15),
-    'top': (Vector((0, -1, 0)), 60),
+    'top': (Vector((0, -1, 0)), 89.5),
 }
 RES = (3072, 1024)
 sizes = []
@@ -203,7 +203,10 @@ for view, (d, elev) in VIEWS.items():
     c.data.type = 'ORTHO'
     c.data.sensor_fit = 'HORIZONTAL'
     top = max(s[2] for s in sizes)
-    c.data.ortho_scale = max(total * 1.08, (top + 1.5) * 3.0 / max(0.4, math.cos(math.radians(elev))))
+    if elev > 80:   # from above the row shows its depth, not its height
+        c.data.ortho_scale = max(total * 1.08, max(max(s[0], s[1]) for s in sizes) * 3.3)
+    else:
+        c.data.ortho_scale = max(total * 1.08, (top + 1.5) * 3.0 / max(0.4, math.cos(math.radians(elev))))
     look = Vector((0, 0, top * 0.42))
     back = -Vector((d.x, d.y, 0)).normalized() if view != 'top' else Vector((0, -1, 0))
     dist = 60.0
@@ -239,6 +242,21 @@ if not PAINT:
     sys.exit(0)
 
 # ---------------------------------------------------------------- projection
+# the original paintings (before the background fill), to see where the painter actually painted
+import numpy as np
+painted_px = {}
+for view in VIEWS:
+    im = bpy.data.images.load(f'{OUT}/painted-{view}.png')
+    a = np.empty(im.size[0] * im.size[1] * 4, dtype=np.float32)
+    im.pixels.foreach_get(a)
+    painted_px[view] = a.reshape(im.size[1], im.size[0], 4)
+
+def on_object(view, u, v):
+    """the painting shows the object (not the magenta background) at this point"""
+    px = painted_px[view]; H, W = px.shape[:2]
+    r, g, b = px[min(H - 1, max(0, int(v * (H - 1)))), min(W - 1, max(0, int(u * (W - 1)))), :3]
+    return not (min(r, b) - g > 0.15)
+
 mats = {}
 for view in VIEWS:
     # the background of the painting filled with the objects' edge colours (props.mjs fill)
@@ -269,13 +287,18 @@ for o in OBJS:
             facing = p.normal.dot(-d) - 2.0
             if facing > best[i][0]: best[i] = (facing, view)
     for view in names:
+        place(view)
         c, _ = cams[view]
+        mw = o.matrix_world
         d = (c.matrix_world.to_3x3() @ Vector((0, 0, -1))).normalized()   # ortho: one direction
         for i, p in enumerate(me.polygons):
             facing = p.normal.dot(-d)
             if facing < 0.05: continue
             hit = bvh.ray_cast(p.center + p.normal * 0.02, -d, 200.0)
             if hit[0] is not None: continue
+            # where the painter drew the outline a little differently, this view shows background here
+            q = world_to_camera_view(scene, c, mw @ p.center)
+            if not on_object(view, q.x, q.y): continue
             score = facing
             if score > best[i][0]: best[i] = (score, view)
     print(o.name, {v: sum(1 for b in best if b[1] == v) for v in names}, 'unseen', sum(1 for b in best if b[0] < 0))

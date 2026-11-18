@@ -19,6 +19,8 @@ const MAX_FLYING = 48;
 const BODY_HALF = 0.13;
 /** how close the boat comes before the birds on a rock take off (m) */
 const SHY = 32;
+/** the models are about twice a real puffin; a bit more still reads better from the boat */
+const SIZE = 1.4;
 
 interface Flyer {
   pos: THREE.Vector3;
@@ -27,6 +29,9 @@ interface Flyer {
   life: number;
   phase: number;
   rate: number;
+  /** where it sat and which way it looked: until it takes off (age < 0) it is drawn sitting there */
+  spot: THREE.Vector3 | null;
+  yaw: number;
   /** circling above the river (idyll) or fleeing; age < 0: waiting to take off */
   circle: { cx: number; cz: number; r: number; speed: number; a: number; y: number } | null;
 }
@@ -88,6 +93,7 @@ export class Puffins {
   private s = new THREE.Vector3();
   private look = new THREE.Matrix4();
   private up = new THREE.Vector3(0, 1, 0);
+  private tmp = new THREE.Vector3();
 
   private static loading: Promise<THREE.Object3D[]> | null = null;
   static preload(): Promise<THREE.Object3D[]> {
@@ -133,14 +139,21 @@ export class Puffins {
     return inst;
   }
 
-  /** a bird leaves its spot: up and away from the boat, along the river and back over the bank */
-  private takeOff(at: THREE.Vector3, delay: number) {
+  /** which way the bird on spot i of a section looks: most of them towards the river */
+  private static yaw(key: number, i: number) { return -Math.PI * 0.5 + Math.sin(key * 7.1 + i * 2.3) * 1.1; }
+
+  /**
+   * A bird leaves its spot: it keeps sitting until its turn (one after the other), then pushes off
+   * the way it was looking, climbs and turns ahead along the river and back over the bank.
+   */
+  private takeOff(at: THREE.Vector3, yaw: number, delay: number) {
     if (this.flyers.length >= MAX_FLYING) return;
-    const side = Math.random() < 0.5 ? -1 : 1;
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
     this.flyers.push({
-      pos: at.clone().add(new THREE.Vector3(0, 0.35, 0)),
-      vel: new THREE.Vector3(side * (0.5 + Math.random() * 1.5), 2.2 + Math.random(), -(5 + Math.random() * 3)),
-      age: -delay, life: 7 + Math.random() * 3, phase: Math.random() * 40, rate: 17 + Math.random() * 4, circle: null,
+      pos: at.clone().add(new THREE.Vector3(0, 0.3 * SIZE, 0)),
+      vel: fwd.multiplyScalar(2.5 + Math.random()).add(new THREE.Vector3(0, 2.6 + Math.random(), -(2 + Math.random() * 2))),
+      age: -delay, life: 8 + Math.random() * 3, phase: Math.random() * 40, rate: 17 + Math.random() * 4,
+      spot: at.clone(), yaw, circle: null,
     });
   }
 
@@ -157,15 +170,20 @@ export class Puffins {
       if (scared || (ahead > -4 && ahead < SHY)) {
         this.gone.add(key);
         // one after the other, not all in the same instant
-        spots.forEach((sp, i) => this.takeOff(sp, i * 0.14 + Math.random() * 0.2));
+        spots.forEach((sp, i) => this.takeOff(sp, Puffins.yaw(key, i), i * 0.18 + Math.random() * 0.25));
         continue;
       }
       for (const [i, sp] of spots.entries()) {
         if (n >= MAX_SITTING) break;
-        // each bird looks somewhere else, most of them towards the river
-        this.q.setFromAxisAngle(this.up, -Math.PI * 0.5 + Math.sin(key * 7.1 + i * 2.3) * 1.1);
-        this.sitting.setMatrixAt(n++, this.m.compose(sp, this.q, this.s.setScalar(1)));
+        this.q.setFromAxisAngle(this.up, Puffins.yaw(key, i));
+        this.sitting.setMatrixAt(n++, this.m.compose(sp, this.q, this.s.setScalar(SIZE)));
       }
+    }
+    // birds about to take off still sit where they were
+    for (const f of this.flyers) {
+      if (f.age + p.dt >= 0 || !f.spot || n >= MAX_SITTING) continue;
+      this.q.setFromAxisAngle(this.up, f.yaw);
+      this.sitting.setMatrixAt(n++, this.m.compose(f.spot, this.q, this.s.setScalar(SIZE)));
     }
     // forget sections far behind (they are rebuilt with fresh birds when they come round again)
     for (const k of this.gone) if (!p.perches.some((x) => x.key === k)) this.gone.delete(k);
@@ -177,7 +195,7 @@ export class Puffins {
       this.circling = true;
       for (let i = 0; i < 6; i++) {
         this.flyers.push({
-          pos: new THREE.Vector3(), vel: new THREE.Vector3(), age: 0, life: Infinity, phase: Math.random() * 40, rate: 15 + Math.random() * 3,
+          pos: new THREE.Vector3(), vel: new THREE.Vector3(), age: 0, life: Infinity, phase: Math.random() * 40, rate: 15 + Math.random() * 3, spot: null, yaw: 0,
           circle: { cx: i % 2 ? 7 : -7, cz: -45 - (i % 3) * 10, r: 12 + (i % 3) * 4, speed: 0.32 + (i % 2) * 0.06, a: (i / 6) * Math.PI * 2, y: 10 + (i % 3) * 1.5 },
         });
       }
@@ -203,20 +221,21 @@ export class Puffins {
         const c = f.circle;
         c.a += p.dt * c.speed;
         f.pos.set(c.cx + Math.cos(c.a) * c.r, c.y + Math.sin(p.time * 0.9 + c.r) * 1.2, p.boatZ + c.cz + Math.sin(c.a) * c.r * 0.6);
+        this.look.lookAt(prev, f.pos, this.up);
       } else {
-        // climb away, then curve back towards the bank they came from
-        f.vel.y = Math.max(0.3, f.vel.y - p.dt * 0.35);
-        f.vel.x += Math.sign(f.vel.x || 1) * p.dt * 0.6;
+        // climb away ahead of the boat, then curve back over the bank they came from
+        f.vel.y = Math.max(0.3, f.vel.y - p.dt * 0.4);
+        f.vel.x -= p.dt * 1.1;
+        f.vel.z -= p.dt * 1.5;
         f.pos.addScaledVector(f.vel, p.dt);
+        this.look.lookAt(f.pos, this.tmp.copy(f.pos).add(f.vel), this.up);
       }
-      const dir = f.pos.clone().sub(prev);
-      if (dir.lengthSq() < 1e-8) dir.set(0, 0, -1);
-      // model forward is −z: look along the flight path, bank into the turn a little
-      this.look.lookAt(prev, f.pos, this.up);
+      // model forward is −z: look along the flight path
       this.q.setFromRotationMatrix(this.look);
-      const fade = Math.min(1, f.age / 0.3, (f.life - f.age) / 1.2);
+      // full size from the first wing beat; only far away at the end do they shrink out of sight
+      const fade = Math.min(1, (f.life - f.age) / 1.2);
       if (m >= MAX_FLYING) break;
-      this.flying.setMatrixAt(m, this.m.compose(f.pos, this.q, this.s.setScalar(Math.max(0.001, fade))));
+      this.flying.setMatrixAt(m, this.m.compose(f.pos, this.q, this.s.setScalar(SIZE * Math.max(0.001, fade))));
       flap.setXY(m, f.phase, f.rate);
       m++;
     }

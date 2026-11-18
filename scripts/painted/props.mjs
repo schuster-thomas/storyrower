@@ -27,9 +27,29 @@ async function fill(src, dst) {
   let col = new Float32Array(W * H * 3), w = new Float32Array(W * H);
   for (let i = 0; i < W * H; i++) {
     const r = data[i * 3], g = data[i * 3 + 1], b = data[i * 3 + 2];
-    const bg = Math.min(r, b) - g > 30;
+    const bg = Math.min(r, b) - g > 12;   // also the slightly magenta edge pixels
     w[i] = bg ? 0 : 1;
     col.set([r, g, b], i * 3);
+  }
+  // first grow the objects outwards pixel by pixel (each empty pixel takes the mean of its painted
+  // neighbours): near a silhouette the fill is the object's own edge colour, not a blurred average
+  for (let pass = 0; pass < 40; pass++) {
+    const grown = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      if (w[i]) continue;
+      let n = 0, r = 0, g = 0, b = 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx;
+        if (!w[j]) continue;
+        n++; r += col[j * 3]; g += col[j * 3 + 1]; b += col[j * 3 + 2];
+      }
+      if (n) grown.push([i, r / n, g / n, b / n]);
+    }
+    if (!grown.length) break;
+    for (const [i, r, g, b] of grown) { col.set([r, g, b], i * 3); w[i] = 1; }
   }
   const levels = [{ W, H, col, w }];
   while (W > 1 || H > 1) {   // pull: average the painted pixels into ever smaller levels
@@ -94,7 +114,7 @@ const WHAT = {
 
 const VIEW_TEXT = {
   side: 'seen from the side and slightly above',
-  top: 'seen from above at a steep angle',
+  top: 'seen from directly above (top-down view)',
 };
 
 for (const view of VIEWS) {

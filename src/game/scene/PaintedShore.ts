@@ -249,7 +249,7 @@ export class PaintedShore {
       ray.set(new THREE.Vector3(x, 60, z), new THREE.Vector3(0, -1, 0));
       const hit = ray.intersectObject(rock, true)[0];
       if (!hit || hit.point.y < top * 0.8 || !hit.face || hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y < 0.6) continue;
-      if (spots.some(([sx, , sz]) => Math.hypot(sx - x, sz - z) < 0.55)) continue;
+      if (spots.some(([sx, , sz]) => Math.hypot(sx - x, sz - z) < 0.8)) continue;   // room for the bigger birds
       spots.push([x, hit.point.y, z]);
     }
     root.userData.perch = spots;

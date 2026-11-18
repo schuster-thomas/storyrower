@@ -81,8 +81,19 @@ const coneFragment = /* glsl */ `
     vec3 col = paint.rgb * uTint;
 
     // the fresh lava fills the middle of the grooves down to the flow front
+    // (no reversed smoothstep edges and no pow() of negative numbers: both are undefined in GLSL
+    // and give NaN on some mobile GPUs – which the bloom then smears over the whole screen)
     float core = smoothstep(0.42, 0.82, ch);
-    float reach = uFlow > 0.001 ? smoothstep(uFlow + 0.004, uFlow - 0.03, along) : 0.0;
+    float reach = uFlow > 0.001 ? 1.0 - smoothstep(uFlow - 0.03, uFlow + 0.004, along) : 0.0;
+
+    // in the ice cap the old grooves lie under snow until lava runs down them: fill them with the
+    // snow beside them (sampled left and right, away from the groove)
+    vec2 dx = vec2(0.02, 0.0);
+    float wl = 1.0 - texture2D(tMask, vUv - dx).r, wr = 1.0 - texture2D(tMask, vUv + dx).r;
+    vec3 side = (texture2D(tPaint, vUv - dx).rgb * wl + texture2D(tPaint, vUv + dx).rgb * wr) / (wl + wr + 0.001);
+    float snowy = smoothstep(0.5, 0.75, dot(side, vec3(0.299, 0.587, 0.114)));
+    float groove = smoothstep(0.1, 0.5, ch);
+    col = mix(col, side * uTint, groove * snowy * 0.9 * (1.0 - reach));
     float lava = core * reach;
     // crust plates drifting down the channel, more of them as it cools
     float plates = noise(vec2(vUv.x * 260.0, along * 70.0 - uTime * 0.55));
@@ -90,7 +101,8 @@ const coneFragment = /* glsl */ `
     float pulse = noise(vec2(vUv.x * 90.0, along * 22.0 - uTime * 0.9));
     vec3 hot = mix(vec3(0.95, 0.17, 0.03), vec3(1.0, 0.62, 0.15), smoothstep(0.78, 1.0, ch) * (0.35 + 0.65 * pulse));
     // the front of the flow is the hottest, brightest part
-    float front = exp(-pow((along - uFlow + 0.012) / 0.018, 2.0)) * core * step(0.001, uFlow);
+    float fx = (along - uFlow + 0.012) / 0.018;
+    float front = exp(-fx * fx) * core * step(0.001, uFlow);
     hot *= 1.05 + 1.0 * front;
     vec3 cooled = vec3(0.10, 0.06, 0.05) + vec3(0.25, 0.05, 0.0) * uHeat * 0.4;
     vec3 lavaCol = mix(hot * uHeat + cooled * (1.0 - uHeat), cooled, crust * 0.85);
