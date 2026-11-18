@@ -47,6 +47,13 @@ export const ITEMS = [
     prompt: 'Character and prop model sheet on a plain light grey background for a 3D modeller. Top row: a racing single scull (long narrow white hull with a red stripe, two outriggers, sliding seat, foot stretcher, two sculling oars with red-and-white blades) in side view and top view. Bottom row: an athletic adult rower in a red and white rowing unisuit, short hair, sitting in the boat, shown in the four phases of a rowing stroke from the side – catch (knees bent, arms reaching forward to the stern), drive (legs pushing), finish (leaning back, hands at the chest), recovery – plus one front view facing the stern. Consistent proportions in every view, slightly stylised, friendly face.',
   },
   {
+    // input for Tripo3D image-to-model: one clean full-body view in A-pose
+    id: 'ref-rower-apose',
+    size: '1024x1536',
+    refs: ['assets/raw/concepts/sheet-rower.png'],
+    prompt: 'Full-body character reference for 3D model generation: exactly the rower character from the reference sheet (athletic adult, short brown hair, friendly face, red and white rowing unisuit, white socks and light sneakers). Standing in a neutral A-pose: arms straight and angled down about 45 degrees away from the body, palms facing down, fingers together, legs straight and slightly apart. Front view, facing the camera, the whole body from head to feet in frame with some margin. Plain light grey background, soft even lighting, no cast shadows, no oars, no boat, no props.',
+  },
+  {
     id: 'sheet-puffin',
     size: '1536x1024',
     refs: [MOCKUP],

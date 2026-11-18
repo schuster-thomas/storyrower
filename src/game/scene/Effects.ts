@@ -54,6 +54,7 @@ export class Effects {
   private bombs: Bomb[] = [];
   private bombTimer = 1;
   private rings: Ring[] = [];
+  private puddles: Ring[] = [];
   private birds = new THREE.Group();
   private birdWings: THREE.Mesh[][] = [];
   private birdScale = 0;
@@ -88,7 +89,7 @@ export class Effects {
     this.sprayVel = new Float32Array(spN * 3);
     const spGeo = new THREE.BufferGeometry();
     spGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(spN * 3).fill(-999), 3));
-    this.spray = new THREE.Points(spGeo, new THREE.PointsMaterial({ map: dot, color: 0xffffff, size: 0.3, transparent: true, opacity: 0.85, depthWrite: false }));
+    this.spray = new THREE.Points(spGeo, new THREE.PointsMaterial({ map: dot, color: 0xffffff, size: 0.16, transparent: true, opacity: 0.8, depthWrite: false }));
     this.spray.frustumCulled = false;
 
     // Lava bombs and splash rings
@@ -106,6 +107,16 @@ export class Effects {
       const mesh = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
       mesh.visible = false;
       this.rings.push({ mesh, age: 0, active: false });
+      scene.add(mesh);
+    }
+
+    // Puddles: white swirls the blades leave on the water at the finish
+    const puddleGeo = new THREE.RingGeometry(0.18, 0.42, 20, 1, 0, Math.PI * 1.6);
+    puddleGeo.rotateX(-Math.PI / 2);
+    for (let i = 0; i < 12; i++) {
+      const mesh = new THREE.Mesh(puddleGeo, new THREE.MeshBasicMaterial({ color: 0xf2fbff, transparent: true, opacity: 0, depthWrite: false }));
+      mesh.visible = false;
+      this.puddles.push({ mesh, age: 0, active: false });
       scene.add(mesh);
     }
 
@@ -152,6 +163,7 @@ export class Effects {
     this.updateSpray(c);
     this.updateBombs(c);
     this.updateRings(c);
+    this.updatePuddles(c.dt);
     this.updateBirds(c);
   }
 
@@ -212,7 +224,7 @@ export class Effects {
       const i = this.sprayNext;
       this.sprayNext = (this.sprayNext + 1) % n;
       const side = Math.random() < 0.5 ? -1 : 1;
-      a.set([side * rnd(0.1, 0.4), 0.25, c.boatZ - 3.6], i * 3);
+      a.set([side * rnd(0.05, 0.25), 0.18, c.boatZ - 3.9], i * 3);
       this.sprayVel.set([side * rnd(0.8, 2), rnd(1.2, 2.6), rnd(0.5, 2)], i * 3);
       this.sprayLife[i] = rnd(0.5, 0.9);
       emit -= 1;
@@ -264,6 +276,41 @@ export class Effects {
       b.mesh.position.y = b.from.y * (1 - k * k) + Math.sin(Math.PI * k) * 6;
       b.mesh.rotation.x += c.dt * 5;
       b.mesh.rotation.y += c.dt * 3;
+    }
+  }
+
+  /** Blade entering the water at the catch: a little burst of droplets. */
+  bladeSplash(at: THREE.Vector3, strength = 1) {
+    const pos = this.spray.geometry.attributes.position as THREE.BufferAttribute;
+    const a = pos.array as Float32Array;
+    const n = Math.round(6 + strength * 6);
+    for (let k = 0; k < n; k++) {
+      const i = this.sprayNext;
+      this.sprayNext = (this.sprayNext + 1) % this.sprayLife.length;
+      a.set([at.x + rnd(-0.25, 0.25), 0.05, at.z + rnd(-0.15, 0.15)], i * 3);
+      this.sprayVel.set([rnd(-0.9, 0.9), rnd(1.0, 2.2) * strength, rnd(-0.6, 0.9)], i * 3);
+      this.sprayLife[i] = rnd(0.35, 0.6);
+    }
+  }
+
+  /** Blade leaving the water at the finish: a swirl ("puddle") that stays behind on the water. */
+  puddle(at: THREE.Vector3) {
+    const p = this.puddles.find((x) => !x.active) ?? this.puddles.reduce((o, x) => (x.age > o.age ? x : o));
+    p.active = true;
+    p.age = 0;
+    p.mesh.position.set(at.x, 0.06, at.z);
+    p.mesh.rotation.y = Math.random() * Math.PI;
+    p.mesh.visible = true;
+  }
+
+  private updatePuddles(dt: number) {
+    for (const p of this.puddles) {
+      if (!p.active) continue;
+      p.age += dt;
+      const k = p.age / 3;
+      if (k >= 1) { p.active = false; p.mesh.visible = false; continue; }
+      p.mesh.scale.setScalar(0.6 + k * 1.4);
+      (p.mesh.material as THREE.MeshBasicMaterial).opacity = 0.75 * (1 - k) ** 1.5;
     }
   }
 

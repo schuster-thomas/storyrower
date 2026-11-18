@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { EffectId, StoryState } from '../../story/story';
 import type { Environment } from '../levels/iceland';
 import { Backdrop } from './Backdrop';
+import { Boat } from './Boat';
 import { Effects } from './Effects';
 import { buildFjordChunk, createFjordMaterials, disposeFjordChunk } from './Fjord';
 import { NatureKit } from './NatureKit';
@@ -55,6 +56,11 @@ export class RiverScene {
   private tint = new THREE.Color(1, 1, 1);
 
   private boat = new THREE.Group();
+  /** the real scull and rower; the greybox boat stays until it is loaded */
+  private model: Boat;
+  private greybox = new THREE.Group();
+  private prevPhase = 1;
+  private bladePos: THREE.Vector3[] = [];
   private torso!: THREE.Group;
   private oars: { pivot: THREE.Group; side: 1 | -1 }[] = [];
   private volcano = new THREE.Group();
@@ -107,6 +113,9 @@ export class RiverScene {
     this.scene.add(this.water.mesh);
 
     this.buildBoat();
+    this.model = new Boat(this.sun.castShadow);
+    this.boat.add(this.model.group);
+    this.model.onReady = () => { this.greybox.visible = false; };
     this.buildVolcano();
     this.wave = this.buildWave();
     this.effects = new Effects(this.scene);
@@ -145,6 +154,7 @@ export class RiverScene {
     this.sky.setCloudCount(this.q.clouds);
     this.effects.setParticleShare(this.q.particles);
     this.sun.castShadow = level !== 'low';
+    this.model.setShadows(this.sun.castShadow);
     this.post.setQuality(level);
     this.post.setSize(size.x, size.y);
     // rebuild the landscape with the new detail – chunk by chunk, so the sky never shows through
@@ -339,7 +349,8 @@ export class RiverScene {
     hull.position.y = 0.15;
     const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 5.5), stripeMat);
     stripe.position.set(0, 0.36, 0);
-    this.boat.add(hull, stripe);
+    this.greybox.add(hull, stripe);
+    this.boat.add(this.greybox);
 
     // Rower: torso pivots at the hips to lean with the stroke
     this.torso = new THREE.Group();
@@ -349,7 +360,7 @@ export class RiverScene {
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), skinMat);
     head.position.y = 1.05;
     this.torso.add(body, head);
-    this.boat.add(this.torso);
+    this.greybox.add(this.torso);
 
     // Oars on riggers
     for (const side of [-1, 1] as const) {
@@ -361,10 +372,10 @@ export class RiverScene {
       const blade = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.22, 0.03), bladeMat);
       blade.position.x = side * 2.95;
       pivot.add(shaft, blade);
-      this.boat.add(pivot);
+      this.greybox.add(pivot);
       this.oars.push({ pivot, side });
     }
-    this.boat.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.castShadow = true; });
+    this.greybox.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.castShadow = true; });
     this.scene.add(this.boat);
   }
 
@@ -386,6 +397,21 @@ export class RiverScene {
     this.boat.position.set(0, Math.sin(this.time * 1.7) * 0.04 * (1 + this.env.swell * 3), this.z);
     this.boat.rotation.z = Math.sin(this.time * 1.1) * 0.015 * (1 + this.env.swell * 4);
     this.boat.rotation.x = Math.sin(this.time * 0.9) * 0.01 * (1 + this.env.swell * 3);
+
+    // The real rower model: same phase convention as the clip (catch 0, finish 0.35)
+    this.model.update(p);
+    if (this.model.ready) {
+      const prev = this.prevPhase;
+      const crossed = (at: number) => (prev < at && p >= at) || (prev > p && p >= at); // also after a new stroke reset the phase
+      if (crossed(0.03) || crossed(0.37)) {
+        this.boat.updateMatrixWorld(true);
+        for (const b of this.model.bladePositions(this.bladePos)) {
+          if (crossed(0.03)) this.effects.bladeSplash(b, Math.min(1.4, 0.6 + this.speed / 8));
+          else this.effects.puddle(b);
+        }
+      }
+    }
+    this.prevPhase = p;
   }
 
   // ---------- volcano & smoke ----------
@@ -459,9 +485,9 @@ export class RiverScene {
     const f = a / Math.PI;
     this.viewDir = Math.cos(a) >= 0 ? 1 : -1;
     // low chase camera close behind the stern: the rower is big in the lower third, the fjord opens up above
-    const r = 10 + 3 * Math.sin(a) + 2 * f;
-    this.camera.position.set(sx + Math.sin(a) * r + Math.sin(this.time * 0.3) * 0.25, 3.1 + 2 * f + sy, this.z + Math.cos(a) * r);
-    this.camera.lookAt(-Math.sin(a) * 4, 1.5 - 0.7 * f, this.z - Math.cos(a) * (18 - 3 * f));
+    const r = 7.2 + 4 * Math.sin(a) + 3 * f;
+    this.camera.position.set(sx + Math.sin(a) * r + Math.sin(this.time * 0.3) * 0.2, 2.5 + 2.2 * f + sy, this.z + Math.cos(a) * r);
+    this.camera.lookAt(-Math.sin(a) * 3, 1.25 - 0.5 * f, this.z - Math.cos(a) * (14 - 3 * f));
   }
 }
 
