@@ -31,7 +31,7 @@ npm run build    # typecheck + build to dist/
 
 Every push to `main` is tested, built and published to GitHub Pages by GitHub Actions.
 
-Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout), `#/play?beat=eruption` starts 5 s before a story beat (`calm`, `birds`, `tremor`, `ash`, `eruption`, `wave`, `escape`, `sunset`). The "Simulator (autopilot)" source rows by itself and follows the targets.
+On the setup screen, **Start at** (or the dots on the workout preview) jumps straight to a story moment – the puffins, the eruption, the tidal wave … – and "Row again" starts there again. Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout), `#/play?beat=eruption` starts 5 s before a story beat (`calm`, `birds`, `tremor`, `ash`, `eruption`, `wave`, `escape`, `sunset`). The "Simulator (autopilot)" source rows by itself and follows the targets.
 
 ### Recording a session
 Everything is recorded automatically from the moment a rower (or simulator) is connected: every Bluetooth packet with a timestamp, plus game events (`game-start` with settings and all sections, `game-section` on every target change, `game-snapshot` every 5 s with values, zones, wave distance and fps, `visibility`, `error`, `game-finish`). Download it from the results screen, the in-game "i" overlay or **Device & diagnostics**. The recording lives in memory only – reloading the page loses it. Recordings can be replayed in Device & diagnostics.

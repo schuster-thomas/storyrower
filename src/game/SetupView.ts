@@ -11,6 +11,11 @@ import { RiverScene } from './scene/RiverScene';
 import { ICELAND } from './levels/iceland';
 
 const STORAGE_KEY = 'storyrower.settings';
+/** Short names for the story moments you can jump to from the setup screen. */
+const BEAT_NAMES: Record<string, string> = {
+  calm: 'Calm morning', birds: 'Puffins', tremor: 'First tremor', ash: 'Ash rain', eruption: 'Eruption',
+  wave: 'Tidal wave', escape: 'Escape', sunset: 'Sunset',
+};
 const PHASE_COLORS = { idyll: '#5fae6b', omens: '#b3a26a', escalation: '#e0874f', finale: '#c4443a', winddown: '#e9a86b' };
 
 function loadSettings(): WorkoutSettings {
@@ -25,6 +30,8 @@ export function mountPlay(root: HTMLElement): () => void {
   let cleanupGame: (() => void) | null = null;
   let cleanupSetup: (() => void) | null = null;
   let autopilot = true;
+  /** story moment chosen on the setup screen to start at (kept for "Row again") */
+  let jump: string | null = null;
   let audio: AudioEngine | null = null;
 
   const showSetup = () => {
@@ -32,7 +39,7 @@ export function mountPlay(root: HTMLElement): () => void {
     void RiverScene.preload();
     cleanupGame?.(); cleanupGame = null;
     audio?.ctx.suspend().catch(() => {});
-    cleanupSetup = mountSetup(root, (opts) => { autopilot = opts.autopilot; startGame(); });
+    cleanupSetup = mountSetup(root, jump, (opts) => { autopilot = opts.autopilot; jump = opts.jump; startGame(); });
   };
   const startGame = () => {
     cleanupSetup?.(); cleanupSetup = null;
@@ -40,8 +47,9 @@ export function mountPlay(root: HTMLElement): () => void {
     const workout = generateWorkout(loadSettings());
     const dev = new URLSearchParams(location.hash.split('?')[1] ?? '');
     const speed = Number(dev.get('speed')) || 1;
-    // ?beat=eruption starts 5 s before that story beat
-    const beat = dev.get('beat') ? scheduleBeats(ICELAND, workout).find((b) => b.id === dev.get('beat')) : null;
+    // a story moment chosen on the setup screen (or ?beat=eruption) starts 5 s before that beat
+    const beatId = dev.get('beat') ?? jump;
+    const beat = beatId ? scheduleBeats(ICELAND, workout).find((b) => b.id === beatId) : null;
     const startAt = beat ? Math.max(0, beat.t - 5) : Number(dev.get('at')) || 0;
     // Runs inside the Start / Row again click, so the browser allows sound
     try { audio ??= new AudioEngine(); audio.setSettings(loadAudioSettings()); audio.resume().catch(() => {}); } catch { audio = null; }
@@ -51,7 +59,7 @@ export function mountPlay(root: HTMLElement): () => void {
   return () => { cleanupGame?.(); cleanupSetup?.(); audio?.dispose(); audio = null; };
 }
 
-function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => void): () => void {
+function mountSetup(root: HTMLElement, initialJump: string | null, onStart: (o: { autopilot: boolean; jump: string | null }) => void): () => void {
   let settings = loadSettings();
   root.innerHTML = `
     <header class="topbar">
@@ -72,6 +80,12 @@ function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => v
           </div>
           <div class="preview" data-id="preview"></div>
           <div class="legend" data-id="legend"></div>
+          <div class="jump">
+            <label>Start at
+              <select data-id="jump"></select>
+            </label>
+            <span class="muted">Jump straight to a story moment – the workout runs on from there.</span>
+          </div>
         </section>
         <section class="panel">
           <h2>Rower</h2>
@@ -149,14 +163,27 @@ function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => v
     };
   });
 
+  let jump = initialJump;
+  const jumpSel = $<HTMLSelectElement>('jump');
+  jumpSel.onchange = () => { jump = jumpSel.value || null; renderPreview(); };
+
   function renderPreview() {
     const w = generateWorkout(settings);
+    const beats = scheduleBeats(ICELAND, w);
+    if (jump && !beats.some((b) => b.id === jump)) jump = null;   // not in this (shorter) workout
+    jumpSel.innerHTML = `<option value="">Beginning</option>` + beats.map((b) =>
+      `<option value="${b.id}">${BEAT_NAMES[b.id] ?? b.id} · ${formatDuration(b.t)}</option>`).join('');
+    jumpSel.value = jump ?? '';
     const maxP = Math.max(...w.segments.map((s) => s.power.hi)) * 1.1;
     $('preview').innerHTML = w.segments.map((s) => {
       const width = ((s.end - s.start) / w.duration) * 100;
       const h = (((s.power.lo + s.power.hi) / 2) / maxP) * 100;
       return `<div class="pv-seg" style="width:${width}%" title="${ICELAND.phases[s.phase].name} · ${s.kind} · ${s.power.lo}–${s.power.hi} W · ${s.spm.lo}–${s.spm.hi} spm · ${formatDuration(s.end - s.start)}"><i style="height:${h}%;background:${PHASE_COLORS[s.phase]}"></i></div>`;
-    }).join('');
+    }).join('') + beats.map((b) =>
+      `<button class="pv-beat${b.id === jump ? ' on' : ''}" data-beat="${b.id}" style="left:${(b.t / w.duration) * 100}%" title="Start at: ${BEAT_NAMES[b.id] ?? b.id} (${formatDuration(b.t)})"></button>`).join('');
+    $('preview').querySelectorAll<HTMLButtonElement>('.pv-beat').forEach((btn) => {
+      btn.onclick = () => { jump = btn.dataset.beat === jump ? null : btn.dataset.beat ?? null; renderPreview(); };
+    });
     $('legend').innerHTML = phaseSpans(w).map((p) =>
       `<span><i style="background:${PHASE_COLORS[p.phase]}"></i>${ICELAND.phases[p.phase].name} ${formatDuration(p.end - p.start)}</span>`).join('');
   }
@@ -191,7 +218,7 @@ function mountSetup(root: HTMLElement, onStart: (o: { autopilot: boolean }) => v
   $('simAuto').onclick = () => { autopilot = true; connection.use(new SimulatorSource({ power: 0, heartRate: true, seed: Date.now() })); };
   $('simManual').onclick = () => { autopilot = false; connection.use(new SimulatorSource({ power: 0, heartRate: true, seed: Date.now() })); };
   $('hrBtn').onclick = () => (connection.heartRate.state === 'connected' ? connection.disconnectHeartRate() : connection.connectHeartRate());
-  $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource ? autopilot : false });
+  $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource ? autopilot : false, jump });
 
   return () => { offConn(); offSession?.(); };
 }
