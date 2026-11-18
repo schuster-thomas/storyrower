@@ -14,6 +14,7 @@
     "backdrops:process": "node scripts/backdrops/process.mjs",
     "backdrops:sheet": "node scripts/backdrops/sheet.mjs",
     "models:build": "node scripts/models/build.mjs",
+    "tripo": "node scripts/tripo/tripo.mjs",
     "polyhaven:download": "node scripts/polyhaven/download.mjs",
     "section:fjord": "\"C:/Program Files/Blender Foundation/Blender 5.3/blender.exe\" --background --factory-startup --python scripts/blender/section_fjord.py -- assets/raw/sections --preview && node scripts/sections/build.mjs fjord"
   },
