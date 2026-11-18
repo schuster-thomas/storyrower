@@ -1,16 +1,19 @@
 import * as THREE from 'three';
 import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import shoreAUrl from '../../assets/painted/shore-a.glb?url';
+import cliffsUrl from '../../assets/painted/cliffs.glb?url';
+import glacierUrl from '../../assets/painted/glacier.glb?url';
 import { SHORE_SECTION } from './Fjord';
 
 /**
- * The left shore as painted sections (matte-painting approach, scripts/blender/painted_shore.py):
+ * A river bank as painted sections – basalt cliffs on the left, the glacier front on the right (matte-painting approach, scripts/blender/painted_shore.py):
  * simple geometry with a painting projected onto it, so the light, detail and style come from the
- * painting while the cliffs still pass by with real depth. Sections are 200 m long and alternate
+ * painting while the banks still pass by with real depth. Sections are 120 m long and alternate
  * normal / mirrored, so neighbours always meet without a seam. The painted waterfalls get an
  * animated overlay (flowing streaks, mist) on top.
  */
+export type BankKind = 'cliffs' | 'glacier';
+
 export class PaintedShore {
   readonly group = new THREE.Group();
   ready = false;
@@ -22,23 +25,27 @@ export class PaintedShore {
   private fallMat: THREE.ShaderMaterial;
   private mistMat: THREE.SpriteMaterial;
 
-  private static loading: Promise<GLTF> | null = null;
-  static preload(): Promise<GLTF> {
-    if (!this.loading) {
+  private static loading = new Map<BankKind, Promise<GLTF>>();
+  static preload(kind: BankKind): Promise<GLTF> {
+    let p = this.loading.get(kind);
+    if (!p) {
       const loader = new GLTFLoader();
       loader.setMeshoptDecoder(MeshoptDecoder);
-      this.loading = loader.loadAsync(shoreAUrl);
-      this.loading.catch(() => { this.loading = null; });
+      p = loader.loadAsync(kind === 'cliffs' ? cliffsUrl : glacierUrl);
+      p.catch(() => { this.loading.delete(kind); });
+      this.loading.set(kind, p);
     }
-    return this.loading;
+    return p;
   }
 
-  constructor(fall: THREE.ShaderMaterial, mist: THREE.SpriteMaterial) {
+  constructor(kind: BankKind, fall: THREE.ShaderMaterial, mist: THREE.SpriteMaterial) {
+    // every section is built as a left bank; the glacier is mirrored onto the right bank
+    if (kind === 'glacier') this.group.scale.x = -1;
     // a softer copy of the fjord's waterfall shader: the painting already shows the water
     this.fallMat = fall.clone();
     this.fallMat.uniforms.uAlpha.value = 0.5;
     this.mistMat = mist;
-    this.loaded = PaintedShore.preload().then((gltf) => {
+    this.loaded = PaintedShore.preload(kind).then((gltf) => {
       const root = gltf.scene;
       root.traverse((o) => {
         const mesh = o as THREE.Mesh;
@@ -70,7 +77,7 @@ export class PaintedShore {
       }
       this.template = root;
       this.ready = true;
-    }).catch((e) => console.warn('Painted shore could not be loaded, keeping the generated slopes', e));
+    }).catch((e) => console.warn(`Painted ${kind} could not be loaded, keeping the generated bank`, e));
   }
 
   /** Keep the sections around the boat; tint the painted light with the phase. */

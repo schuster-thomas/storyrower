@@ -71,7 +71,7 @@ export class NatureKit {
     }
 
     // Icebergs: rocks with a glacier-ice material
-    this.ice = new THREE.MeshStandardMaterial({ color: 0xdff4fb, emissive: 0x2a6f86, emissiveIntensity: 0.25, roughness: 0.35, metalness: 0, flatShading: true });
+    this.ice = new THREE.MeshStandardMaterial({ color: 0xeef9ff, emissive: 0x3ea8dc, emissiveIntensity: 0.45, roughness: 0.35, metalness: 0, flatShading: true });
     for (const [src, id] of [['Rock_Medium_1', 'Iceberg_1'], ['Rock_Medium_3', 'Iceberg_2']] as const) {
       const m = this.models.get(src);
       if (m) this.models.set(id, this.measure(m.parts.map((p) => ({ geometry: p.geometry, material: this.ice }))));

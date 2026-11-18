@@ -3,17 +3,20 @@ import { type NatureKit, Scatter } from './NatureKit';
 
 // ---------- shape of the fjord (pure functions of world z, mirrored in the water shader) ----------
 
-/** Distance from the boat's lane (x = 0) to the left shore (basalt slopes). */
-/** Painted shore sections are 200 m long and alternate normal / mirrored, so the shore line is
- * symmetric about every multiple of 200 m (same function in scripts/blender/painted_shore.py). */
-export const SHORE_SECTION = 200;
-export const leftShore = (z: number) => { const w = (2 * Math.PI * z) / (2 * SHORE_SECTION); return 60 + 2 * Math.cos(w) + Math.cos(3 * w); };
+/** Painted bank sections are 120 m long and alternate normal / mirrored, so both bank lines are
+ * symmetric about every multiple of 120 m (same functions in scripts/blender/painted_shore.py).
+ * The river is narrow – about 50 m – so the landscape is close to the boat. */
+export const SHORE_SECTION = 120;
+const bankWave = (z: number) => { const w = (2 * Math.PI * z) / (2 * SHORE_SECTION); return 1.5 * Math.cos(w) + 0.8 * Math.cos(3 * w); };
+/** Distance from the boat's lane (x = 0) to the left bank (basalt cliffs). */
+export const leftShore = (z: number) => 24 + bankWave(z);
 /** Distance from the boat's lane to the glacier front on the right. */
-export const glacierFront = (z: number) => 88 + 16 * Math.sin(z * 0.008 + 2.0) + 7 * Math.sin(z * 0.031 + 0.4);
+export const glacierFront = (z: number) => 28 + bankWave(z);
 /** The same two functions in GLSL, for the water shader (shallows, glacier milk, foam). */
 export const FJORD_GLSL = /* glsl */ `
-  float leftShore(float z) { float w = 6.2831853 * z / 400.0; return 60.0 + 2.0 * cos(w) + cos(3.0 * w); }
-  float glacierFront(float z) { return 88.0 + 16.0 * sin(z * 0.008 + 2.0) + 7.0 * sin(z * 0.031 + 0.4); }
+  float bankWave(float z) { float w = 6.2831853 * z / 240.0; return 1.5 * cos(w) + 0.8 * cos(3.0 * w); }
+  float leftShore(float z) { return 24.0 + bankWave(z); }
+  float glacierFront(float z) { return 28.0 + bankWave(z); }
 `;
 
 // ---------- deterministic noise ----------
@@ -217,6 +220,8 @@ export interface FjordChunkOptions {
   kit: NatureKit | null; detail: FjordDetail; shadows: boolean;
   /** the left shore comes from painted sections (PaintedShore): skip the generated slopes there */
   paintedLeft?: boolean;
+  /** the glacier comes from painted sections too: skip the generated one */
+  paintedRight?: boolean;
 }
 
 /** One stretch of the fjord: both shores, waterfalls with mist, icebergs and shore rocks. */
@@ -225,7 +230,7 @@ export function buildFjordChunk(index: number, length: number, m: FjordMaterials
   const z0 = -index * length;
   const glacier = new THREE.Mesh(buildGlacier(z0, length, [Math.round(o.detail[0] * 1.2), o.detail[1]]), m.ice);
   glacier.matrixAutoUpdate = false;
-  group.add(glacier);
+  if (!o.paintedRight) group.add(glacier);
   if (!o.paintedLeft) {
     const slopes = new THREE.Mesh(buildSlopes(z0, length, o.detail), m.land);
     slopes.matrixAutoUpdate = false;
@@ -257,14 +262,13 @@ export function buildFjordChunk(index: number, length: number, m: FjordMaterials
   if (o.kit) {
     const s = new Scatter(o.kit);
     // icebergs calved from the glacier: many near the ice, a few drifting across; never in the boat's lane
-    const bergs = 5 + Math.floor(r() * 5);
+    // small ice chunks calved from the glacier, close to its front (proper icebergs come later)
+    const bergs = 2 + Math.floor(r() * 3);
     for (let k = 0; k < bergs; k++) {
       const z = z0 - r() * length;
-      const right = r() < 0.8;
-      const span = right ? glacierFront(z) - 10 : leftShore(z) - 10;
-      const x = (right ? 1 : -1) * (7 + span * r() ** 0.6);
+      const x = glacierFront(z) - 3 - r() * 8;
       const big = r();
-      s.add(r() < 0.5 ? 'Iceberg_1' : 'Iceberg_2', x, -0.6 - big * 0.6, z, 1.2 + big * big * 6, r() * Math.PI * 2, 0.55 + r() * 0.4);
+      s.add(r() < 0.5 ? 'Iceberg_1' : 'Iceberg_2', x, -0.4 - big * 0.3, z, 0.6 + big * big * 2.2, r() * Math.PI * 2, 0.5 + r() * 0.3);
     }
     // dark boulders at the foot of the cliffs
     for (let k = 0; k < (o.paintedLeft ? 0 : 6); k++) {

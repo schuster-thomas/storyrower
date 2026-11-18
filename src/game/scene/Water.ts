@@ -71,8 +71,8 @@ const fragment = /* glsl */ `
     float toLeft = vWorld.x + leftShore(vWorld.z);        // 0 at the left shore, > 0 on the water
     float toIce = glacierFront(vWorld.z) - vWorld.x;      // 0 at the glacier front
     float shore = min(toLeft, toIce);
-    vec3 col = mix(uShallow, uDeep, smoothstep(2.0, 26.0, toLeft));
-    col = mix(col, uMilk, (1.0 - smoothstep(0.0, 70.0, toIce)) * 0.75);
+    vec3 col = mix(uShallow, uDeep, smoothstep(1.0, 10.0, toLeft));
+    col = mix(col, uMilk, (1.0 - smoothstep(0.0, 30.0, toIce)) * 0.6);
 
     // Sky reflection at grazing angles
     float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 5.0);
