@@ -203,7 +203,7 @@ if KIND == 'cliffs':
         e = bpy.data.objects.new(name, None)
         scene.collection.objects.link(e)
         e.location = (-bank(FALL_Y) - (d0 + d1) / 2 + 0.5, FALL_Y, (top + bottom) / 2)
-        e.scale = (3.6, 1.0, top - bottom + 0.8)
+        e.scale = (6.0, 1.0, top - bottom + 0.8)   # a bold sheet, it is a key feature from the boat
     fall_marker('Fall_Lower', -0.5, 1.0)
     fall_marker('Fall_Upper', band_d(FALL_Y) - 0.5, band_d(FALL_Y) + 3.5)
 
@@ -268,6 +268,32 @@ for o in projected:
         p = world_to_camera_view(scene, cam, co)
         uv.data[loop.index].uv = (p.x, p.y)
     for a in list(me.color_attributes): me.color_attributes.remove(a)
+
+# Cut the terrain at the painted skyline: where the painting shows sky, the geometry rises above
+# what was painted and would be smeared with sky colour (pale streaks above the cliffs). Those
+# faces go, so the real panorama and sky show behind the bank. Cliffs only – the glacier's blue
+# ice would read as sky.
+if KIND == 'cliffs':
+    import numpy as np
+    W, H = img.size
+    px = np.empty(W * H * 4, dtype=np.float32)
+    img.pixels.foreach_get(px)
+    px = px.reshape(H, W, 4)
+    def sky(u, v):
+        r, g, b = px[min(H - 1, max(0, int(v * (H - 1)))), min(W - 1, max(0, int(u * (W - 1)))), :3]
+        return b > 0.55 and b - r > 0.12 and g - r > 0.02
+    me = bank_obj.data
+    uvl = me.uv_layers['UVMap']
+    vert_sky = {}
+    for loop in me.loops:
+        if loop.vertex_index in vert_sky: continue
+        co = bank_obj.matrix_world @ me.vertices[loop.vertex_index].co
+        vert_sky[loop.vertex_index] = co.z > 6.0 and sky(*uvl.data[loop.index].uv)
+    bm = bmesh.new(); bm.from_mesh(me)
+    gone = [f for f in bm.faces if all(vert_sky.get(v.index, False) for v in f.verts)]
+    bmesh.ops.delete(bm, geom=gone, context='FACES')
+    bm.to_mesh(me); bm.free()
+    print(f'cut {len(gone)} faces above the painted skyline')
 
 bpy.data.objects.remove(water, do_unlink=True)
 for o in list(scene.objects):
