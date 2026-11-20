@@ -57,7 +57,12 @@ describe('workout generator', () => {
     expect(b.power.hi).toBeGreaterThan(110);
     expect(b.spm).toEqual({ lo: 28, hi: 32, target: 30 });
     // faster split belongs to higher power
-    expect(b.pace.lo).toBeCloseTo(paceFromPower(b.power.hi));
+    expect(b.pace.lo).toBeCloseTo(paceFromPower(b.power.hi), 0);
+    // ±5 s around the target split, the watts derived from it
+    expect(b.pace.target - b.pace.lo).toBeCloseTo(5);
+    expect(b.pace.hi - b.pace.target).toBeCloseTo(5);
+    expect(b.power.lo).toBe(Math.round(powerFromPace(b.pace.target + 5)));
+    expect(b.power.hi).toBe(Math.round(powerFromPace(b.pace.target - 5)));
     expect(b.pace.lo).toBeLessThan(b.pace.hi);
   });
 
