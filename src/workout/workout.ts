@@ -45,6 +45,8 @@ export type PhaseId = 'idyll' | 'omens' | 'escalation' | 'finale' | 'winddown';
 export const PHASES: PhaseId[] = ['idyll', 'omens', 'escalation', 'finale', 'winddown'];
 
 export interface Band { lo: number; hi: number }
+/** A band around the value actually asked for: `target` is the goal, lo–hi the tolerance around it. */
+export interface Target extends Band { target: number }
 
 /**
  * Where the story phases sit on a shaped (non-story) workout: a share of the total time each,
@@ -68,10 +70,10 @@ export interface Segment {
   end: number;
   /** 0 = easiest, 1 = hardest */
   intensity: number;
-  power: Band;
-  spm: Band;
-  /** s/500 m; lo = faster split (from power.hi) */
-  pace: Band;
+  power: Target;
+  spm: Target;
+  /** s/500 m; lo = faster split (from power.hi), target = the split of the target power */
+  pace: Target;
   /** short label, e.g. "Hard" / "Easy" for intervals */
   kind: 'steady' | 'ramp' | 'hard' | 'easy' | 'peak';
 }
@@ -87,14 +89,21 @@ const r10 = (x: number) => Math.round(x / 10) * 10;
 /** Intensity of the easy row-out at the end of a build-up. */
 const COOL_DOWN = 0.1;
 
-/** Target bands for a given intensity (0–1). */
-export function bandsFor(s: WorkoutSettings, intensity: number) {
-  const p = lerp(s.minPower, s.maxPower, intensity);
+/**
+ * Targets for a given intensity (0–1). The configured minimum is the target at intensity 0 (the
+ * start), the maximum the target at 1 (the peak); the tolerance band lies around the target, so it
+ * may reach below the minimum and above the maximum.
+ */
+export function bandsFor(s: WorkoutSettings, intensity: number): { power: Target; spm: Target; pace: Target } {
+  // the settings may hold fractional watts (they are entered as splits): the split target comes
+  // from the exact value, so a 2:50 start shows as 2:50 and not 2:49
+  const exact = lerp(s.minPower, s.maxPower, intensity);
+  const p = Math.round(exact);
   const halfP = Math.max(5, p * 0.08);
-  const power = { lo: Math.round(p - halfP), hi: Math.round(p + halfP) };
-  const spmT = lerp(s.minSpm, s.maxSpm, intensity);
-  const spm = { lo: Math.round(spmT - 2), hi: Math.round(spmT + 2) };
-  const pace = { lo: paceFromPower(power.hi), hi: paceFromPower(Math.max(1, power.lo)) };
+  const power = { lo: Math.round(p - halfP), hi: Math.round(p + halfP), target: p };
+  const spmT = Math.round(lerp(s.minSpm, s.maxSpm, intensity));
+  const spm = { lo: spmT - 2, hi: spmT + 2, target: spmT };
+  const pace = { lo: paceFromPower(power.hi), hi: paceFromPower(Math.max(1, power.lo)), target: paceFromPower(Math.max(1, exact)) };
   return { power, spm, pace };
 }
 
@@ -144,7 +153,8 @@ function storyCurve(s: WorkoutSettings, total: number, minSeg: number): Segment[
     t += len;
   };
 
-  add('idyll', idyll, 0.1, 'steady');
+  // the warm-up asks for exactly the configured minimum
+  add('idyll', idyll, 0, 'steady');
   // build-up in two steps (one if too short); leftover interval time goes here so the total stays exact
   const omensTotal = omens + leftover;
   const twoSteps = (len: number) => r10(len / 2) >= minSeg && len - r10(len / 2) >= minSeg;

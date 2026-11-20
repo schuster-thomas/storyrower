@@ -1,7 +1,7 @@
 import { formatDuration, formatPace } from '../../rower/ftms';
 import type { RowerSample } from '../../rower/types';
 import { accuracy, type ScoreState, type Zone } from '../../workout/scoring';
-import type { Band, Segment, Workout } from '../../workout/workout';
+import type { Segment, Target, Workout } from '../../workout/workout';
 import { phaseSpans } from '../../workout/workout';
 import type { Level } from '../levels/level';
 import { bindFullscreenButton } from '../../ui/fullscreen';
@@ -67,9 +67,9 @@ export class Hud {
       </div>
       <div class="hud-bottom glass">
         <div class="hud-tile" data-h="dist"><div class="lbl">Distance</div><div class="val"><b>–</b><span>m</span></div><div class="sub"></div></div>
-        <div class="hud-tile" data-h="power"><div class="lbl">Power</div><div class="val"><b>–</b><span>W</span></div><div class="band"><i class="zone"></i><i class="mark"></i></div><div class="sub"></div></div>
-        <div class="hud-tile" data-h="spm"><div class="lbl">Stroke rate</div><div class="val"><b>–</b><span>spm</span></div><div class="band"><i class="zone"></i><i class="mark"></i></div><div class="sub"></div></div>
-        <div class="hud-tile" data-h="pace"><div class="lbl">Split</div><div class="val"><b>–</b><span>/500 m</span></div><div class="band"><i class="zone"></i><i class="mark"></i></div><div class="sub"></div></div>
+        <div class="hud-tile" data-h="power"><div class="lbl">Power</div><div class="val"><b>–</b><span>W</span></div><div class="band"><i class="zone"></i><i class="goal"></i><i class="mark"></i></div><div class="sub"></div></div>
+        <div class="hud-tile" data-h="spm"><div class="lbl">Stroke rate</div><div class="val"><b>–</b><span>spm</span></div><div class="band"><i class="zone"></i><i class="goal"></i><i class="mark"></i></div><div class="sub"></div></div>
+        <div class="hud-tile" data-h="pace"><div class="lbl">Split</div><div class="val"><b>–</b><span>/500 m</span></div><div class="band"><i class="zone"></i><i class="goal"></i><i class="mark"></i></div><div class="sub"></div></div>
         <div class="hud-tile" data-h="hr"><div class="lbl">Heart rate</div><div class="val"><b>–</b><span>bpm</span></div><div class="sub"></div></div>
       </div>`;
     parent.appendChild(this.el);
@@ -121,8 +121,8 @@ export class Hud {
     const el = this.q('target');
     el.innerHTML = `
       <div class="tg-head">${headline}</div>
-      <div class="tg-pace">${formatPace(seg.pace.lo)}–${formatPace(seg.pace.hi)}<small>/500 m</small></div>
-      <div class="tg-spm">${seg.spm.lo}–${seg.spm.hi}<small>spm</small></div>`;
+      <div class="tg-pace">${formatPace(seg.pace.target)}<small>/500 m</small></div>
+      <div class="tg-spm">${seg.spm.target}<small>spm</small></div>`;
     el.classList.remove('show');
     void el.offsetWidth; // restart the animation
     el.classList.add('show');
@@ -136,7 +136,7 @@ export class Hud {
   update(s: HudState) {
     if (this.builtFor !== s.workout) this.buildProgress(s.workout, s.level);
     // Announce when the target split (band centre) or stroke rate changes – also once at the start
-    const key = `${Math.round((s.segment.pace.lo + s.segment.pace.hi) / 2)}|${s.segment.spm.lo + s.segment.spm.hi}`;
+    const key = `${formatPace(s.segment.pace.target)}|${s.segment.spm.target}`;
     if (key !== this.targetKey) {
       const first = this.targetKey == null;
       this.targetKey = key;
@@ -159,7 +159,7 @@ export class Hud {
     const nx = this.q('next');
     if (s.next && toNext <= 20) {
       const phaseChange = s.next.phase !== s.segment.phase ? `${s.level.phases[s.next.phase].name}! ` : '';
-      setHtml(nx, `In <b>${Math.ceil(toNext)} s</b>: ${phaseChange}${KIND_LABEL[s.next.kind]} · ${s.next.power.lo}–${s.next.power.hi} W · ${s.next.spm.lo}–${s.next.spm.hi} spm`);
+      setHtml(nx, `In <b>${Math.ceil(toNext)} s</b>: ${phaseChange}${KIND_LABEL[s.next.kind]} · ${formatPace(s.next.pace.target)} /500 m · ${s.next.spm.target} spm`);
       nx.hidden = false;
     } else {
       setHtml(nx, `${KIND_LABEL[s.segment.kind]} · ${formatDuration(Math.max(0, toNext))} left`);
@@ -181,7 +181,7 @@ export class Hud {
     this.tile('pace', formatPace(smp?.paceSmoothed), `${formatPace(s.segment.pace.lo)}–${formatPace(s.segment.pace.hi)}`);
     // Split: lower is faster → mirror so "faster" is on the right like the other bars
     const pz = s.zones?.power ?? null;
-    this.band('pace', { lo: -s.segment.pace.hi, hi: -s.segment.pace.lo }, smp?.paceSmoothed ? -smp.paceSmoothed : null, pz);
+    this.band('pace', { lo: -s.segment.pace.hi, hi: -s.segment.pace.lo, target: -s.segment.pace.target }, smp?.paceSmoothed ? -smp.paceSmoothed : null, pz);
     this.tile('hr', smp?.heartRate != null ? String(smp.heartRate) : '–', smp?.heartRate != null ? '' : 'not connected');
 
     setText(this.q('acc'), s.score.time > 5 ? `${Math.round(accuracy(s.score) * 100)}%` : '–');
@@ -193,7 +193,7 @@ export class Hud {
     setText(t.querySelector<HTMLElement>('.sub')!, sub);
   }
 
-  private band(id: string, band: Band, value: number | null, zone: Zone | null) {
+  private band(id: string, band: Target, value: number | null, zone: Zone | null) {
     const t = this.q(id);
     const span = Math.max(1e-6, band.hi - band.lo);
     const min = band.lo - span * 0.9, max = band.hi + span * 0.9;
@@ -201,6 +201,8 @@ export class Hud {
     const zoneEl = t.querySelector<HTMLElement>('.zone')!;
     zoneEl.style.left = `${pct(band.lo)}%`;
     zoneEl.style.width = `${pct(band.hi) - pct(band.lo)}%`;
+    // the value actually asked for: a thin line inside the band
+    t.querySelector<HTMLElement>('.goal')!.style.left = `${pct(band.target)}%`;
     const mark = t.querySelector<HTMLElement>('.mark')!;
     mark.style.display = value == null ? 'none' : '';
     if (value != null) mark.style.left = `${pct(value)}%`;

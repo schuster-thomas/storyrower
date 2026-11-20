@@ -58,6 +58,8 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .hud-tile .sub { font-size: 12px; color: #b9c9d6; font-variant-numeric: tabular-nums; min-height: 1.3em; }
 .band { position: relative; height: 8px; margin: 4px 0; background: rgba(255, 255, 255, .18); border-radius: 4px; }
 .band .zone { position: absolute; top: 0; bottom: 0; background: rgba(124, 245, 163, .55); border-radius: 4px; }
+/* the target itself: a thin dark line across the band (the white bar is the current value) */
+.band .goal { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: #0d2a1c; border-radius: 1px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .35); }
 .band .mark { position: absolute; top: -4px; width: 4px; height: 16px; margin-left: -2px; background: #fff; border-radius: 2px; box-shadow: 0 0 6px rgba(0, 0, 0, .5); transition: left .25s; }
 .hud-tile[data-zone="in"] .val b { color: #7cf5a3; }
 .hud-tile[data-zone="close-low"] .val b, .hud-tile[data-zone="close-high"] .val b { color: #ffd166; }

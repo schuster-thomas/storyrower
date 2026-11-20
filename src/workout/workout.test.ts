@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { paceFromPower } from '../rower/ftms';
+import { formatPace, paceFromPower, powerFromPace } from '../rower/ftms';
 import { accuracy, newScore, stars, updateScore, zoneOf } from './scoring';
 import { DEFAULT_SETTINGS, PHASES, bandsFor, generateWorkout, phaseSpans, segmentAt } from './workout';
 
@@ -26,11 +26,36 @@ describe('workout generator', () => {
     kinds.forEach((k, i) => expect(k).toBe(i % 2 === 0 ? 'hard' : 'easy'));
   });
 
+  for (const mode of ['story', 'buildup', 'pyramid', 'waves'] as const) {
+    it(`${mode}: the minimum is the first target, the maximum the peak target`, () => {
+      const s = { ...DEFAULT_SETTINGS, mode, minPower: 60, maxPower: 120, minSpm: 22, maxSpm: 30 };
+      const w = generateWorkout(s);
+      expect(w.segments[0].power.target).toBe(60);
+      expect(w.segments[0].spm.target).toBe(22);
+      expect(Math.max(...w.segments.map((g) => g.power.target))).toBe(120);
+      expect(Math.max(...w.segments.map((g) => g.spm.target))).toBe(30);
+      // the band is the tolerance around the target – it may reach past the configured range
+      expect(w.segments[0].power.lo).toBeLessThan(60);
+      expect(Math.max(...w.segments.map((g) => g.power.hi))).toBeGreaterThan(120);
+      for (const g of w.segments) {
+        expect(g.pace.target).toBeCloseTo(paceFromPower(g.power.target), 0);
+        expect(g.power.target).toBeGreaterThanOrEqual(60);
+        expect(g.power.target).toBeLessThanOrEqual(120);
+      }
+    });
+  }
+
+  it('keeps splits entered in the settings exact at the start and the peak', () => {
+    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'pyramid', minPower: powerFromPace(170), maxPower: powerFromPace(140) });
+    expect(formatPace(w.segments[0].pace.target)).toBe('2:50');
+    expect(formatPace(Math.min(...w.segments.map((g) => g.pace.target)))).toBe('2:20');
+  });
+
   it('derives consistent power, stroke rate and pace bands', () => {
     const b = bandsFor(DEFAULT_SETTINGS, 1);
     expect(b.power.lo).toBeLessThan(110);
     expect(b.power.hi).toBeGreaterThan(110);
-    expect(b.spm).toEqual({ lo: 28, hi: 32 });
+    expect(b.spm).toEqual({ lo: 28, hi: 32, target: 30 });
     // faster split belongs to higher power
     expect(b.pace.lo).toBeCloseTo(paceFromPower(b.power.hi));
     expect(b.pace.lo).toBeLessThan(b.pace.hi);

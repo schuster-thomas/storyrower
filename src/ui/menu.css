@@ -107,6 +107,10 @@ body:has(.menu) { background: #e6f0f8; }
 .num input::-webkit-outer-spin-button, .num input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .num small { color: var(--ink-2); font-size: 17px; font-weight: 600; flex: none; }
 .num.wide small { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
+/* split inputs: m:ss big, the watts it means small */
+.num.split small { font-size: 14px; white-space: nowrap; }
+.num input.bad { color: #b03030; }
+.field > span em { font-style: normal; font-weight: 600; font-size: 14px; color: var(--ink-2); margin-left: 6px; }
 
 /* workout preview */
 .pv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }

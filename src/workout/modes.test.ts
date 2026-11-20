@@ -32,7 +32,7 @@ describe('workout modes', () => {
     const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'steady', steadyPower: 100, steadySpm: 24 });
     for (const s of w.segments) {
       expect((s.power.lo + s.power.hi) / 2).toBe(100);
-      expect(s.spm).toEqual({ lo: 22, hi: 26 });
+      expect(s.spm).toEqual({ lo: 22, hi: 26, target: 24 });
     }
   });
 

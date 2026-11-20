@@ -1,7 +1,7 @@
 import { connection } from '../app/connection';
 import { AudioEngine, loadAudioSettings, saveAudioSettings } from '../audio/AudioEngine';
 import { loadGraphics, saveGraphics, type QualitySetting } from './scene/quality';
-import { formatDuration } from '../rower/ftms';
+import { formatDuration, formatPace, paceFromPower, powerFromPace } from '../rower/ftms';
 import { scheduleBeats } from '../story/story';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { SimulatorSource } from '../rower/sources/simulator';
@@ -61,11 +61,34 @@ export function mountPlay(root: HTMLElement, level: Level): () => void {
   return () => { cleanupGame?.(); cleanupSetup?.(); audio?.dispose(); audio = null; };
 }
 
+type SplitKey = 'minPower' | 'maxPower' | 'steadyPower';
+
+/**
+ * A 500 m split as typed: "2:45", "2.45", "2,45" or just "245" (numeric keypads have no colon);
+ * "2" alone means 2:00. Only 1:00–5:00 counts, anything else is null (still typing).
+ */
+export function parseSplit(text: string): number | null {
+  const t = text.trim();
+  let sec: number;
+  const m = /^(\d{1,2})\s*[:.,]\s*(\d{1,2})$/.exec(t);
+  if (m) {
+    if (Number(m[2]) > 59) return null;
+    sec = Number(m[1]) * 60 + Number(m[2].padEnd(2, '0'));
+  } else if (/^\d{1,4}$/.test(t)) {
+    sec = t.length <= 2 ? Number(t) * 60 : Number(t.slice(0, -2)) * 60 + Number(t.slice(-2));
+    if (t.length > 2 && Number(t.slice(-2)) > 59) return null;
+  } else return null;
+  return sec >= 60 && sec <= 300 ? sec : null;
+}
+
 function mountSetup(root: HTMLElement, level: Level, initialJump: string | null, onStart: (o: { autopilot: boolean; jump: string | null }) => void): () => void {
   let settings = loadSettings();
   settings.mode = pickMode(level, settings.mode);
   const num = (k: keyof WorkoutSettings, unit: string, attrs: string, wide = false) =>
     `<label class="num${wide ? ' wide' : ''}"><input type="number" inputmode="numeric" data-k="${k}" ${attrs}><small>${unit}</small></label>`;
+  // a 500 m split (m:ss); the workout keeps working in watts, shown small next to it
+  const split = (k: SplitKey, wide = false) =>
+    `<label class="num split${wide ? ' wide' : ''}"><input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" data-split="${k}" aria-label="Split per 500 m"><small data-watts="${k}"></small></label>`;
 
   root.innerHTML = `
     <div class="menu">
@@ -93,9 +116,9 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
             <div class="fields">
               <div class="field"><span>Duration</span>${num('durationMin', 'min', 'min="10" max="90" step="5"', true)}</div>
               <div class="field no-steady" title="No target changes faster than this – higher values mean fewer, longer sections"><span>Shortest section</span>${num('minSegmentSec', 's', 'min="10" max="600" step="10"', true)}</div>
-              <div class="field no-steady"><span>Power range</span><div class="pair">${num('minPower', 'W', 'min="20" max="500" step="5"')}to${num('maxPower', 'W', 'min="20" max="600" step="5"')}</div></div>
-              <div class="field no-steady"><span>Stroke rate</span><div class="pair">${num('minSpm', 'spm', 'min="12" max="40"')}to${num('maxSpm', 'spm', 'min="12" max="45"')}</div></div>
-              <div class="field only-steady"><span>Power</span>${num('steadyPower', 'W', 'min="20" max="600" step="5"', true)}</div>
+              <div class="field no-steady" title="Target split at the start and at the peak – e.g. 2:50 → 2:20"><span>Split /500 m <em>start → peak</em></span><div class="pair">${split('minPower')}→${split('maxPower')}</div></div>
+              <div class="field no-steady" title="Target stroke rate at the start and at the peak"><span>Stroke rate <em>start → peak</em></span><div class="pair">${num('minSpm', 'spm', 'min="12" max="40"')}→${num('maxSpm', 'spm', 'min="12" max="45"')}</div></div>
+              <div class="field only-steady"><span>Split /500 m</span>${split('steadyPower', true)}</div>
               <div class="field only-steady"><span>Stroke rate</span>${num('steadySpm', 'spm', 'min="12" max="45"', true)}</div>
             </div>
           </section>
@@ -209,6 +232,26 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     };
   });
 
+  // splits: typed as m:ss, stored as the watts the workout is built from
+  root.querySelectorAll<HTMLInputElement>('input[data-split]').forEach((input) => {
+    const k = input.dataset.split as SplitKey;
+    const watts = root.querySelector<HTMLElement>(`[data-watts="${k}"]`)!;
+    const show = () => { watts.textContent = `${Math.round(settings[k])} W`; };
+    const format = () => { input.value = formatPace(paceFromPower(settings[k])); };
+    format(); show();
+    input.oninput = () => {
+      const sec = parseSplit(input.value);
+      input.classList.toggle('bad', sec == null && input.value.trim() !== '');
+      if (sec == null) return;
+      settings = { ...settings, [k]: powerFromPace(sec) };
+      saveSettings(settings);
+      show();
+      renderPreview();
+    };
+    input.onblur = () => { input.classList.remove('bad'); format(); };
+    input.onfocus = () => input.select();
+  });
+
   let jump = initialJump;
   const jumpSel = $<HTMLSelectElement>('jump');
   jumpSel.onchange = () => { jump = jumpSel.value || null; renderPreview(); };
@@ -238,7 +281,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     const plotW = Math.max(200, pv.clientWidth - 8);
     const rowEnd = ROWS.map(() => -Infinity);
     pv.innerHTML = `<div class="pv-bars">${w.segments.map((s) =>
-      `<i style="flex:${s.end - s.start} 1 0;height:${(height(s) * 100).toFixed(1)}%;background:${PHASE_COLORS[s.phase]}" title="${played.phases[s.phase].name} · ${s.power.lo}–${s.power.hi} W · ${s.spm.lo}–${s.spm.hi} spm · ${formatDuration(s.end - s.start)}"></i>`).join('')}</div>` +
+      `<i style="flex:${s.end - s.start} 1 0;height:${(height(s) * 100).toFixed(1)}%;background:${PHASE_COLORS[s.phase]}" title="${played.phases[s.phase].name} · ${formatPace(s.pace.target)} /500 m (${s.power.target} W) · ${s.spm.target} spm · ${formatDuration(s.end - s.start)}"></i>`).join('')}</div>` +
       beats.map((b) => {
         const seg = segmentAt(w, b.t);
         const x = (b.t / w.duration) * plotW;
