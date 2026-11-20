@@ -31,6 +31,16 @@ npm run build    # typecheck + build to dist/
 
 Every push to `main` is tested, built and published to GitHub Pages by GitHub Actions.
 
+### Testing on the tablet before pushing
+Web Bluetooth only works on `https://` or `localhost`, so the dev server's LAN address needs one of these:
+
+- **Chrome flag (no cable):** allow the dev server through the Windows firewall (*private* networks), find the PC's IPv4 address with `ipconfig` (e.g. `192.168.178.20`), then on the tablet open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`, add `http://192.168.178.20:5173`, set it to *Enabled*, restart Chrome and open that address.
+- **USB port forwarding** (developer options + USB debugging on the tablet): connect via USB, on the PC open `chrome://inspect/#devices` → *Port forwarding* → `5173` → `localhost:5173`, then open `http://localhost:5173` on the tablet.
+
+Before connecting, close e-Connected, Kinomap etc. on all devices – the rower usually accepts only one connection.
+
+**Device & diagnostics** (`#/diagnose`) is the tool for looking at a rower: live values, raw packets, Bluetooth trace, FTMS control point, and a service explorer that can read or subscribe to any characteristic (for consoles that don't speak standard FTMS).
+
 On the setup screen, **Start at** (or the dots on the workout preview) jumps straight to a story moment – the puffins, the eruption, the tidal wave … – and "Row again" starts there again. Development shortcuts for the game: `#/play?speed=30` runs the workout clock 30× faster, `#/play?at=990` starts at second 990 (the finale of a 20-minute workout), `#/play?beat=eruption` starts 5 s before a story beat (`calm`, `birds`, `tremor`, `calving`, `ash`, `eruption`, `wave`, `escape`, `sunset`). The "Simulator" source rows by itself and follows the targets (the diagnostics page still has manual power control for testing).
 
 ### Recording a session

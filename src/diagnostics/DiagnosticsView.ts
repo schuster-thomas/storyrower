@@ -309,8 +309,29 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     for (const s of src.services) {
       const el = document.createElement('div');
       el.className = 'svc';
-      el.innerHTML = `<b>${s.name}</b><br><code style="font-size:11px;color:var(--muted)">${s.uuid}</code>` +
-        s.characteristics.map((c) => `<div style="padding-left:12px"><code>${c.name}</code>${c.properties.map((p) => `<span class="tag">${p}</span>`).join('')}</div>`).join('');
+      el.innerHTML = `<b>${s.name}</b><br><code style="font-size:11px;color:var(--muted)">${s.uuid}</code>`;
+      for (const c of s.characteristics) {
+        // Explorer: read or subscribe to any characteristic – values show up in the log and the recording
+        const row = document.createElement('div');
+        row.className = 'chr';
+        row.innerHTML = `<code>${c.name}</code>${c.properties.map((p) => `<span class="tag">${p}</span>`).join('')}`;
+        if (c.properties.includes('read')) {
+          const b = document.createElement('button');
+          b.textContent = 'read';
+          b.title = 'Read the value once (shown in the log and under Device)';
+          b.onclick = async () => { b.disabled = true; await src.read(c); b.disabled = false; };
+          row.appendChild(b);
+        }
+        if (c.properties.includes('notify') || c.properties.includes('indicate')) {
+          const b = document.createElement('button');
+          const sync = () => { b.textContent = c.subscribed ? 'subscribed' : 'subscribe'; b.disabled = c.subscribed; };
+          b.title = 'Receive every new value (shown in the log, included in the recording)';
+          b.onclick = async () => { b.disabled = true; await src.subscribe(c); sync(); };
+          sync();
+          row.appendChild(b);
+        }
+        el.appendChild(row);
+      }
       box.appendChild(el);
     }
   }

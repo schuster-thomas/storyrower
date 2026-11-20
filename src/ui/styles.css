@@ -70,6 +70,8 @@ pre.kv { margin: 0; font: 13px/1.45 ui-monospace, Consolas, monospace; white-spa
 .svc { margin: 8px 0; padding: 8px; background: var(--panel-2); border-radius: 8px; font-size: 14px; }
 .svc code { color: #9fd8ff; }
 .tag { font-size: 11px; padding: 2px 6px; border-radius: 6px; background: var(--line); color: var(--muted); margin-left: 4px; }
+.svc .chr { padding-left: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; margin-top: 2px; }
+.svc .chr button { font-size: 11px; padding: 2px 8px; margin-left: 6px; }
 
 /* Startseite */
 .hero { max-width: 760px; margin: 8vh auto 0; padding: 0 16px; display: grid; gap: 20px; }

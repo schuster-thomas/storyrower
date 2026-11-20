@@ -17,7 +17,6 @@ function home(root: HTMLElement) {
         <a class="card" href="#/play"><b>🌋 Iceland Volcano Run</b><span class="muted">Greybox preview – story, graphics and sound follow</span></a>
         <a class="card" href="#/diagnose"><b>🔌 Device &amp; diagnostics</b><span class="muted">Connect, live values, recording, simulator</span></a>
       </div>
-      <p class="muted">Original PoC test page: <a href="poc/ble/">poc/ble</a></p>
     </div>`;
   return () => {};
 }

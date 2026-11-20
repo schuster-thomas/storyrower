@@ -2,7 +2,7 @@ import { Emitter } from '../emitter';
 import { OPTIONAL_SERVICES, UUID, nameOf, normUuid, toHex } from '../ftms';
 import type { PacketSource, PacketSourceEvents, RawPacket } from '../types';
 
-export interface CharacteristicDescription { uuid: string; name: string; properties: string[] }
+export interface CharacteristicDescription { uuid: string; name: string; properties: string[]; subscribed: boolean }
 export interface ServiceDescription { uuid: string; name: string; characteristics: CharacteristicDescription[] }
 
 /** Characteristics that are subscribed automatically. */
@@ -34,6 +34,8 @@ export class BluetoothSource implements PacketSource {
   private t0: number | null = null;
   private manualStop = false;
   services: ServiceDescription[] = [];
+  /** The live characteristic behind each entry in `services` (for the explorer on the diagnostics page). */
+  private chars = new Map<CharacteristicDescription, BluetoothRemoteGATTCharacteristic>();
   /**
    * Low-level trace for the diagnostics page: every step of the connection and every raw
    * notification as the browser delivers it (which object fired, whether the value object is
@@ -119,6 +121,18 @@ export class BluetoothSource implements PacketSource {
     try { await ch.startNotifications(); this.tr('re-subscribe: started'); } catch (e) { this.tr(`re-subscribe: start failed: ${(e as Error).message}`); }
   }
 
+  /** Explorer: read any characteristic once. The value arrives as a 'read' packet (log, device info, recording). */
+  async read(c: CharacteristicDescription) {
+    const ch = this.chars.get(c);
+    if (ch) await this.readChar(ch, c.uuid);
+  }
+
+  /** Explorer: subscribe to any characteristic. Its values arrive as 'notify' packets (log, recording). */
+  async subscribe(c: CharacteristicDescription) {
+    const ch = this.chars.get(c);
+    if (ch && !c.subscribed) await this.subscribeChar(ch, c);
+  }
+
   async sendControl(bytes: number[]) {
     if (!this.controlPoint) throw new Error('Device has no FTMS Control Point');
     const data = new Uint8Array(bytes);
@@ -142,6 +156,7 @@ export class BluetoothSource implements PacketSource {
       this.log('No FTMS service found – the device probably uses a proprietary protocol.', 'error');
     }
     this.services = [];
+    this.chars.clear();
     for (const svc of services) {
       const svcUuid = normUuid(svc.uuid);
       const desc: ServiceDescription = { uuid: svcUuid, name: nameOf(svcUuid), characteristics: [] };
@@ -151,47 +166,56 @@ export class BluetoothSource implements PacketSource {
       for (const ch of chars) {
         const p = ch.properties;
         const chUuid = normUuid(ch.uuid);
-        desc.characteristics.push({
-          uuid: chUuid, name: nameOf(chUuid),
+        const c: CharacteristicDescription = {
+          uuid: chUuid, name: nameOf(chUuid), subscribed: false,
           properties: Object.entries({ read: p.read, write: p.write, writeNR: p.writeWithoutResponse, notify: p.notify, indicate: p.indicate })
             .filter(([, v]) => v).map(([k]) => k),
-        });
-        this.tr(`  char ${ch.uuid} (${nameOf(chUuid)}) in ${svc.uuid}: ${desc.characteristics[desc.characteristics.length - 1].properties.join(' ')}`);
+        };
+        desc.characteristics.push(c);
+        this.chars.set(c, ch);
+        this.tr(`  char ${ch.uuid} (${nameOf(chUuid)}) in ${svc.uuid}: ${c.properties.join(' ')}`);
         if (chUuid === UUID.CONTROL_POINT) this.controlPoint = ch;
-        if (p.read && (AUTO_READ_SERVICES.includes(svcUuid) || chUuid === UUID.FEATURE)) {
-          try { const v = await ch.readValue(); this.tr(`  read ${nameOf(chUuid)}: [${hexOf(v)}]`); this.emitPacket(chUuid, v, 'read'); }
-          catch (e) { this.log(`Reading ${nameOf(chUuid)} failed: ${(e as Error).message}`, 'warn'); this.tr(`  read ${nameOf(chUuid)} failed: ${(e as Error).message}`); }
-        }
+        if (p.read && (AUTO_READ_SERVICES.includes(svcUuid) || chUuid === UUID.FEATURE)) await this.readChar(ch, chUuid);
         const wanted = debug.onlyRowerData ? [UUID.ROWER_DATA] : AUTO_SUBSCRIBE;
-        if ((p.notify || p.indicate) && wanted.includes(chUuid)) {
-          // read the value from the event's own characteristic: Bluefy (iOS) only updates that one –
-          // the object we hold keeps its first value, so every packet looked the same
-          let count = 0, lastView: DataView | null = null, lastT = 0;
-          const onValue = (ev: Event) => {
-            const target = ev.target as BluetoothRemoteGATTCharacteristic | null;
-            const v = target?.value ?? ch.value;
-            const t = this.now();
-            this.tr(`notify ${nameOf(chUuid)} #${++count} +${Math.round(t - lastT)}ms · target ${target === ch ? 'ours' : target ? 'other object' : 'none'}` +
-              ` · value object ${v === lastView ? 'SAME as before' : 'new'} · len ${v?.byteLength ?? '–'} off ${v?.byteOffset ?? '–'} buf ${v?.buffer.byteLength ?? '–'}` +
-              ` · target [${hexOf(target?.value)}]${target !== ch ? ` · ours [${hexOf(ch.value)}]` : ''}`);
-            lastView = v ?? null;
-            lastT = t;
-            if (v) this.emitPacket(chUuid, v, 'notify');
-          };
-          ch.addEventListener('characteristicvaluechanged', onValue);
-          try {
-            const returned = await ch.startNotifications();
-            this.log(`subscribed: ${nameOf(chUuid)}`);
-            this.tr(`  subscribed ${nameOf(chUuid)} · startNotifications() returned ${returned === ch ? 'the same object' : 'ANOTHER object'}`);
-            // some browsers fire the events on the object startNotifications() returned – listen there too
-            if (returned && returned !== ch) returned.addEventListener('characteristicvaluechanged', onValue);
-            if (chUuid === UUID.ROWER_DATA) this.rowerChars = [ch, ...(returned && returned !== ch ? [returned] : [])];
-          } catch (e) {
-            this.log(`Subscribing to ${nameOf(chUuid)} failed: ${(e as Error).message}`, 'warn');
-            this.tr(`  subscribing to ${nameOf(chUuid)} failed: ${(e as Error).name}: ${(e as Error).message}`);
-          }
-        }
+        if ((p.notify || p.indicate) && wanted.includes(chUuid)) await this.subscribeChar(ch, c);
       }
+    }
+  }
+
+  private async readChar(ch: BluetoothRemoteGATTCharacteristic, chUuid: string) {
+    try { const v = await ch.readValue(); this.tr(`  read ${nameOf(chUuid)}: [${hexOf(v)}]`); this.emitPacket(chUuid, v, 'read'); }
+    catch (e) { this.log(`Reading ${nameOf(chUuid)} failed: ${(e as Error).message}`, 'warn'); this.tr(`  read ${nameOf(chUuid)} failed: ${(e as Error).message}`); }
+  }
+
+  private async subscribeChar(ch: BluetoothRemoteGATTCharacteristic, c: CharacteristicDescription) {
+    const chUuid = c.uuid;
+    // read the value from the event's own characteristic: Bluefy (iOS) only updates that one –
+    // the object we hold keeps its first value, so every packet looked the same
+    let count = 0, lastView: DataView | null = null, lastT = 0;
+    const onValue = (ev: Event) => {
+      const target = ev.target as BluetoothRemoteGATTCharacteristic | null;
+      const v = target?.value ?? ch.value;
+      const t = this.now();
+      this.tr(`notify ${nameOf(chUuid)} #${++count} +${Math.round(t - lastT)}ms · target ${target === ch ? 'ours' : target ? 'other object' : 'none'}` +
+        ` · value object ${v === lastView ? 'SAME as before' : 'new'} · len ${v?.byteLength ?? '–'} off ${v?.byteOffset ?? '–'} buf ${v?.buffer.byteLength ?? '–'}` +
+        ` · target [${hexOf(target?.value)}]${target !== ch ? ` · ours [${hexOf(ch.value)}]` : ''}`);
+      lastView = v ?? null;
+      lastT = t;
+      if (v) this.emitPacket(chUuid, v, 'notify');
+    };
+    ch.addEventListener('characteristicvaluechanged', onValue);
+    try {
+      const returned = await ch.startNotifications();
+      c.subscribed = true;
+      this.log(`subscribed: ${nameOf(chUuid)}`);
+      this.tr(`  subscribed ${nameOf(chUuid)} · startNotifications() returned ${returned === ch ? 'the same object' : 'ANOTHER object'}`);
+      // some browsers fire the events on the object startNotifications() returned – listen there too
+      if (returned && returned !== ch) returned.addEventListener('characteristicvaluechanged', onValue);
+      if (chUuid === UUID.ROWER_DATA) this.rowerChars = [ch, ...(returned && returned !== ch ? [returned] : [])];
+    } catch (e) {
+      ch.removeEventListener('characteristicvaluechanged', onValue);
+      this.log(`Subscribing to ${nameOf(chUuid)} failed: ${(e as Error).message}`, 'warn');
+      this.tr(`  subscribing to ${nameOf(chUuid)} failed: ${(e as Error).name}: ${(e as Error).message}`);
     }
   }
 }
