@@ -110,7 +110,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
           <h2>Your rower</h2>
           <div class="notice-light" data-id="noBt" hidden>No Web Bluetooth in this browser – use Chrome or Edge, or try the simulator.</div>
           <div class="rower">
-            <b data-id="rowerHead">Ready to connect</b><p data-id="rowerText">Pair your rowing machine to use live data in the adventure.</p>
+            <p data-id="rowerText">Pair your rower – close other rowing apps first.</p>
           </div>
           <div class="stack">
             <button class="btn-big navy" data-id="btBtn">${ICON_ROWER}<span>Connect rower</span></button>
@@ -271,10 +271,11 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     $<HTMLButtonElement>('startBtn').disabled = !connected;
     $('startHint').textContent = !connected ? 'Connect a rower or use the simulator.'
       : sim ? 'The simulator rows by itself and follows the targets.' : 'Ready – the workout starts with your first stroke.';
-    $('rowerHead').textContent = !s ? 'Ready to connect' : connected ? (sim ? 'Simulator running' : 'Rower connected') : s.state === 'connecting' ? 'Connecting…' : 'Not connected';
-    $('rowerText').textContent = !s ? 'Pair your rowing machine to use live data in the adventure. Close other rowing apps first.'
-      : sim ? 'A simulated rower that follows the targets on its own.'
-      : connected ? `${s.source.info.label} – live data drives the adventure.` : 'Turn on the rower and try again.';
+    const rowerText = $('rowerText');
+    rowerText.textContent = !s ? 'Pair your rower – close other rowing apps first.'
+      : sim ? 'Simulator running – it follows the targets.'
+      : connected ? `${s.source.info.label} connected.` : s.state === 'connecting' ? 'Connecting…' : 'Not connected – turn on the rower and retry.';
+    rowerText.title = rowerText.textContent;
     const bt = $<HTMLButtonElement>('btBtn');
     bt.classList.toggle('ok', connected && !sim);
     bt.querySelector('span')!.textContent = connected && !sim ? 'Rower connected' : 'Connect rower';

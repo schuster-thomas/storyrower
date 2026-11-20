@@ -129,8 +129,7 @@ body:has(.menu) { background: #e6f0f8; }
 
 /* rower panel */
 .rower { margin: -4px 0 12px; }
-.rower b { display: block; font-size: 18px; font-weight: 900; }
-.rower p { margin: 2px 0 0; color: var(--ink-2); font-size: 15px; }
+.rower p { margin: 0; color: var(--ink-2); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stack { display: grid; gap: 12px; }
 .btn-big { display: flex; align-items: center; justify-content: center; gap: 14px; position: relative; width: 100%; min-height: 54px !important; border-radius: 12px; font-size: 21px; font-weight: 800; cursor: pointer; padding: 8px 56px; }
 .btn-big svg { position: absolute; left: 22px; width: 34px; height: 30px; }
