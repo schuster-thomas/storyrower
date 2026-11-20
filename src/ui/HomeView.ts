@@ -5,6 +5,8 @@ import { LOGO } from './icons';
 import { bindFullscreenButton, FS_BUTTON } from './fullscreen';
 import icelandCard from '../assets/ui/iceland-card.webp';
 import rowerCard from '../assets/ui/rower-card.webp';
+import historyCard from '../assets/ui/history-card.svg';
+import { bindDriveButton, DRIVE_BUTTON } from './driveButton';
 
 /** Tile art per level id. */
 const LEVEL_ART: Record<string, string> = { 'iceland-volcano-run': icelandCard };
@@ -22,6 +24,7 @@ export function mountHome(root: HTMLElement): () => void {
         <a href="#/" class="menu-logo">${LOGO}</a>
         <div class="menu-bar-right">
           <button class="btn-navy" data-id="connect">Connect rower</button>
+          ${DRIVE_BUTTON}
           ${FS_BUTTON}
         </div>
       </header>
@@ -29,12 +32,14 @@ export function mountHome(root: HTMLElement): () => void {
         <h1 class="menu-title">Choose your adventure</h1>
         <div class="tile-grid">
           ${LEVELS.map((l) => tile(`#/play/${l.id}`, LEVEL_ART[l.id] ?? icelandCard, l.title, l.tagline)).join('')}
+          ${tile('#/history', historyCard, 'Training history', 'Every workout you rowed – results, charts and settings to row it again.')}
           ${tile('#/diagnose', rowerCard, 'Devices &amp; Diagnostics', 'Connect your rower, check live data or try the simulator.')}
         </div>
       </main>
     </div>`;
 
   const offFs = bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
+  const offDrive = bindDriveButton(root.querySelector<HTMLElement>('.drive-wrap')!);
   const btn = root.querySelector<HTMLButtonElement>('[data-id="connect"]')!;
   const render = () => {
     const s = connection.session;
@@ -53,5 +58,5 @@ export function mountHome(root: HTMLElement): () => void {
   const follow = () => { offSession?.(); offSession = connection.session?.on((e) => { if (e.type === 'state') render(); }) ?? null; render(); };
   const offConn = connection.onChange(follow);
   follow();
-  return () => { offConn(); offSession?.(); offFs(); };
+  return () => { offConn(); offSession?.(); offFs(); offDrive(); };
 }

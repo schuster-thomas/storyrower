@@ -12,6 +12,7 @@ import { PowerChart } from './PowerChart';
 import { ICON_BACK, LOGO } from '../ui/icons';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { bindDisconnectButton, DISCONNECT_BUTTON } from '../ui/disconnect';
+import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
 import rowerCard from '../assets/ui/rower-card.webp';
 import tenMinUrl from '../../poc/ble/recordings/woodrower-2026-11-16-19-13-47-10min.json?url';
 import shortUrl from '../../poc/ble/recordings/woodrower-2026-11-16-18-56-39.json?url';
@@ -33,7 +34,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     <header class="set-bar">
       <a class="back-pill" href="#/">${ICON_BACK}Home</a>
       ${LOGO}
-      <div class="bar-right"><span class="pill" data-id="state">no source</span>${DISCONNECT_BUTTON}${FS_BUTTON}</div>
+      <div class="bar-right"><span class="pill" data-id="state">no source</span>${DISCONNECT_BUTTON}${DRIVE_BUTTON}${FS_BUTTON}</div>
     </header>
     <div class="set-banner">
       <img src="${rowerCard}" alt="">
@@ -147,6 +148,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>(`[data-id="${id}"]`)!;
   bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
   const offDisc = bindDisconnectButton(root.querySelector<HTMLButtonElement>('[data-disc]')!);
+  const offDrive = bindDriveButton(root.querySelector<HTMLElement>('.drive-wrap')!);
   const tile = (name: string) => root.querySelector<HTMLElement>(`[data-tile="${name}"]`)!;
   const setTile = (name: string, value: string | number | null | undefined, sub?: string) => {
     const t = tile(name);
@@ -494,6 +496,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     offConnection();
     offTrace();
     offDisc();
+    offDrive();
     clearInterval(rateTimer);
     chart.dispose();
     window.removeEventListener('keydown', onKey);

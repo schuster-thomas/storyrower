@@ -4,6 +4,9 @@ import type { AudioEngine } from '../audio/AudioEngine';
 import { environmentAt, scheduleBeats, storyStateAt } from '../story/story';
 import { formatDuration, formatPace } from '../rower/ftms';
 import { SimulatorSource } from '../rower/sources/simulator';
+import { BluetoothSource } from '../rower/sources/bluetooth';
+import { MIN_TRAINING_SECONDS, newTrainingId, type TrainingRecord } from '../history/history';
+import { SAVE_TEXT, saveTraining } from '../history/save';
 import type { RowerEvent, RowerSample } from '../rower/types';
 import { accuracy, isIn, isLow, newScore, stars, updateScore, type Zone } from '../workout/scoring';
 import { WorkoutTrace, summarize } from '../workout/trace';
@@ -87,6 +90,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   // ---------- state ----------
   let t = Math.max(0, Math.min(workout.duration - 1, opts.startAt ?? 0));
   let started = false;
+  let rowingStartedAt: Date | null = null;
   let finished = false;
   let sample: RowerSample | null = session.sample;
   let zones: { power: Zone; spm: Zone } | null = null;
@@ -137,7 +141,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   const off = session.on((e: RowerEvent) => {
     if (e.type === 'sample') {
       sample = e.sample;
-      if (!started && shown && e.sample.rowing) { started = true; session.logEvent('game-rowing-started', { gameT: t }); }
+      if (!started && shown && e.sample.rowing) { started = true; rowingStartedAt = new Date(); session.logEvent('game-rowing-started', { gameT: t }); }
       if (started && startDistance == null) { startDistance = e.sample.distance; startEnergy = e.sample.energy; }
       // rowing starts with a stroke, and that one counts
       if (started && startStrokes == null) startStrokes = Math.max(0, e.sample.strokeCount - 1);
@@ -191,6 +195,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
           ${tile(`${Math.round(accuracy(score) * 100)}%`, 'in target band')}
         </div>
         <div class="results-chart"></div>
+        <p class="results-saved" data-a="saved" hidden></p>
         <div class="row" style="justify-content:center">
           <button class="primary" data-a="again">Row again</button>
           <button data-a="back">Back to setup</button>
@@ -203,6 +208,21 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     overlay.querySelector<HTMLButtonElement>('[data-a="back"]')!.onclick = opts.onExit;
     overlay.querySelector<HTMLButtonElement>('[data-a="rec"]')!.onclick = () => downloadRecording(session!);
     unmountChart = mountResultsChart(overlay.querySelector<HTMLElement>('.results-chart')!, trace.points, (p) => level.phases[p].name);
+
+    // into the training history (and Google Drive): real rows only – no simulator, no replays
+    // (#/play?…&savesim=1 keeps simulator runs too, for testing), and nothing shorter than a minute
+    const real = session!.source.info.kind === 'bluetooth' || /[?&]savesim=1/.test(location.hash);
+    if (real && sum.time >= MIN_TRAINING_SECONDS) {
+      const savedEl = overlay.querySelector<HTMLElement>('[data-a="saved"]')!;
+      const now = new Date();
+      const record: TrainingRecord = {
+        v: 1, id: newTrainingId(rowingStartedAt ?? now), startedAt: (rowingStartedAt ?? now).toISOString(), finishedAt: now.toISOString(),
+        level: { id: level.id, title: level.title }, mode: workout.settings.mode, settings: workout.settings, plannedDuration: workout.duration,
+        early, device: session!.source instanceof BluetoothSource ? session!.source.deviceName : session!.source.info.label,
+        summary: sum, accuracy: +accuracy(score).toFixed(3), stars: st, points: trace.points,
+      };
+      void saveTraining(record).then((r) => { savedEl.textContent = SAVE_TEXT[r]; savedEl.hidden = false; savedEl.dataset.result = r; });
+    }
   }
 
   hud.onExit(() => (finished || t < 1 ? opts.onExit() : finish(true)));

@@ -218,6 +218,25 @@ body:has(.menu) { background: #e6f0f8; }
 /* icon only where the header gets tight (the centred logo needs the room) */
 @media (max-width: 1100px) { .menu .disc-btn { padding: 0; width: 44px; height: 44px; justify-content: center; } .menu .disc-btn span { display: none; } }
 
+/* Google Drive status in the menu headers */
+.drive-wrap { position: relative; flex: none; }
+.menu .drive-btn { position: relative; padding: 0; border: 0; cursor: pointer; color: var(--navy); }
+.menu .drive-btn svg { width: 28px; height: 28px; }
+.menu .drive-btn:hover { background: #d3e1ee; }
+.menu .drive-btn[data-state="unconfigured"], .menu .drive-btn[data-state="signed-out"] { color: #8193a9; }
+.menu .drive-btn[data-state="synced"] { color: var(--teal-ink); }
+.menu .drive-btn[data-state="needs-login"], .menu .drive-btn[data-state="error"] { color: #b7791f; }
+.menu .drive-btn[data-state="syncing"] svg, .menu .drive-btn[data-state="connecting"] svg { animation: drive-pulse 1.2s ease-in-out infinite; }
+@keyframes drive-pulse { 50% { opacity: .45; } }
+.drive-count { position: absolute; top: 2px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #e0a63a; color: #fff; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
+.drive-pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: min(320px, calc(100vw - 32px)); background: #fff; border: 1px solid var(--rule); border-radius: 16px; box-shadow: 0 12px 32px rgba(19, 36, 75, .18); padding: 14px 16px 16px; text-align: left; color: var(--ink); }
+.drive-pop h3 { margin: 0 0 6px; font-size: 18px; font-weight: 900; }
+.drive-pop p { margin: 0 0 10px; font-size: 15px; color: var(--ink-2); line-height: 1.4; }
+.drive-pop .drive-meta { font-size: 14px; }
+.drive-pop .drive-err { color: #b03030; font-size: 14px; }
+.drive-pop .btn-navy { width: 100%; }
+.drive-pop .drive-link { display: block; margin: 8px auto 0; background: none; border: 0; color: var(--ink-2); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+
 /* fullscreen toggle in the menu headers */
 .bar-right { justify-self: end; display: flex; align-items: center; gap: 10px; min-width: 0; }
 .menu .fs-btn { padding: 0; border: 0; min-height: 48px; cursor: pointer; }
@@ -225,3 +244,56 @@ body:has(.menu) { background: #e6f0f8; }
 .menu .fs-btn:hover:not(:disabled) { background: #d3e1ee; }
 .diag .fs-btn { color: var(--navy); }
 @media (max-width: 640px) { .menu .fs-btn { width: 44px; height: 44px; min-height: 44px; } }
+
+/* ---------- Training history ---------- */
+.hist-page { max-width: 1100px; margin: 0 auto; }
+.hist .set-banner img { width: 60%; }
+.hist-list { display: grid; gap: 10px; }
+.hist-item { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto auto 20px; align-items: center; gap: 16px; padding: 14px 18px; background: var(--card); border: 1px solid var(--rule); border-radius: 16px; box-shadow: var(--shadow); color: var(--ink); text-decoration: none; transition: transform .15s, box-shadow .15s; }
+.hist-item:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(19, 36, 75, .08), 0 10px 24px rgba(19, 36, 75, .12); }
+.hist-item:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.hi-date b, .hi-main b { display: block; font-weight: 900; font-size: 17px; }
+.hi-date span, .hi-main span { color: var(--ink-2); font-size: 14px; }
+.hi-main { min-width: 0; }
+.hi-main b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hi-stats { display: flex; gap: 18px; }
+.hi-stats span { display: grid; text-align: right; }
+.hi-stats b { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.hi-stats small { color: var(--ink-2); font-size: 12px; }
+.h-stars { color: #f0b429; font-size: 20px; letter-spacing: 2px; white-space: nowrap; }
+.h-stars i { font-style: normal; color: #cfdbe6; }
+.hi-cloud { color: var(--teal-ink); font-size: 18px; text-align: center; }
+@media (max-width: 760px) {
+  .hist-item { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 14px; }
+  .hi-date { grid-column: 1; }
+  .hist-item .h-stars { grid-column: 2; grid-row: 1; justify-self: end; }
+  .hi-main { grid-column: 1 / -1; }
+  .hi-stats { grid-column: 1 / -1; justify-content: space-between; gap: 8px; }
+  .hi-stats span { text-align: left; }
+  .hi-cloud { display: none; }
+}
+.hist-empty { text-align: center; padding: 30px 16px; }
+.hist-empty h2 { margin-bottom: 8px; }
+.hist-empty p { max-width: 560px; margin: 0 auto 12px; color: var(--ink-2); font-size: 17px; }
+.hist-empty .btn-navy { display: inline-block; margin-top: 8px; text-decoration: none; }
+.hist-detail { display: grid; gap: 16px; }
+.hd-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hd-head h2 { margin: 0; }
+.hd-head p { margin: 2px 0 0; color: var(--ink-2); }
+.hd-head .h-stars { font-size: 30px; }
+.hd-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 10px; text-align: center; }
+.hd-results > div { background: var(--card-2); border: 1px solid var(--rule); border-radius: 12px; padding: 10px 6px; }
+.hd-results b { display: block; font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.hd-results small { color: var(--ink-2); }
+.hd-results em { display: block; font-style: normal; font-size: 12px; color: var(--mute); }
+.hd-sub { margin: 4px 0 0 !important; font-size: 22px !important; }
+.hd-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 22px; margin: 0; }
+.hd-settings div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.hd-settings dt { color: var(--ink-2); }
+.hd-settings dd { margin: 0; font-weight: 800; text-align: right; }
+.hd-settings small { display: block; font-weight: 600; color: var(--mute); font-size: 13px; }
+.hd-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.hd-actions .muted-line { margin: 0; }
+/* the results chart from the end screen, in the light menu colours */
+.hist .rc { --bg: #fff; --panel: #fff; --line: #d6e3ee; --text: #13244b; --muted: #607089; }
+.hist .rc-toggle { background: #eef4f9; color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }

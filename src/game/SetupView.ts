@@ -1,28 +1,22 @@
 import { connection } from '../app/connection';
+import { loadSettings, markSettingsChanged, saveSettings } from '../app/settings';
 import { AudioEngine, loadAudioSettings, saveAudioSettings } from '../audio/AudioEngine';
 import { loadGraphics, saveGraphics, type QualitySetting } from './scene/quality';
 import { formatDuration, formatPace, paceFromPower, powerFromPace } from '../rower/ftms';
 import { scheduleBeats } from '../story/story';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { SimulatorSource } from '../rower/sources/simulator';
-import { DEFAULT_SETTINGS, phaseSpans, segmentAt, type WorkoutMode, type WorkoutSettings } from '../workout/workout';
+import { phaseSpans, segmentAt, type WorkoutMode, type WorkoutSettings } from '../workout/workout';
 import { mountGame } from './GameView';
 import { RiverScene } from './scene/RiverScene';
 import { levelForMode, levelModes, levelWorkout, pickMode, type Level } from './levels/level';
 import { PHASE_COLORS } from './phaseColors';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { bindDisconnectButton, DISCONNECT_BUTTON } from '../ui/disconnect';
+import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
 import { BEAT_ICONS, ICON_ARROW, ICON_BACK, ICON_BT, ICON_CHECK, ICON_HEART, ICON_ROWER, LOGO, MODE_HINTS, MODE_ICONS, MODE_LABELS } from '../ui/icons';
 import icelandCard from '../assets/ui/iceland-card.webp';
 
-const STORAGE_KEY = 'storyrower.settings';
-
-function loadSettings(): WorkoutSettings {
-  try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') }; } catch { return { ...DEFAULT_SETTINGS }; }
-}
-function saveSettings(s: WorkoutSettings) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch { /* storage unavailable */ }
-}
 
 /** "#/play/<level>": workout settings, rower and heart-rate connection, then the game. */
 export function mountPlay(root: HTMLElement, level: Level): () => void {
@@ -95,7 +89,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
       <header class="set-bar">
         <a class="back-pill" href="#/">${ICON_BACK}Home</a>
         ${LOGO}
-        <div class="bar-right"><span class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></span>${DISCONNECT_BUTTON}${FS_BUTTON}</div>
+        <div class="bar-right"><span class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></span>${DISCONNECT_BUTTON}${DRIVE_BUTTON}${FS_BUTTON}</div>
       </header>
       <div class="set-banner">
         <img src="${icelandCard}" alt="">
@@ -172,6 +166,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
 
   const offFs = bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
   const offDisc = bindDisconnectButton(root.querySelector<HTMLButtonElement>('[data-disc]')!);
+  const offDrive = bindDriveButton(root.querySelector<HTMLElement>('.drive-wrap')!);
 
   // ---------- sound ----------
   const snd = loadAudioSettings();
@@ -181,7 +176,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
   music.value = String(Math.round(snd.music * 100));
   effects.value = String(Math.round(snd.effects * 100));
   muted.checked = snd.muted;
-  const saveSound = () => saveAudioSettings({ music: Number(music.value) / 100, effects: Number(effects.value) / 100, muted: muted.checked });
+  const saveSound = () => { saveAudioSettings({ music: Number(music.value) / 100, effects: Number(effects.value) / 100, muted: muted.checked }); markSettingsChanged(); };
   music.oninput = effects.oninput = muted.onchange = saveSound;
 
   // ---------- graphics ----------
@@ -190,7 +185,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
   const showFps = $a<HTMLInputElement>('showFps');
   qualitySel.value = gfx.quality;
   showFps.checked = gfx.showFps;
-  const saveGfx = () => saveGraphics({ quality: qualitySel.value as QualitySetting, showFps: showFps.checked });
+  const saveGfx = () => { saveGraphics({ quality: qualitySel.value as QualitySetting, showFps: showFps.checked }); markSettingsChanged(); };
   qualitySel.onchange = showFps.onchange = saveGfx;
 
   // ---------- mode ----------
@@ -349,5 +344,5 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     ? connection.connectHeartRate() : connection.disconnectHeartRate());
   $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource, jump });
 
-  return () => { offConn(); offSession?.(); ro.disconnect(); offFs(); offDisc(); };
+  return () => { offConn(); offSession?.(); ro.disconnect(); offFs(); offDisc(); offDrive(); };
 }
