@@ -4,7 +4,7 @@ import { paceFromPower } from '../rower/ftms';
  * How the targets move over the workout.
  * - story:   the full adventure curve (warm-up, build-up, intervals, peak, cool-down)
  * - steady:  the same targets from start to finish
- * - buildup: targets get harder step by step up to the peak at the end
+ * - buildup: targets get harder step by step up to the peak, then an easy cool-down
  * - pyramid: easy → hardest in the middle → easy
  * - waves:   up and down, several times
  */
@@ -56,7 +56,7 @@ export interface PhaseShare { phase: PhaseId; share: number }
 /** Used when a level gives no plan for a mode. */
 export const DEFAULT_PHASE_PLANS: Record<ShapedMode, PhaseShare[]> = {
   steady: [{ phase: 'idyll', share: 0.85 }, { phase: 'winddown', share: 0.15 }],
-  buildup: [{ phase: 'idyll', share: 0.25 }, { phase: 'omens', share: 0.25 }, { phase: 'escalation', share: 0.3 }, { phase: 'finale', share: 0.2 }],
+  buildup: [{ phase: 'idyll', share: 0.2 }, { phase: 'omens', share: 0.22 }, { phase: 'escalation', share: 0.28 }, { phase: 'finale', share: 0.15 }, { phase: 'winddown', share: 0.15 }],
   pyramid: [{ phase: 'idyll', share: 0.2 }, { phase: 'omens', share: 0.2 }, { phase: 'escalation', share: 0.08 }, { phase: 'finale', share: 0.12 }, { phase: 'winddown', share: 0.4 }],
   waves: [{ phase: 'idyll', share: 0.2 }, { phase: 'omens', share: 0.2 }, { phase: 'escalation', share: 0.45 }, { phase: 'winddown', share: 0.15 }],
 };
@@ -84,6 +84,8 @@ export interface Workout {
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const r10 = (x: number) => Math.round(x / 10) * 10;
+/** Intensity of the easy row-out at the end of a build-up. */
+const COOL_DOWN = 0.1;
 
 /** Target bands for a given intensity (0–1). */
 export function bandsFor(s: WorkoutSettings, intensity: number) {
@@ -202,6 +204,10 @@ function shapedCurve(settings: WorkoutSettings, mode: ShapedMode, total: number,
     n = 2 * waves * Math.max(1, Math.floor((n - 1) / (2 * waves))) + 1;
   }
 
+  // build-up: the last ~15 % of the steps are an easy cool-down after the peak
+  const coolSteps = mode === 'buildup' && n >= 3 ? Math.max(1, Math.round(n * 0.15)) : 0;
+  const climb = n - coolSteps;
+
   // step lengths in 10 s units, the remainder spread evenly so the total stays exact
   const units = total / 10;
   const base = Math.floor(units / n);
@@ -220,8 +226,8 @@ function shapedCurve(settings: WorkoutSettings, mode: ShapedMode, total: number,
   let prev = -1;
   for (let i = 0; i < n; i++) {
     const len = lens[i];
-    const u = n === 1 ? 0.5 : i / (n - 1);
-    const intensity = Math.round(shape(mode, u, waves) * 100) / 100;
+    const u = mode === 'buildup' ? (climb <= 1 ? 1 : i / (climb - 1)) : n === 1 ? 0.5 : i / (n - 1);
+    const intensity = i >= climb ? COOL_DOWN : Math.round(shape(mode, u, waves) * 100) / 100;
     const phase = phaseAt((t + len / 2) / total);
     const kind: Segment['kind'] = mode === 'steady' || i === 0 ? 'steady'
       : intensity >= 0.995 ? (mode === 'waves' ? 'hard' : 'peak')

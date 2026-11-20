@@ -63,12 +63,13 @@ export const ICELAND: Level = {
       env: { winddown: { lava: 0, smoke: 0 } },
     },
     buildup: {
-      summary: 'The volcano wakes slowly – the tidal wave hits at the very end.',
-      phases: [{ phase: 'idyll', share: 0.25 }, { phase: 'omens', share: 0.25 }, { phase: 'escalation', share: 0.3 }, { phase: 'finale', share: 0.2 }],
+      summary: 'The volcano wakes slowly – outrun the tidal wave at the peak, then row out easy.',
+      // winddown share = the cool-down after the peak (the last ~15 % of the steps)
+      phases: [{ phase: 'idyll', share: 0.2 }, { phase: 'omens', share: 0.22 }, { phase: 'escalation', share: 0.28 }, { phase: 'finale', share: 0.15 }, { phase: 'winddown', share: 0.15 }],
       beats: {
         calm: true, birds: true, tremor: true, calving: true, ash: true,
         eruption: { anchor: { at: 'phase-start', phase: 'escalation', offset: 0 } },
-        wave: true,
+        wave: true, escape: true, sunset: true,
       },
     },
     pyramid: {

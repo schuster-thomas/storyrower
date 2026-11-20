@@ -7,6 +7,8 @@ import { ReplaySource } from '../rower/sources/replay';
 import { SimulatorSource } from '../rower/sources/simulator';
 import type { RowerEvent, RowerSample } from '../rower/types';
 import { PowerChart } from './PowerChart';
+import { ICON_BACK, LOGO } from '../ui/icons';
+import rowerCard from '../assets/ui/rower-card.webp';
 import tenMinUrl from '../../poc/ble/recordings/woodrower-2026-11-16-19-13-47-10min.json?url';
 import shortUrl from '../../poc/ble/recordings/woodrower-2026-11-16-18-56-39.json?url';
 
@@ -23,10 +25,16 @@ const html = String.raw;
  */
 export function mountDiagnostics(root: HTMLElement): () => void {
   root.innerHTML = html`
-    <header class="topbar">
-      <h1><a href="#/">StoryRower ‹</a> Device &amp; diagnostics</h1>
+    <div class="menu diag">
+    <header class="set-bar">
+      <a class="back-pill" href="#/">${ICON_BACK}Home</a>
+      ${LOGO}
       <span class="pill" data-id="state">no source</span>
     </header>
+    <div class="set-banner">
+      <img src="${rowerCard}" alt="">
+      <div><h1>Devices &amp; Diagnostics</h1><p>Connect, live values, recording, simulator</p></div>
+    </div>
     <main class="page">
       <div class="notice" data-id="noBt" hidden>
         This browser doesn't support Web Bluetooth. Please use <b>Chrome</b> or Edge (Android, Windows, macOS).
@@ -129,7 +137,8 @@ export function mountDiagnostics(root: HTMLElement): () => void {
         </details>
         <div class="log" data-id="log"></div>
       </section>
-    </main>`;
+    </main>
+    </div>`;
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>(`[data-id="${id}"]`)!;
   const tile = (name: string) => root.querySelector<HTMLElement>(`[data-tile="${name}"]`)!;

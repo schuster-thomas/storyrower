@@ -12,7 +12,6 @@ import { levelForMode, levelModes, levelWorkout, pickMode, type Level } from './
 import { PHASE_COLORS } from './phaseColors';
 import { BEAT_ICONS, ICON_ARROW, ICON_BACK, ICON_BT, ICON_CHECK, ICON_HEART, ICON_ROWER, LOGO, MODE_HINTS, MODE_ICONS, MODE_LABELS } from '../ui/icons';
 import icelandCard from '../assets/ui/iceland-card.webp';
-import rowerSmall from '../assets/ui/rower-small.webp';
 
 const STORAGE_KEY = 'storyrower.settings';
 
@@ -69,7 +68,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
   root.innerHTML = `
     <div class="menu">
       <header class="set-bar">
-        <a class="back-pill" href="#/">${ICON_BACK}Adventures</a>
+        <a class="back-pill" href="#/">${ICON_BACK}Home</a>
         ${LOGO}
         <span class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></span>
       </header>
@@ -110,17 +109,20 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
           <h2>Your rower</h2>
           <div class="notice-light" data-id="noBt" hidden>No Web Bluetooth in this browser – use Chrome or Edge, or try the simulator.</div>
           <div class="rower">
-            <img src="${rowerSmall}" alt="">
-            <div><b data-id="rowerHead">Ready to connect</b><p data-id="rowerText">Pair your rowing machine to use live data in the adventure.</p></div>
+            <b data-id="rowerHead">Ready to connect</b><p data-id="rowerText">Pair your rowing machine to use live data in the adventure.</p>
           </div>
           <div class="stack">
             <button class="btn-big navy" data-id="btBtn">${ICON_ROWER}<span>Connect rower</span></button>
             <button class="btn-big navy" data-id="hrBtn">${ICON_HEART}<span>Connect heart-rate monitor</span></button>
-            <p class="hr-note" data-id="hrState">Optional. Fitbit: start a workout and enable "Heart rate on equipment". Chest straps work too.</p>
+            <p class="hr-note" data-id="hrState" title="Optional. Fitbit: start a workout and enable &quot;Heart rate on equipment&quot;. Chest straps work too.">Optional · Fitbit: turn on "Heart rate on equipment"</p>
             <button class="btn-big outline" data-id="simBtn" title="A simulated rower that follows the targets on its own"><span>Use simulator</span></button>
           </div>
           <hr class="rule">
-          <h2>Sound &amp; display</h2>
+          <div class="sd-head">
+            <h2>Sound &amp; display</h2>
+            <label class="check"><input type="checkbox" data-a="muted"> Mute</label>
+            <label class="check" title="Show the frame rate during the game"><input type="checkbox" data-a="showFps"> Frame rate</label>
+          </div>
           <div class="opt-row"><span>Music</span><input type="range" min="0" max="100" step="5" data-a="music" aria-label="Music volume"></div>
           <div class="opt-row"><span>Effects</span><input type="range" min="0" max="100" step="5" data-a="effects" aria-label="Effects volume"></div>
           <div class="opt-row"><span>Graphics</span>
@@ -131,16 +133,9 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
               <option value="low">Low</option>
             </select>
           </div>
-          <div class="opt-row"><span></span><div>
-            <label class="check"><input type="checkbox" data-a="muted"> Mute all sound</label>
-            <label class="check"><input type="checkbox" data-a="showFps"> Show frame rate</label>
-          </div></div>
           <hr class="rule">
-          <div class="start-at">
-            <h3>Start at</h3>
-            <select data-id="jump" aria-label="Start at"></select>
-            <p>Jump to a story moment.</p>
-          </div>
+          <div class="opt-row"><span>Start at</span><select data-id="jump" aria-label="Start at"></select></div>
+          <p class="opt-hint">Jump to a story moment.</p>
           <button class="btn-start" data-id="startBtn" disabled>Start rowing ${ICON_ARROW}</button>
           <p class="start-hint" data-id="startHint">Connect a rower or use the simulator.</p>
         </div>

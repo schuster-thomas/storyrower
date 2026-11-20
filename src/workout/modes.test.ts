@@ -36,13 +36,21 @@ describe('workout modes', () => {
     }
   });
 
-  it('build-up only ever gets harder and ends at the hardest target', () => {
-    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'buildup', durationMin: 20 });
-    const i = w.segments.map((s) => s.intensity);
-    for (let k = 1; k < i.length; k++) expect(i[k]).toBeGreaterThan(i[k - 1]);
-    expect(i[0]).toBe(0);
-    expect(i[i.length - 1]).toBe(1);
-  });
+  for (const durationMin of [10, 20, 45]) {
+    it(`build-up climbs to the peak, then cools down easy (${durationMin} min)`, () => {
+      const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'buildup', durationMin });
+      const i = w.segments.map((s) => s.intensity);
+      const top = i.indexOf(1);
+      expect(i[0]).toBe(0);
+      for (let k = 1; k <= top; k++) expect(i[k]).toBeGreaterThan(i[k - 1]);
+      const cool = w.segments.slice(top + 1);
+      expect(cool.length).toBeGreaterThan(0);
+      for (const s of cool) expect(s.intensity).toBeLessThan(0.2);
+      const coolTime = cool.reduce((a, s) => a + s.end - s.start, 0);
+      expect(coolTime / w.duration).toBeGreaterThan(0.08);
+      expect(coolTime / w.duration).toBeLessThan(0.25);
+    });
+  }
 
   it('pyramid peaks in the middle and starts and ends easy', () => {
     const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'pyramid', durationMin: 20 });
