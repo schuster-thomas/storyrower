@@ -39,7 +39,7 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .prog-node.current { border-color: var(--accent); box-shadow: 0 0 10px var(--accent); transform: scale(1.15); }
 .prog-node.finish { width: auto; padding: 0 6px; border-radius: 12px; margin-left: -12px; }
 .hud-right { display: flex; gap: 8px; align-items: center; }
-.hud-timer { padding: 10px 14px; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hud-timer { padding: 10px 14px; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .hud-btn { width: 46px; height: 46px; min-height: 46px; justify-content: center; border-radius: 50%; background: rgba(10, 22, 32, .62); color: #fff; border: 1px solid rgba(255, 255, 255, .25); font-weight: 700; font-size: 18px; }
 .hud-next { align-self: center; margin-top: 10px; padding: 6px 16px; font-size: 15px; }
 .hud-message { align-self: center; margin-top: 14vh; font-size: clamp(22px, 3.4vw, 38px); font-weight: 800; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, .6); opacity: 0; transition: opacity .3s; text-align: center; }
@@ -89,6 +89,9 @@ button.big { font-size: 18px; padding: 14px 22px; }
   .hud-progress { display: none; }
   .hud-timer { padding: 8px 10px; font-size: 16px; }
   .hud-btn { width: 44px; height: 44px; min-height: 44px; }
+  /* timer, frame rate and the buttons wrap instead of running off the right edge */
+  .hud-right { flex-wrap: wrap; justify-content: flex-end; max-width: 100%; margin-left: auto; }
+  .hud-fps { padding: 8px 10px; font-size: 12px; }
   /* "In band" as a compact chip under the top bar instead of a side column */
   .hud-side { order: 1; position: static; transform: none; align-self: flex-end; margin-top: 8px; grid-auto-flow: column; gap: 14px; padding: 6px 12px; min-width: 0; }
   .hud-side span { font-size: 18px; }
@@ -106,7 +109,9 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .tg-head { font-size: clamp(14px, 1.8vw, 20px); font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
 .tg-pace { font-size: clamp(44px, 8vw, 96px); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.05; }
 .tg-spm { font-size: clamp(30px, 5vw, 60px); font-weight: 800; font-variant-numeric: tabular-nums; color: #ffd166; line-height: 1.1; }
-.hud-target small { font-size: .35em; font-weight: 600; margin-left: 8px; color: #b9c9d6; }
+.hud-target small { font-size: .35em; font-weight: 600; margin-left: 8px; color: #b9c9d6; white-space: nowrap; }
+/* value and unit stay on one line (on a phone "/500 m" used to break before the m) */
+.tg-pace, .tg-spm { white-space: nowrap; }
 .game-diag pre { margin: 0 0 8px; font: inherit; white-space: pre; }
 .game-diag .row button { min-height: 40px; padding: 6px 12px; font-size: 14px; }
 .game-diag .muted { color: #b9c9d6; font-size: 12px; }
@@ -121,7 +126,7 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .sound-row label { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
 
 /* Frame-rate badge */
-.hud-fps { padding: 10px 12px; font: 600 14px/1 ui-monospace, Consolas, monospace; color: #7cf5a3; }
+.hud-fps { padding: 10px 12px; font: 600 14px/1 ui-monospace, Consolas, monospace; color: #7cf5a3; white-space: nowrap; }
 .hud-fps.meh { color: #ffd166; }
 .hud-fps.bad { color: #ff8a7a; }
 .sound-row select { min-height: 40px; padding: 6px 8px; }
