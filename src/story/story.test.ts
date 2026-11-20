@@ -69,6 +69,23 @@ describe('story engine', () => {
     expect(storyStateAt(beats, w, at('calving') + 1).calvingIn).toBe(-1);
   });
 
+  for (const durationMin of [10, 30, 60]) {
+    it(`ends happily: volcano asleep, air clear, wave gone (${durationMin} min)`, () => {
+      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin });
+      const beats = scheduleBeats(ICELAND, w);
+      const winddown = phaseSpans(w).find((p) => p.phase === 'winddown')!;
+      // right after the escape it is still smoky…
+      const escaped = environmentAt(ICELAND, w, winddown.start + 1);
+      expect(escaped.smoke).toBeGreaterThan(0.1);
+      // …from the middle of the wind-down on everything has settled
+      for (const t of [(winddown.start + winddown.end) / 2, w.duration - 1]) {
+        const env = environmentAt(ICELAND, w, t);
+        expect(env).toMatchObject({ lava: 0, smoke: 0, wave: 0 });
+        expect(storyStateAt(beats, w, t)).toMatchObject({ unrest: 0, ashfall: 0, lavaBombs: 0, cooling: 1 });
+      }
+    });
+  }
+
   it('blends the environment smoothly instead of jumping at phase borders', () => {
     const w = generateWorkout(DEFAULT_SETTINGS);
     const omens = phaseSpans(w).find((p) => p.phase === 'omens')!;

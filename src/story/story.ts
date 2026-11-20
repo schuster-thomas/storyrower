@@ -66,21 +66,34 @@ export interface StoryState {
   calvingIn: number;
 }
 
+/**
+ * The happy end: after the escape everything calms down over the first half of the wind-down
+ * (20 s – 2 min), so the last part of the workout is a clean, quiet fjord at sunset.
+ */
+export function settling(workout: Workout, t: number): number {
+  const span = phaseSpans(workout).find((p) => p.phase === 'winddown');
+  if (!span) return 0;
+  const len = Math.max(20, Math.min(120, (span.end - span.start) * 0.5));
+  return Math.max(0, Math.min(1, (t - span.start) / len));
+}
+
 export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number): StoryState {
   const when = (id: string) => beats.find((b) => b.id === id)?.t ?? Infinity;
   const winddown = phaseSpans(workout).find((p) => p.phase === 'winddown')?.start ?? workout.duration;
+  const cooling = settling(workout, t);
   const seg = workout.segments.find((s) => t < s.end) ?? workout.segments[workout.segments.length - 1];
   const ramp = (from: number, len: number) => Math.max(0, Math.min(1, (t - from) / len));
-  const fade = (to: number, len: number) => Math.max(0, Math.min(1, (to - t) / len));
   const erupted = t >= when('eruption') && t < winddown;
   return {
     // bombs follow the effort: heavier in hard sections and in the finale
     lavaBombs: erupted ? (seg.kind === 'easy' ? 0.35 : seg.kind === 'peak' ? 1 : 0.75) : 0,
-    ashfall: Math.min(ramp(when('ash'), 30), fade(winddown + 60, 60)) * (t >= when('ash') ? 1 : 0),
+    // the ash settles while the volcano calms down
+    ashfall: Math.min(ramp(when('ash'), 30), 1 - cooling) * (t >= when('ash') ? 1 : 0),
     birds: t < when('tremor') ? 1 : 0,
-    unrest: Number.isFinite(when('tremor')) ? ramp(when('tremor'), Math.max(1, Math.min(when('eruption'), winddown) - when('tremor'))) : 0,
+    // builds from the tremor up to the eruption, and dies away again with the cooling
+    unrest: Number.isFinite(when('tremor')) ? ramp(when('tremor'), Math.max(1, Math.min(when('eruption'), winddown) - when('tremor'))) * (1 - cooling) : 0,
     eruptionAge: t >= when('eruption') ? t - when('eruption') : -1,
-    cooling: ramp(winddown, 120),
+    cooling,
     calvingIn: Number.isFinite(when('calving')) && t < when('calving') ? when('calving') - t : -1,
   };
 }
@@ -121,5 +134,8 @@ export function environmentAt(level: Level, workout: Workout, t: number): Enviro
     const k = seg.kind === 'hard' ? 1.15 : 0.85;
     env = { ...env, swell: Math.min(1, env.swell * k), smoke: Math.min(1, env.smoke * k), lava: Math.min(1, env.lava * k) };
   }
+  // happy end: from the look right after the escape to the settled one
+  const settled = level.phases[cur.phase].settled;
+  if (cur.phase === 'winddown' && settled) env = lerpEnv(env, { ...env, ...settled }, smooth(settling(workout, t)));
   return env;
 }

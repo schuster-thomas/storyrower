@@ -26,6 +26,8 @@ export const ICELAND: Level = {
     winddown: {
       id: 'winddown', name: 'Safe Waters',
       env: { sky: 0xf3b27f, fog: 0xf6c9a0, fogNear: 160, fogFar: 900, sun: 0xffc48a, sunIntensity: 1.9, ground: 0x6c8f52, water: 0x3a7fa8, lava: 0.15, smoke: 0.25, wave: 0, swell: 0.15, sunHeight: 0.1 },
+      // happy end: the volcano falls asleep, the ash settles, the air clears and the fjord goes still
+      settled: { lava: 0, smoke: 0, wave: 0, swell: 0.06, sky: 0xf5bd88, fog: 0xf8d3ae, fogNear: 200, fogFar: 1000, sunIntensity: 2.1 },
     },
   },
   // Every story moment of the level, laid onto the training curve by the story engine (src/story/story.ts).
@@ -39,7 +41,7 @@ export const ICELAND: Level = {
     { id: 'eruption', name: 'Eruption', anchor: { at: 'first-section', kind: 'hard', offset: 0 }, effect: 'eruption', caption: 'ERUPTION! Row for your life!' },
     { id: 'wave', name: 'Tidal wave', anchor: { at: 'phase-start', phase: 'finale', offset: 0 }, effect: 'wave', caption: 'A tidal wave! Give it everything!' },
     { id: 'escape', name: 'Escape', anchor: { at: 'phase-start', phase: 'winddown', offset: 0 }, effect: 'escape', caption: 'You outran the wave. Safe waters ahead.' },
-    { id: 'sunset', name: 'Sunset', anchor: { at: 'phase-fraction', phase: 'winddown', fraction: 0.5 }, effect: 'sunset', caption: 'Ease off and let the boat glide into the sunset.' },
+    { id: 'sunset', name: 'Sunset', anchor: { at: 'phase-fraction', phase: 'winddown', fraction: 0.5 }, effect: 'sunset', caption: 'The volcano sleeps again, the air is clear. Glide into the sunset.' },
   ],
   /**
    * Which story elements each workout mode gets. `phases` places the scenery along the time

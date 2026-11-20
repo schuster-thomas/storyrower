@@ -23,7 +23,16 @@ export interface Environment {
   sunHeight: number;
 }
 
-export interface LevelPhase { id: PhaseId; name: string; env: Environment }
+export interface LevelPhase {
+  id: PhaseId;
+  name: string;
+  env: Environment;
+  /**
+   * Wind-down only: the look once the story has settled (volcano asleep, air clear). `env` is the
+   * look right after the escape; the world drifts to this over the first part of the phase.
+   */
+  settled?: Partial<Environment>;
+}
 
 /** A beat used in one mode: as the level defines it, or moved / reworded for that mode. */
 export type ModeBeat = true | { anchor?: Anchor; caption?: string };

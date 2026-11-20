@@ -406,7 +406,8 @@ export class Volcano {
     s.height = lerp(s.height, 70 + 50 * f.unrest + 140 * live + 60 * blast, k);
     s.size = lerp(s.size, 34 + 14 * f.unrest + 80 * live + 30 * blast, k);
     s.spread = lerp(s.spread, 30 + 240 * live, k);
-    s.dark = lerp(s.dark, Math.min(1, 0.45 * f.unrest + live * 0.95 + f.cooling * erupting * 0.4), k);
+    // while it cools the last ash still darkens the plume; once settled it is white steam again
+    s.dark = lerp(s.dark, Math.min(1, 0.45 * f.unrest + live * 0.95 + Math.sin(Math.PI * f.cooling) * erupting * 0.4), k);
     s.speed = lerp(s.speed, 0.045 + 0.02 * f.unrest + 0.05 * live + 0.12 * blast, k);
     s.glow = lerp(s.glow, live * (0.55 + 0.45 * clamp01(f.lava)) + 0.15 * f.unrest, k);
     s.power = lerp(s.power, live * (0.8 + 0.25 * clamp01(f.lava)) + blast * 0.7, 1 - Math.exp(-f.dt * 2));
