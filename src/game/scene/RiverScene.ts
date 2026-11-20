@@ -12,6 +12,7 @@ import { PaintedProps } from './PaintedProps';
 import { Puffins } from './Puffins';
 import { TidalWave } from './TidalWave';
 import { Calving } from './Calving';
+import { Gates, type GateInfo } from './Gates';
 import { Post } from './Post';
 import { FrameStats, PROFILES, type QualityLevel, type QualityProfile } from './quality';
 import { Sky } from './Sky';
@@ -93,6 +94,10 @@ export class RiverScene {
   private lavaMat = new THREE.MeshStandardMaterial({ color: 0x3a2a24, emissive: 0xff4a10, emissiveIntensity: 0, roughness: 1, flatShading: true, fog: false });
   private smoke: THREE.Mesh[] = [];
   private wave: TidalWave;
+  /** the gates at target changes and at the finish */
+  private gates = new Gates();
+  private gateInfo: GateInfo | null = null;
+  private gateMoving = false;
 
   private z = 0;              // boat position (moves towards -z)
   private speed = 0;          // current world speed (units/s)
@@ -152,6 +157,9 @@ export class RiverScene {
     this.calving = new Calving(this.props);
     this.calving.onSwell = () => { this.impulse = Math.max(this.impulse, 0.9); this.rock = 0.14; };
     this.scene.add(this.calving.group);
+    this.scene.add(this.gates.group);
+    // passing a gate: a short flash in its colour (the finish throws confetti on its own)
+    this.gates.onPass = (kind, color) => this.flash(color, kind === 'finish' ? 0.45 : 0.22);
     this.effects = new Effects(this.scene);
     this.effects.setParticleShare(this.q.particles);
     // Painted layers replace the greybox mountains once loaded
@@ -219,6 +227,12 @@ export class RiverScene {
     this.envTarget = { ...env };
     if (immediate) this.applyEnvironment(1);
   }
+
+  /**
+   * The next gate (target change or finish): when the boat should pass it, and whether the
+   * workout clock is running (a paused workout freezes the gate where it is).
+   */
+  setGate(info: GateInfo | null, moving: boolean) { this.gateInfo = info; this.gateMoving = moving; }
 
   /** Ongoing story effects (lava bombs, ash, birds) – derived from the workout time. */
   setStory(state: StoryState) { this.story = state; }
@@ -292,6 +306,7 @@ export class RiverScene {
       dt, time: this.time, boatZ: this.z, light: this.light, horizon: this.horizonColor, lava: this.env.lava, smoke: this.env.smoke,
       unrest: this.story.unrest, eruptionAge: this.story.eruptionAge, cooling: this.story.cooling, pixelHeight: this.bufferSize.y, camera: this.camera,
     });
+    this.gates.update({ dt, time: this.time, boatZ: this.z, speed: this.speed, moving: this.gateMoving, info: this.gateInfo, surfaceAt: (x, z) => this.water.surfaceAt(x, z, this.time, this.env.swell) });
     this.calving.prepare(this.z, this.speed, this.story.calvingIn);
     this.calving.update({ dt, time: this.time, boatZ: this.z, light: this.light, pixelHeight: this.bufferSize.y, camera: this.camera });
     this.wave.update({
@@ -341,6 +356,7 @@ export class RiverScene {
     this.puffins.dispose();
     this.wave.dispose();
     this.calving.dispose();
+    this.gates.dispose();
     this.water.dispose();
     this.sky.dispose();
     this.renderer.dispose();

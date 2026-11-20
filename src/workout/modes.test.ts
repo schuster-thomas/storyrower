@@ -62,7 +62,7 @@ describe('workout modes', () => {
   });
 
   it('waves go up and down several times', () => {
-    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'waves', durationMin: 30 });
+    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'waves', durationMin: 30, minSegmentSec: 30 });
     const crests = w.segments.filter((s) => s.intensity === 1).length;
     expect(crests).toBeGreaterThanOrEqual(3);
     expect(w.segments[0].intensity).toBe(0);

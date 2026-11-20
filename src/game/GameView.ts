@@ -6,7 +6,7 @@ import { formatDuration, formatPace } from '../rower/ftms';
 import { SimulatorSource } from '../rower/sources/simulator';
 import { BluetoothSource } from '../rower/sources/bluetooth';
 import { MIN_TRAINING_SECONDS, newTrainingId, type TrainingRecord } from '../history/history';
-import { saveTraining, showSaveResult } from '../history/save';
+import { saveTraining, showSaveResult, type SaveResult } from '../history/save';
 import type { RowerEvent, RowerSample } from '../rower/types';
 import { accuracy, isIn, isLow, newScore, stars, updateScore, type Zone } from '../workout/scoring';
 import { WorkoutTrace, summarize } from '../workout/trace';
@@ -16,6 +16,10 @@ import { Hud } from './hud/Hud';
 import type { Level } from './levels/level';
 import { AutoQuality, loadGraphics } from './scene/quality';
 import { RiverScene } from './scene/RiverScene';
+import type { GateInfo } from './scene/Gates';
+
+/** Gate colour per section kind – the same as the HUD's wording: Build, Hard, Easy, All out, Steady. */
+const GATE_COLORS: Record<Segment['kind'], number> = { ramp: 0xf5a524, hard: 0xff5a36, easy: 0x2fd3c0, peak: 0xff4fa3, steady: 0x4aa8ff };
 
 export interface GameOptions {
   level: Level;
@@ -91,6 +95,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   let t = Math.max(0, Math.min(workout.duration - 1, opts.startAt ?? 0));
   let started = false;
   let rowingStartedAt: Date | null = null;
+  let resultsTimer: ReturnType<typeof setTimeout> | null = null;
   let finished = false;
   let sample: RowerSample | null = session.sample;
   let zones: { power: Zone; spm: Zone } | null = null;
@@ -177,6 +182,24 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     });
     const energy = sample?.energy != null && startEnergy != null ? sample.energy - startEnergy : null;
     const sum = summarize(trace.points, { time: t - startT, distance: dist, strokes: strokesRowed(), energy });
+    // into the training history (and Google Drive) right away: real rows only – no simulator, no
+    // replays (#/play?…&savesim=1 keeps simulator runs too, for testing), nothing under a minute
+    const real = session!.source.info.kind === 'bluetooth' || /[?&]savesim=1/.test(location.hash);
+    let saving: Promise<SaveResult> | null = null;
+    if (real && sum.time >= MIN_TRAINING_SECONDS) {
+      const now = new Date();
+      const record: TrainingRecord = {
+        v: 1, id: newTrainingId(rowingStartedAt ?? now), startedAt: (rowingStartedAt ?? now).toISOString(), finishedAt: now.toISOString(),
+        level: { id: level.id, title: level.title }, mode: workout.settings.mode, settings: workout.settings, plannedDuration: workout.duration,
+        early, device: session!.source instanceof BluetoothSource ? session!.source.deviceName : session!.source.info.label,
+        summary: sum, accuracy: +accuracy(score).toFixed(3), stars: st, points: trace.points,
+      };
+      saving = saveTraining(record);
+    }
+    // a workout rowed to the end: let the boat glide through the finish gate and the confetti first
+    if (early) showResults(); else resultsTimer = setTimeout(showResults, 2800);
+
+    function showResults() {
     const tile = (value: string, label: string, extra = '') => `<div><b>${value}</b><small>${label}</small>${extra ? `<em>${extra}</em>` : ''}</div>`;
     overlay.className = 'game-overlay show';
     overlay.innerHTML = `
@@ -208,21 +231,23 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     overlay.querySelector<HTMLButtonElement>('[data-a="back"]')!.onclick = opts.onExit;
     overlay.querySelector<HTMLButtonElement>('[data-a="rec"]')!.onclick = () => downloadRecording(session!);
     unmountChart = mountResultsChart(overlay.querySelector<HTMLElement>('.results-chart')!, trace.points, (p) => level.phases[p].name);
-
-    // into the training history (and Google Drive): real rows only – no simulator, no replays
-    // (#/play?…&savesim=1 keeps simulator runs too, for testing), and nothing shorter than a minute
-    const real = session!.source.info.kind === 'bluetooth' || /[?&]savesim=1/.test(location.hash);
-    if (real && sum.time >= MIN_TRAINING_SECONDS) {
-      const savedEl = overlay.querySelector<HTMLElement>('[data-a="saved"]')!;
-      const now = new Date();
-      const record: TrainingRecord = {
-        v: 1, id: newTrainingId(rowingStartedAt ?? now), startedAt: (rowingStartedAt ?? now).toISOString(), finishedAt: now.toISOString(),
-        level: { id: level.id, title: level.title }, mode: workout.settings.mode, settings: workout.settings, plannedDuration: workout.duration,
-        early, device: session!.source instanceof BluetoothSource ? session!.source.deviceName : session!.source.info.label,
-        summary: sum, accuracy: +accuracy(score).toFixed(3), stars: st, points: trace.points,
-      };
-      void saveTraining(record).then((r) => showSaveResult(savedEl, r));
+    const savedEl = overlay.querySelector<HTMLElement>('[data-a="saved"]')!;
+    void saving?.then((r) => showSaveResult(savedEl, r));
     }
+  }
+
+  /**
+   * The gate the boat rows through next: at every change of the target (split or stroke rate), in
+   * the colour of the coming section and with its target on the sign – and at the end the finish.
+   */
+  function gateFor(seg: Segment): GateInfo | null {
+    const ts = opts.timeScale ?? 1;
+    if (t >= workout.duration) return null;
+    const next = nextSegment(workout, t);
+    if (!next) return { key: 'finish', kind: 'finish', timeTo: (workout.duration - t) / ts, color: 0xffc83d };
+    const changes = formatPace(next.pace.target) !== formatPace(seg.pace.target) || next.spm.target !== seg.spm.target;
+    if (!changes) return null;
+    return { key: `target-${next.start}`, kind: 'target', timeTo: (seg.end - t) / ts, color: GATE_COLORS[next.kind], split: formatPace(next.pace.target), spm: `${next.spm.target} spm` };
   }
 
   hud.onExit(() => (finished || t < 1 ? opts.onExit() : finish(true)));
@@ -297,6 +322,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     if (t >= workout.duration) finish(false);
 
     const speed = rowing && sample?.paceSmoothed ? 500 / sample.paceSmoothed : 0;
+    scene.setGate(gateFor(seg), active);
     scene.update(dt, speed, score.threat, seg.intensity, story);
     audio?.update({
       dt, intensity: musicIntensity(seg), danger: env.wave * (1 - score.threat), speed,
@@ -370,6 +396,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     if (!finished && started) session.logEvent('game-exit', { gameT: Math.round(t) });
     if (sim && opts.autopilot) sim.profile = null;
     wakeLock?.release().catch(() => {});
+    if (resultsTimer) clearTimeout(resultsTimer);
     unmountChart?.();
     scene.dispose();
   };

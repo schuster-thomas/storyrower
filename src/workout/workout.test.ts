@@ -6,7 +6,7 @@ import { DEFAULT_SETTINGS, PHASES, bandsFor, generateWorkout, phaseSpans, segmen
 describe('workout generator', () => {
   for (const durationMin of [10, 15, 20, 30, 45, 60, 90]) {
     it(`builds a gap-free ${durationMin} min workout with all five phases`, () => {
-      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin });
+      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin, minSegmentSec: 30 });
       expect(w.duration).toBe(durationMin * 60);
       expect(w.segments[0].start).toBe(0);
       for (let i = 1; i < w.segments.length; i++) expect(w.segments[i].start).toBe(w.segments[i - 1].end);

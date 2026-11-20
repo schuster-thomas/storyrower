@@ -71,7 +71,7 @@ describe('story engine', () => {
 
   for (const durationMin of [10, 30, 60]) {
     it(`ends happily: volcano asleep, air clear, wave gone (${durationMin} min)`, () => {
-      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin });
+      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin, minSegmentSec: 30 });
       const beats = scheduleBeats(ICELAND, w);
       const winddown = phaseSpans(w).find((p) => p.phase === 'winddown')!;
       // right after the escape it is still smoky…

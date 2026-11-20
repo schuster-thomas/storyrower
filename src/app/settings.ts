@@ -11,8 +11,18 @@ import { DEFAULT_SETTINGS, type WorkoutSettings } from '../workout/workout';
 const WORKOUT_KEY = 'storyrower.settings';
 const UPDATED_KEY = 'storyrower.settingsUpdatedAt';
 
+const MIN_SECTION_KEY = 'storyrower.minSection120';
+
 export function loadSettings(): WorkoutSettings {
-  try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(WORKOUT_KEY) ?? '{}') }; } catch { return { ...DEFAULT_SETTINGS }; }
+  try {
+    const stored = JSON.parse(localStorage.getItem(WORKOUT_KEY) ?? '{}') as Partial<WorkoutSettings>;
+    // once: the shortest section used to default to 30 s – whoever still has that gets the new 120 s
+    if (!localStorage.getItem(MIN_SECTION_KEY)) {
+      localStorage.setItem(MIN_SECTION_KEY, '1');
+      if (stored.minSegmentSec === 30) { stored.minSegmentSec = DEFAULT_SETTINGS.minSegmentSec; localStorage.setItem(WORKOUT_KEY, JSON.stringify(stored)); }
+    }
+    return { ...DEFAULT_SETTINGS, ...stored };
+  } catch { return { ...DEFAULT_SETTINGS }; }
 }
 
 export function saveSettings(s: WorkoutSettings) {

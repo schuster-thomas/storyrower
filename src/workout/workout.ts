@@ -35,7 +35,8 @@ export const DEFAULT_SETTINGS: WorkoutSettings = {
   minSpm: 22,
   maxSpm: 30,
   durationMin: 20,
-  minSegmentSec: 30,
+  // two minutes: targets do not change too often
+  minSegmentSec: 120,
   steadyPower: 80,
   steadySpm: 26,
 };

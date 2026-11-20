@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gates</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap">
+<style>body{margin:0;background:#222;font:13px system-ui;color:#fff} #grid{display:grid;grid-template-columns:1fr 1fr;gap:4px} img{width:100%;display:block}</style>
+</head>
+<body>
+<div id="grid"></div>
+<script type="module">
+// Dev-only: renders the target and finish gates in a plain stand-in scene (sky, water, chase camera).
+import * as THREE from 'three';
+import { Gates } from '/src/game/scene/Gates.ts';
+
+await document.fonts.load('900 100px Nunito');
+const W = 640, H = 400;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const grid = document.getElementById('grid');
+
+function shot(label, sky, info, ahead, steps, after = 0) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(sky);
+  scene.fog = new THREE.Fog(sky, 160, 700);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x6f7a5a, 1.7));
+  const sun = new THREE.DirectionalLight(0xffffff, 2); sun.position.set(55, 90, 45); scene.add(sun);
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(400, 1200), new THREE.MeshStandardMaterial({ color: 0x1f8fb0, roughness: 0.25 }));
+  water.rotation.x = -Math.PI / 2; water.position.z = -400; scene.add(water);
+  const boat = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 8), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+  boat.position.y = 0.2; scene.add(boat);
+  const oars = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.08, 0.1), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+  oars.position.y = 0.6; scene.add(oars);
+  const g = new Gates();
+  scene.add(g.group);
+  const cam = new THREE.PerspectiveCamera(55, W / H, 0.1, 2000);
+  cam.position.set(0, 2.5, 7.2); cam.lookAt(0, 1.25, -14);
+  // first update creates the gate at the predicted place; then step it towards the boat
+  const speed = 8;
+  let t = 0;
+  for (let i = 0; i < steps; i++) {
+    const timeTo = ahead / speed - i * 0.1;
+    g.update({ dt: 0.1, time: t += 0.1, boatZ: 0, speed, moving: true, info: timeTo > 0 ? { ...info, timeTo } : null, surfaceAt: () => 0 });
+  }
+  for (let i = 0; i < after; i++) g.update({ dt: 0.1, time: t += 0.1, boatZ: 0, speed, moving: true, info: null, surfaceAt: () => 0 });
+  renderer.render(scene, cam);
+  const fig = document.createElement('figure'); fig.style.margin = 0;
+  const img = new Image(); img.src = renderer.domElement.toDataURL();
+  const cap = document.createElement('figcaption'); cap.textContent = label;
+  fig.append(img, cap); grid.append(fig);
+}
+
+const target = { key: 'a', kind: 'target', color: 0xf5a524, split: '2:31', spm: '26 spm' };
+shot('target gate, 40 m ahead (build)', 0x9fd4ef, target, 40, 18);
+shot('target gate, 14 m ahead (hard)', 0x9fd4ef, { ...target, color: 0xff5a36, split: '2:23', spm: '29 spm' }, 14, 18);
+shot('finish gate, 45 m ahead', 0xf3b27f, { key: 'f', kind: 'finish', color: 0xffc83d }, 45, 18);
+shot('finish passed – confetti', 0xf3b27f, { key: 'f', kind: 'finish', color: 0xffc83d }, 2, 21, 12);
+document.title = 'gates ready';
+</script>
+</body>
+</html>
