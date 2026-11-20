@@ -48,6 +48,10 @@ body:has(.menu) { background: #e6f0f8; }
 .tile-grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
 @media (min-width: 640px) { .tile-grid { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 1000px) { .tile-grid { grid-template-columns: repeat(3, 1fr); } }
+.menu-page { padding-top: 14px; }
+/* history, diagnostics …: always on a new row after the last level */
+.tile-card.tools-start { grid-column-start: 1; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .tile-card { display: flex; flex-direction: column; text-decoration: none; background: var(--card); border: 1px solid var(--rule); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s; }
 .tile-card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(19, 36, 75, .08), 0 14px 32px rgba(19, 36, 75, .14); }
 .tile-card:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }

@@ -13,8 +13,8 @@ const LEVEL_ART: Record<string, string> = { 'iceland-volcano-run': icelandCard }
 
 /** "#/": pick a level (only levels that exist), or go to devices & diagnostics. */
 export function mountHome(root: HTMLElement): () => void {
-  const tile = (href: string, img: string, title: string, text: string) => `
-    <a class="tile-card" href="${href}">
+  const tile = (href: string, img: string, title: string, text: string, cls = '') => `
+    <a class="tile-card ${cls}" href="${href}">
       <div class="tile-img"><img src="${img}" alt="" loading="lazy"></div>
       <div class="tile-text"><h2>${title}</h2><p>${text}</p></div>
     </a>`;
@@ -29,10 +29,10 @@ export function mountHome(root: HTMLElement): () => void {
         </div>
       </header>
       <main class="menu-page">
-        <h1 class="menu-title">Choose your adventure</h1>
+        <h1 class="visually-hidden">StoryRower</h1>
         <div class="tile-grid">
           ${LEVELS.map((l) => tile(`#/play/${l.id}`, LEVEL_ART[l.id] ?? icelandCard, l.title, l.tagline)).join('')}
-          ${tile('#/history', historyCard, 'Training history', 'Every workout you rowed – results, charts and settings to row it again.')}
+          ${tile('#/history', historyCard, 'Training history', 'Every workout you rowed – results, charts and settings to row it again.', 'tools-start')}
           ${tile('#/diagnose', rowerCard, 'Devices &amp; Diagnostics', 'Connect your rower, check live data or try the simulator.')}
         </div>
       </main>
