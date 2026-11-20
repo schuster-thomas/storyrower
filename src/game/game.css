@@ -22,7 +22,9 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .game.loading .game-canvas { opacity: 0; }
 .game-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted, #9fb3c2); font-size: 1.1rem; letter-spacing: .02em; pointer-events: none; }
 .game:not(.loading) .game-loading { display: none; }
-.glass { background: rgba(10, 22, 32, .62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, .14); border-radius: 18px; color: #fff; }
+/* No backdrop-filter over the WebGL canvas: blurring a full-screen 60 fps canvas makes the compositor
+   read back and blur it under every panel each frame – a known source of black flashes on Android Chrome. */
+.glass { background: rgba(10, 22, 32, .74); border: 1px solid rgba(255, 255, 255, .14); border-radius: 18px; color: #fff; }
 .hud { position: absolute; inset: 0; pointer-events: none; padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; }
 .hud button { pointer-events: auto; }
 .hud-top { display: flex; gap: 12px; align-items: flex-start; }
@@ -97,7 +99,7 @@ button.big { font-size: 18px; padding: 14px 22px; }
 }
 
 /* Big target announcement when split / stroke-rate targets change */
-.hud-target { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%) scale(.9); text-align: center; color: #fff; pointer-events: none; opacity: 0; transition: opacity .35s, transform .35s; background: rgba(10, 22, 32, .55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgba(255, 255, 255, .18); border-radius: 22px; padding: 14px 30px 18px; text-shadow: 0 2px 10px rgba(0, 0, 0, .5); }
+.hud-target { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%) scale(.9); text-align: center; color: #fff; pointer-events: none; opacity: 0; transition: opacity .35s, transform .35s; background: rgba(10, 22, 32, .7); border: 1px solid rgba(255, 255, 255, .18); border-radius: 22px; padding: 14px 30px 18px; text-shadow: 0 2px 10px rgba(0, 0, 0, .5); }
 .hud-target.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .tg-head { font-size: clamp(14px, 1.8vw, 20px); font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
 .tg-pace { font-size: clamp(44px, 8vw, 96px); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.05; }

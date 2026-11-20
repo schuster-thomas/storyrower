@@ -78,6 +78,7 @@ export class RiverScene {
   /** the painted volcano with flowing lava, plume and fountain (the greybox `volcano` is its stand-in) */
   private setPiece: Volcano;
   private bufferSize = new THREE.Vector2();
+  private sizeTmp = new THREE.Vector2();
   private paintedIce: PaintedShore;
   private paintTint = new THREE.Color();
   private post: Post;
@@ -112,7 +113,13 @@ export class RiverScene {
   constructor(canvas: HTMLCanvasElement, env: Environment, quality: QualityLevel = 'medium') {
     this._quality = quality;
     this.q = PROFILES[quality];
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: quality !== 'low', powerPreference: 'high-performance' });
+    // Our own context so the canvas is opaque: three.js always asks for an alpha channel, which makes the
+    // compositor blend the whole canvas over the black page every frame (and shows black wherever a frame
+    // leaves alpha < 1). No multisampling on the canvas either: medium/high draw through the post chain
+    // (its render targets have no MSAA, the canvas only gets a full-screen quad) and "low" never had it –
+    // at 2.5k on the tablet that was ~100 MB of GPU memory and a resolve per frame for nothing.
+    const context = canvas.getContext('webgl2', { alpha: false, antialias: false, depth: true, stencil: false, powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({ canvas, context: context ?? undefined, antialias: false, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     // Soft sun shadows near the boat (off on "low")
@@ -310,12 +317,20 @@ export class RiverScene {
     this.stats.push(dt * 1000, performance.now() - t0);
   }
 
-  resize(width: number, height: number) {
+  /**
+   * Resizing clears the canvas – call it right before `update()` renders the next frame (not from a
+   * ResizeObserver, which runs after this frame was drawn and would leave a cleared, black canvas on screen).
+   * Returns false when nothing changed.
+   */
+  resize(width: number, height: number): boolean {
+    const cur = this.renderer.getSize(this.sizeTmp);
+    if (cur.x === width && cur.y === height) return false;
     this.renderer.setSize(width, height, false);
     this.post.setSize(width, height);
     this.resizeReflection();
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
+    return true;
   }
 
   dispose() {

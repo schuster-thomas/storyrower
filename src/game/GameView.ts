@@ -145,9 +145,17 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   });
 
   // ---------- layout ----------
-  const ro = new ResizeObserver(() => scene.resize(wrap.clientWidth, wrap.clientHeight));
+  // Resizing clears the canvas, so it is applied in the loop right before the next frame is drawn
+  // (a ResizeObserver fires after this frame was rendered – resizing there showed a black frame).
+  let resizePending = false;
+  const ro = new ResizeObserver(() => { resizePending = true; });
   ro.observe(wrap);
   scene.resize(wrap.clientWidth, wrap.clientHeight);
+  // A lost GPU context draws nothing until it is restored – log it, the recording should show it
+  const onContextLost = () => session.logEvent('webgl-context-lost', { gameT: Math.round(t) });
+  const onContextRestored = () => session.logEvent('webgl-context-restored', { gameT: Math.round(t) });
+  canvas.addEventListener('webglcontextlost', onContextLost);
+  canvas.addEventListener('webglcontextrestored', onContextRestored);
 
   let wakeLock: WakeLockSentinel | null = null;
   navigator.wakeLock?.request('screen').then((w) => { wakeLock = w; }).catch(() => {});
@@ -211,9 +219,19 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   let fps = 0;
   let fpsTimer = 0;
   let lastSeg: Segment | null = null;
+  // real (uncapped) frame times since the last snapshot – the scene stats cap dt at 100 ms and only cover 3 s
+  let worstFrameMs = 0;
+  let longFrames = 0;
   const loop = (now: number) => {
-    const dt = Math.min(0.1, (now - last) / 1000);
+    const rawMs = now - last;
+    const dt = Math.min(0.1, rawMs / 1000);
     last = now;
+    worstFrameMs = Math.max(worstFrameMs, rawMs);
+    if (rawMs > 50) longFrames++;
+    if (resizePending) {
+      resizePending = false;
+      if (scene.resize(wrap.clientWidth, wrap.clientHeight)) session.logEvent('resize', { size: [wrap.clientWidth, wrap.clientHeight], dpr: devicePixelRatio, gameT: Math.round(t) });
+    }
     const rowing = session.isRowing && session.state === 'connected';
     const active = started && rowing && !finished;
     const gdt = dt * (opts.timeScale ?? 1); // game time step
@@ -279,10 +297,13 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       session.logEvent('game-snapshot', {
         gameT: Math.round(t), active, rowing, fps: Math.round(fps), quality: scene.quality,
         frameMs: +scene.stats.frameMs.toFixed(1), frameP95: +scene.stats.frameP95.toFixed(1), renderMs: +scene.stats.renderMs.toFixed(1),
+        worstFrameMs: Math.round(worstFrameMs), longFrames,
         calls: scene.stats.calls, triangles: scene.stats.triangles, power: sample?.power ?? null, powerSmoothed: Math.round(sample?.powerSmoothed ?? 0),
         spm: sample?.strokeRate ?? null, pace: sample?.paceSmoothed ? Math.round(sample.paceSmoothed) : null, hr: sample?.heartRate ?? null,
         zones, threat: +score.threat.toFixed(2), accuracy: +accuracy(score).toFixed(3), coins: Math.floor(score.coins),
       });
+      worstFrameMs = 0;
+      longFrames = 0;
     }
 
     hud.setFps(fps, scene.quality);
@@ -322,6 +343,8 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     scene.onBombLanded = null;
     off();
     ro.disconnect();
+    canvas.removeEventListener('webglcontextlost', onContextLost);
+    canvas.removeEventListener('webglcontextrestored', onContextRestored);
     document.removeEventListener('visibilitychange', onVisibility);
     window.removeEventListener('error', onError);
     if (!finished && started) session.logEvent('game-exit', { gameT: Math.round(t) });

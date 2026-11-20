@@ -21,6 +21,10 @@ export interface HudState {
   message: { text: string; tone: 'info' | 'warn' | 'ok' } | null;
 }
 
+/** Write only on change: rewriting identical text every frame still repaints the HUD layers over the canvas. */
+function setText(el: HTMLElement, text: string) { if (el.textContent !== text) el.textContent = text; }
+function setHtml(el: HTMLElement, html: string) { if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; } }
+
 const KIND_LABEL: Record<Segment['kind'], string> = { steady: 'Steady', ramp: 'Build', hard: 'Hard', easy: 'Easy', peak: 'All out' };
 
 /** DOM overlay on top of the 3D scene. Large digits – the tablet is 1–1.5 m away. */
@@ -141,31 +145,32 @@ export class Hud {
     }
     const spans = phaseSpans(s.workout);
     const pi = spans.findIndex((p) => p.phase === s.segment.phase);
-    this.q('level').textContent = s.level.title;
-    this.q('phase').textContent = `Phase ${pi + 1}/${spans.length} – ${s.level.phases[s.segment.phase].name}`;
+    setText(this.q('level'), s.level.title);
+    setText(this.q('phase'), `Phase ${pi + 1}/${spans.length} – ${s.level.phases[s.segment.phase].name}`);
     this.q('progFill').style.width = `${Math.min(100, (s.t / s.workout.duration) * 100)}%`;
     this.el.querySelectorAll<HTMLElement>('.prog-node[data-phase]').forEach((n, i) => {
       n.classList.toggle('done', i < pi);
       n.classList.toggle('current', i === pi);
     });
-    this.q('timer').textContent = `${formatDuration(s.t)} / ${formatDuration(s.workout.duration)}`;
+    setText(this.q('timer'), `${formatDuration(s.t)} / ${formatDuration(s.workout.duration)}`);
 
     // Next segment preview, shown in the last 20 s
     const toNext = s.segment.end - s.t;
     const nx = this.q('next');
     if (s.next && toNext <= 20) {
       const phaseChange = s.next.phase !== s.segment.phase ? `${s.level.phases[s.next.phase].name}! ` : '';
-      nx.innerHTML = `In <b>${Math.ceil(toNext)} s</b>: ${phaseChange}${KIND_LABEL[s.next.kind]} · ${s.next.power.lo}–${s.next.power.hi} W · ${s.next.spm.lo}–${s.next.spm.hi} spm`;
+      setHtml(nx, `In <b>${Math.ceil(toNext)} s</b>: ${phaseChange}${KIND_LABEL[s.next.kind]} · ${s.next.power.lo}–${s.next.power.hi} W · ${s.next.spm.lo}–${s.next.spm.hi} spm`);
       nx.hidden = false;
     } else {
-      nx.innerHTML = `${KIND_LABEL[s.segment.kind]} · ${formatDuration(Math.max(0, toNext))} left`;
+      setHtml(nx, `${KIND_LABEL[s.segment.kind]} · ${formatDuration(Math.max(0, toNext))} left`);
       nx.hidden = false;
     }
 
     const msg = this.q('message');
     const showMsg = s.message && !this.announcing;
-    msg.textContent = showMsg ? s.message!.text : '';
-    msg.className = `hud-message ${showMsg ? `show ${s.message!.tone}` : ''}`;
+    setText(msg, showMsg ? s.message!.text : '');
+    const cls = `hud-message ${showMsg ? `show ${s.message!.tone}` : ''}`;
+    if (msg.className !== cls) msg.className = cls;
 
     const smp = s.sample;
     this.tile('dist', String(Math.round(s.distance)), `${s.strokes} ${s.strokes === 1 ? 'stroke' : 'strokes'}`);
@@ -179,13 +184,13 @@ export class Hud {
     this.band('pace', { lo: -s.segment.pace.hi, hi: -s.segment.pace.lo }, smp?.paceSmoothed ? -smp.paceSmoothed : null, pz);
     this.tile('hr', smp?.heartRate != null ? String(smp.heartRate) : '–', smp?.heartRate != null ? '' : 'not connected');
 
-    this.q('acc').textContent = s.score.time > 5 ? `${Math.round(accuracy(s.score) * 100)}%` : '–';
+    setText(this.q('acc'), s.score.time > 5 ? `${Math.round(accuracy(s.score) * 100)}%` : '–');
   }
 
   private tile(id: string, value: string, sub: string) {
     const t = this.q(id);
-    t.querySelector('b')!.textContent = value;
-    t.querySelector('.sub')!.textContent = sub;
+    setText(t.querySelector('b')!, value);
+    setText(t.querySelector<HTMLElement>('.sub')!, sub);
   }
 
   private band(id: string, band: Band, value: number | null, zone: Zone | null) {
@@ -199,6 +204,6 @@ export class Hud {
     const mark = t.querySelector<HTMLElement>('.mark')!;
     mark.style.display = value == null ? 'none' : '';
     if (value != null) mark.style.left = `${pct(value)}%`;
-    t.dataset.zone = zone ?? '';
+    if (t.dataset.zone !== (zone ?? '')) t.dataset.zone = zone ?? '';
   }
 }
