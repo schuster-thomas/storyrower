@@ -65,7 +65,7 @@ select { background: var(--panel); color: var(--text); border: 1px solid var(--l
 
 /* Protokoll & Explorer */
 .log { max-height: 320px; overflow: auto; background: var(--panel-2); border-radius: 8px; padding: 10px; font: 12.5px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all; }
-.log .warn { color: var(--warn); } .log .error { color: var(--err); } .log .data { color: #9fd8ff; } .log .dup { color: var(--raw); }
+.log .bt { color: #c9b6ff; } .log .warn { color: var(--warn); } .log .error { color: var(--err); } .log .data { color: #9fd8ff; } .log .dup { color: var(--raw); }
 pre.kv { margin: 0; font: 13px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
 .svc { margin: 8px 0; padding: 8px; background: var(--panel-2); border-radius: 8px; font-size: 14px; }
 .svc code { color: #9fd8ff; }
@@ -83,3 +83,6 @@ pre.kv { margin: 0; font: 13px/1.45 ui-monospace, Consolas, monospace; white-spa
 input[type=range] { accent-color: var(--accent); width: 200px; max-width: 100%; }
 input[type=file] { display: none; }
 kbd { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+
+.report-box { width: 100%; margin: 0 0 8px; font: 12px/1.4 ui-monospace, Consolas, monospace; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.bt-tests summary { cursor: pointer; margin-bottom: 4px; }

@@ -2,7 +2,7 @@ import { CONTROL, formatDuration, formatPace, nameOf } from '../rower/ftms';
 import { connection } from '../app/connection';
 import { downloadRecording } from '../app/download';
 import type { RowerSession } from '../rower/session';
-import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
+import { BluetoothSource, isWebBluetoothAvailable, loadBtDebug, saveBtDebug } from '../rower/sources/bluetooth';
 import { ReplaySource } from '../rower/sources/replay';
 import { SimulatorSource } from '../rower/sources/simulator';
 import type { RowerEvent, RowerSample } from '../rower/types';
@@ -117,7 +117,17 @@ export function mountDiagnostics(root: HTMLElement): () => void {
         <h2>Log</h2>
         <div class="row" style="margin-bottom:8px">
           <label class="muted"><input type="checkbox" data-id="showDup"> show duplicate packets</label>
+          <label class="muted" title="Every raw Bluetooth event as the browser delivers it – which object fired, whether the value changed, the bytes"><input type="checkbox" data-id="btTrace"> Bluetooth details</label>
+          <button data-id="reportBtn" title="Everything on this page as text, to paste into a message">Copy report</button>
         </div>
+        <details class="bt-tests">
+          <summary class="muted">Bluetooth tests</summary>
+          <div class="row" style="margin:8px 0">
+            <label class="muted"><input type="checkbox" data-id="btOnlyRower"> subscribe to Rower Data only (applies on the next connect)</label>
+            <button data-id="btResub">Re-subscribe Rower Data</button>
+          </div>
+        </details>
+        <textarea data-id="reportBox" class="report-box" rows="8" readonly hidden></textarea>
         <div class="log" data-id="log"></div>
       </section>
     </main>`;
@@ -156,6 +166,18 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     if (atBottom) logEl.scrollTop = logEl.scrollHeight;
   }
 
+  /** A line that already carries its own time (the Bluetooth trace). */
+  function logLine(text: string, cls = '') {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = text;
+    const atBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 20;
+    logEl.appendChild(line);
+    while (logEl.childElementCount > 600) logEl.firstChild!.remove();
+    if (atBottom) logEl.scrollTop = logEl.scrollHeight;
+  }
+  const btSource = () => (session?.source instanceof BluetoothSource ? session.source : null);
+
   // ---------- Switching sources (shared app-wide connection) ----------
   async function useSource(s: RowerSession['source']) {
     await connection.use(s);
@@ -171,6 +193,11 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     if (!session) { $('state').textContent = 'no source'; $('state').className = 'pill'; return; }
     const s = session.source;
     unsubscribe = session.on(onEvent);
+    if (s instanceof BluetoothSource) {
+      s.onTrace = (line) => { if ($<HTMLInputElement>('btTrace').checked) logLine(line, 'bt'); };
+      // everything before this page started listening (device picker, GATT, subscriptions)
+      if ($<HTMLInputElement>('btTrace').checked) s.trace.forEach((l) => logLine(l, 'bt'));
+    }
     onEvent({ type: 'state', state: session.state });
     if (session.sample) renderSample(session.sample);
     if (Object.keys(session.info).length) onEvent({ type: 'deviceInfo', info: session.info });
@@ -187,6 +214,8 @@ export function mountDiagnostics(root: HTMLElement): () => void {
 
   /** Stop listening – the connection itself stays open for the game. */
   function unbind() {
+    const bt = btSource();
+    if (bt) bt.onTrace = null;
     if (replayTimer) clearInterval(replayTimer);
     replayTimer = null;
     unsubscribe?.();
@@ -323,6 +352,38 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   }
   const onVisible = () => { if (document.visibilityState === 'visible' && session?.state === 'connected') requestWakeLock(); };
   document.addEventListener('visibilitychange', onVisible);
+
+  // ---------- Bluetooth details, tests and the report ----------
+  $<HTMLInputElement>('btTrace').onchange = (ev) => {
+    if ((ev.target as HTMLInputElement).checked) btSource()?.trace.forEach((l) => logLine(l, 'bt'));
+  };
+  $<HTMLInputElement>('btOnlyRower').checked = loadBtDebug().onlyRowerData;
+  $<HTMLInputElement>('btOnlyRower').onchange = (ev) => saveBtDebug({ onlyRowerData: (ev.target as HTMLInputElement).checked });
+  $('btResub').onclick = () => { const bt = btSource(); if (bt) void bt.resubscribeRowerData(); else log(0, 'Re-subscribe: no Bluetooth rower connected', 'warn'); };
+  $('reportBtn').onclick = async () => {
+    const tiles = Array.from(root.querySelectorAll<HTMLElement>('[data-tile]')).map((t) =>
+      `${t.querySelector('.label')?.textContent ?? t.dataset.tile}: ${t.querySelector('.value')?.textContent ?? ''} ${t.querySelector('.unit')?.textContent ?? ''} ${t.querySelector('.sub')?.textContent ?? ''}`.replace(/\s+/g, ' ').trim());
+    const bt = btSource();
+    const report = [
+      'StoryRower diagnostics report',
+      `time: ${new Date().toISOString()}`,
+      `browser: ${navigator.userAgent}`,
+      `source: ${session?.source.info.label ?? 'none'} · ${session?.state ?? '–'} · ${deviceName() ?? ''}`,
+      `test switches: ${JSON.stringify(loadBtDebug())}`,
+      '--- tiles ---', ...tiles,
+      '--- device ---', $('info').textContent ?? '',
+      `--- Bluetooth trace (last ${Math.min(250, bt?.trace.length ?? 0)} of ${bt?.trace.length ?? 0}) ---`, ...(bt?.trace.slice(-250) ?? ['(no Bluetooth source)']),
+      '--- log (last 150 lines) ---', ...Array.from(logEl.children).slice(-150).map((c) => c.textContent ?? ''),
+    ].join('\n');
+    const box = $<HTMLTextAreaElement>('reportBox');
+    box.value = report;
+    box.hidden = false;
+    let copied = false;
+    try { await navigator.clipboard.writeText(report); copied = true; } catch { /* not allowed here – select it instead */ }
+    if (!copied) { box.focus(); box.select(); }
+    $('reportBtn').textContent = copied ? 'Copied ✓' : 'Select & copy the text below';
+    setTimeout(() => { $('reportBtn').textContent = 'Copy report'; }, 3000);
+  };
 
   // ---------- Buttons ----------
   $('btBtn').onclick = () => useSource(new BluetoothSource(false));
