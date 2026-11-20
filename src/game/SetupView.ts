@@ -278,12 +278,13 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     rowerText.title = rowerText.textContent;
     const bt = $<HTMLButtonElement>('btBtn');
     bt.classList.toggle('ok', connected && !sim);
-    bt.querySelector('span')!.textContent = connected && !sim ? 'Rower connected' : 'Connect rower';
+    const link = connection.rowerLink;
+    bt.querySelector('span')!.textContent = link === 'connected' ? 'Disconnect rower' : link === 'connecting' ? 'Cancel connecting' : 'Connect rower';
     $('simBtn').classList.toggle('ok', !!sim && connected);
     const hr = connection.heartRate;
     const hrBtn = $<HTMLButtonElement>('hrBtn');
-    hrBtn.querySelector('span')!.textContent = hr.state === 'connected' ? 'Disconnect heart-rate monitor' : 'Connect heart-rate monitor';
-    hrBtn.disabled = !isWebBluetoothAvailable() || hr.state === 'connecting';
+    hrBtn.querySelector('span')!.textContent = hr.state === 'connected' ? 'Disconnect heart-rate monitor' : hr.state === 'connecting' ? 'Cancel connecting' : 'Connect heart-rate monitor';
+    hrBtn.disabled = !isWebBluetoothAvailable();
     if (hr.state !== 'idle') $('hrState').textContent = `Heart rate: ${hr.state}${hr.name ? ` · ${hr.name}` : ''}`;
   }
   let offSession: (() => void) | null = null;
@@ -295,9 +296,10 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     $('noBt').hidden = false;
     $<HTMLButtonElement>('btBtn').disabled = true;
   }
-  $('btBtn').onclick = () => connection.use(new BluetoothSource(false));
+  $('btBtn').onclick = () => (connection.rowerLink ? connection.disconnectRower() : connection.use(new BluetoothSource(false)));
   $('simBtn').onclick = () => connection.use(new SimulatorSource({ power: 0, heartRate: true, seed: Date.now() }));
-  $('hrBtn').onclick = () => (connection.heartRate.state === 'connected' ? connection.disconnectHeartRate() : connection.connectHeartRate());
+  $('hrBtn').onclick = () => (connection.heartRate.state === 'idle' || connection.heartRate.state === 'disconnected' || connection.heartRate.state === 'error'
+    ? connection.connectHeartRate() : connection.disconnectHeartRate());
   $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource, jump });
 
   return () => { offConn(); offSession?.(); ro.disconnect(); offFs(); };

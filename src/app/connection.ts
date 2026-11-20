@@ -1,6 +1,7 @@
 import { trace } from '../rower/btTrace';
 import { Emitter } from '../rower/emitter';
 import { RowerSession } from '../rower/session';
+import { BluetoothSource } from '../rower/sources/bluetooth';
 import { HeartRateSource } from '../rower/sources/heartRate';
 import type { ConnectionState, PacketSource } from '../rower/types';
 
@@ -59,7 +60,20 @@ class Connection {
     try { await this.hr.start(); } catch { /* reported via state */ }
   }
 
-  disconnectHeartRate() { this.hr?.stop(); }
+  disconnectHeartRate() { trace('app', 'disconnect heart-rate monitor (button)'); this.hr?.stop(); }
+
+  /** A Bluetooth rower that is connected or still connecting – the Connect buttons turn into Disconnect. */
+  get rowerLink(): 'connected' | 'connecting' | null {
+    const s = this._session;
+    if (!s || !(s.source instanceof BluetoothSource)) return null;
+    return s.state === 'connected' ? 'connected' : s.state === 'connecting' ? 'connecting' : null;
+  }
+
+  /**
+   * Disconnect the rower (also cancels a connect that hangs). The session and its recording stay,
+   * so the diagnostics download still has everything; the next Connect starts a new one.
+   */
+  disconnectRower() { trace('app', 'disconnect rower (button)'); this._session?.stop(); }
 }
 
 export const connection = new Connection();

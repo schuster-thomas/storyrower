@@ -230,8 +230,8 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   function renderHeartRate() {
     const hr = connection.heartRate;
     const btn = $<HTMLButtonElement>('hrBtn');
-    btn.textContent = hr.state === 'connected' ? 'Disconnect heart-rate monitor' : 'Connect heart-rate monitor';
-    btn.disabled = !isWebBluetoothAvailable() || hr.state === 'connecting';
+    btn.textContent = hr.state === 'connected' ? 'Disconnect heart-rate monitor' : hr.state === 'connecting' ? 'Cancel connecting' : 'Connect heart-rate monitor';
+    btn.disabled = !isWebBluetoothAvailable();
     if (hr.state !== 'idle') $('hrState').textContent = `${hr.state}${hr.name ? ` · ${hr.name}` : ''}${hr.detail && hr.state !== 'connected' ? ` · ${hr.detail}` : ''}`;
   }
   const offConnection = connection.onChange(() => { bind(connection.session); renderHeartRate(); });
@@ -245,6 +245,8 @@ export function mountDiagnostics(root: HTMLElement): () => void {
         pill.textContent = `${labels[e.state]}${e.detail ? ` · ${e.detail}` : ''}`;
         pill.className = `pill ${e.state === 'connected' ? 'ok' : e.state === 'error' || e.state === 'disconnected' ? 'err' : 'warn'}`;
         const isBt = session?.source instanceof BluetoothSource;
+        const link = connection.rowerLink;
+        $('btBtn').textContent = link === 'connected' ? 'Disconnect rower' : link === 'connecting' ? 'Cancel connecting' : 'Connect rower';
         $('reconnectBtn').hidden = !(isBt && e.state === 'disconnected');
         ($('stopBtn') as HTMLButtonElement).disabled = e.state !== 'connected';
         const canCp = e.state === 'connected' && isBt && (session!.source as BluetoothSource).canSendControl;
@@ -445,12 +447,13 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   };
 
   // ---------- Buttons ----------
-  $('btBtn').onclick = () => useSource(new BluetoothSource(false));
+  $('btBtn').onclick = () => (connection.rowerLink ? connection.disconnectRower() : useSource(new BluetoothSource(false)));
   $('btAllBtn').onclick = () => useSource(new BluetoothSource(true));
   $('reconnectBtn').onclick = () => session?.start().catch(() => {});
   $('simBtn').onclick = () => useSource(new SimulatorSource({ power: 80, seed: Date.now() }));
   $('stopBtn').onclick = () => session?.stop();
-  $('hrBtn').onclick = () => (connection.heartRate.state === 'connected' ? connection.disconnectHeartRate() : connection.connectHeartRate());
+  $('hrBtn').onclick = () => (connection.heartRate.state === 'idle' || connection.heartRate.state === 'disconnected' || connection.heartRate.state === 'error'
+    ? connection.connectHeartRate() : connection.disconnectHeartRate());
   $<HTMLSelectElement>('recSelect').onchange = async (ev) => {
     const sel = ev.target as HTMLSelectElement;
     const v = sel.value; sel.value = '';

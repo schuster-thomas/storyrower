@@ -41,13 +41,18 @@ export function mountHome(root: HTMLElement): () => void {
   const render = () => {
     const s = connection.session;
     const connected = s?.state === 'connected';
+    const link = connection.rowerLink;
     btn.textContent = !s ? 'Connect rower'
       : s.source instanceof SimulatorSource ? (connected ? 'Simulator ready' : 'Simulator…')
-      : connected ? 'Rower connected' : s.state === 'connecting' ? 'Connecting…' : 'Connect rower';
+      : link === 'connected' ? 'Disconnect rower' : link === 'connecting' ? 'Cancel connecting' : 'Connect rower';
+    if (isWebBluetoothAvailable()) btn.title = link === 'connected' ? `${(s?.source as BluetoothSource).deviceName ?? 'Rower'} connected – tap to disconnect` : '';
     btn.classList.toggle('ok', connected);
   };
   if (!isWebBluetoothAvailable()) { btn.disabled = true; btn.title = 'No Web Bluetooth in this browser – use Chrome or Edge'; }
-  btn.onclick = () => { if (connection.session?.state !== 'connected') void connection.use(new BluetoothSource(false)); };
+  btn.onclick = () => {
+    if (connection.rowerLink) connection.disconnectRower();
+    else if (connection.session?.state !== 'connected') void connection.use(new BluetoothSource(false));
+  };
 
   let offSession: (() => void) | null = null;
   const follow = () => { offSession?.(); offSession = connection.session?.on((e) => { if (e.type === 'state') render(); }) ?? null; render(); };
