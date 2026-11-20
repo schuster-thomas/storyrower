@@ -167,3 +167,4 @@ button.big { font-size: 18px; padding: 14px 22px; }
 .rc-table th, .rc-table td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right; }
 .rc-table th:nth-child(-n+2), .rc-table td:nth-child(-n+2) { text-align: left; }
 .rc-table th { color: var(--muted); font-weight: 500; position: sticky; top: 0; background: var(--bg); }
+.results-saved .save-upload { margin-left: 8px; padding: 4px 12px; font-size: 13px; }

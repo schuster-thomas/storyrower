@@ -6,7 +6,7 @@
  * https://schuster-thomas.github.io and http://localhost:5173 for development). A client ID is
  * public – it is fine in the code. Empty = Drive sync is off, the icon says it is not set up yet.
  */
-export const GOOGLE_CLIENT_ID = '';
+export const GOOGLE_CLIENT_ID: string = '179877376000-2o0njr8gkv5aklv1945pd5kcne3r359f.apps.googleusercontent.com';
 
 /**
  * Only files this app created itself (non-sensitive, no Google review needed), plus the e-mail

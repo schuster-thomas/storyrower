@@ -51,7 +51,20 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
         <a class="btn-navy" href="#/">Choose an adventure</a></div>`;
       return;
     }
-    body.innerHTML = `<div class="hist-list">${list.map(item).join('')}</div>`;
+    body.innerHTML = `${syncBanner(list)}<div class="hist-list">${list.map(item).join('')}</div>`;
+  }
+
+  /** Trainings only on this device: one tap signs in (or renews) and uploads them. */
+  function syncBanner(list: StoredTraining[]) {
+    if (!drive.configured) return '';
+    const local = list.filter((r) => !r.driveId).length;
+    if (!local) return '';
+    const s = drive.status;
+    const busy = s.state === 'syncing' || s.state === 'connecting';
+    return `<div class="hist-sync">
+      <span><b>${local}</b> ${local === 1 ? 'training is' : 'trainings are'} only on this device.${s.error ? ` <em>${esc(s.error)}</em>` : ''}</span>
+      <button class="btn-navy" data-act="upload" ${busy ? 'disabled' : ''}>${busy ? 'Uploading…' : drive.signedIn ? 'Upload to Google Drive' : 'Sign in with Google to upload'}</button>
+    </div>`;
   }
 
   function item(r: StoredTraining) {
@@ -102,7 +115,8 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
         <dl class="hd-settings">${settingsRows(r.settings)}</dl>
         <div class="hd-actions">
           ${level ? `<button class="btn-navy" data-act="again">Row again with these settings</button>` : ''}
-          <span class="muted-line">${r.driveId ? 'Saved in Google Drive' : 'Saved on this device'}</span>
+          <span class="muted-line">${r.driveId ? 'Saved in Google Drive' : 'Saved on this device only'}</span>
+          ${!r.driveId && drive.configured ? `<button class="hd-upload" data-act="upload">${drive.signedIn ? 'Upload to Google Drive' : 'Sign in with Google to upload'}</button>` : ''}
         </div>
       </section>`;
     if (r.points.length > 1) {
@@ -129,10 +143,20 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
     return rows.join('');
   }
 
+  // the upload buttons (banner and detail): sign in or renew right from this tap, then sync
+  body.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-act="upload"]');
+    if (!b || b.disabled) return;
+    b.disabled = true;
+    b.textContent = 'Uploading…';
+    void drive.connect().then(() => render());
+  });
   const offHistory = onHistoryChanged(() => void render());
+  // the banner follows the sign-in state (renewed elsewhere, sync finished, an error)
+  const offDriveState = drive.onChange(() => { if (!id) void render(); });
   void render();
-  // pick up trainings from other devices when the sign-in is still valid
-  if (drive.status.state === 'synced') void drive.sync();
+  // trainings from other devices: now, or on the next tap once the sign-in is renewed
+  drive.requestSync();
 
-  return () => { disposed = true; offHistory(); offFs(); offDrive(); unmountChart?.(); };
+  return () => { disposed = true; offHistory(); offDriveState(); offFs(); offDrive(); unmountChart?.(); };
 }

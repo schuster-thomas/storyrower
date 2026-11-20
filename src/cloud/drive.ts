@@ -78,13 +78,22 @@ class DriveSync {
   private client: TokenClient | null = null;
   private listeners = new Set<(s: DriveStatus) => void>();
   private running: Promise<void> | null = null;
+  private signing: Promise<void> | null = null;
   private settingsTimer: ReturnType<typeof setTimeout> | null = null;
+  /** settings changed while the sign-in had run out – upload them with the next sync */
+  private settingsDirty = false;
+  /** a page asked for fresh data (the history: trainings from other devices) */
+  private wantSync = false;
+  private lastAuto = 0;
   private _status: DriveStatus;
 
   constructor() {
     this._status = { state: 'signed-out', email: this.linked?.email ?? null, lastSync: this.linked?.lastSync ?? null, pending: 0, error: null };
     this._status.state = this.baseState();
     onSettingsChanged(() => this.settingsChanged());
+    // Renew a run-out sign-in on the next tap anywhere in the menus – browsers only allow the
+    // Google window from a tap. Capture phase, so it runs before the tapped button's own handler.
+    if (typeof document !== 'undefined') document.addEventListener('click', this.onTap, true);
   }
 
   get configured() { return GOOGLE_CLIENT_ID !== ''; }
@@ -106,30 +115,76 @@ class DriveSync {
 
   private hasToken() { return this.token != null && this.token.exp > Date.now() + 60_000; }
 
-  /** Load Google's sign-in script early, so a tap on the icon can open the window right away. */
-  preload() { if (this.configured) loadGis().catch(() => {}); }
+  /**
+   * Load Google's sign-in script and set up the token client early: the Google window may only be
+   * opened right inside a tap, so by then everything has to be ready.
+   */
+  preload() {
+    if (this.configured) loadGis().then((g) => this.initClient(g)).catch(() => {});
+  }
+
+  private initClient(gis: Gis) {
+    this.client ??= gis.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: DRIVE_SCOPES, callback: () => {} });
+    return this.client;
+  }
 
   /** Start-up: count what waits, and sync if the last sign-in is still valid. */
   async init() {
     if (!this.configured) return;
+    if (this.linked) this.preload();
     await this.refreshPending();
     if (this.linked && this.hasToken()) void this.sync();
     else this.set({ state: this.baseState() });
   }
 
+  /**
+   * From a tap ("Upload to Google Drive", "Sign in"): sign in or renew if needed, then sync.
+   * The one call every button uses.
+   */
+  connect(): Promise<void> {
+    if (!this.configured) return Promise.resolve();
+    if (this.linked && this.hasToken()) return this.sync();
+    return this.signIn();
+  }
+
+  /** A page wants fresh data (e.g. the history): sync now, or as soon as the sign-in is renewed. */
+  requestSync() {
+    if (!this.configured || !this.linked) return;
+    if (this.hasToken()) void this.sync();
+    else this.wantSync = true;
+  }
+
+  /** Something waits for Drive and the sign-in has run out: renew it on this tap (at most every 2 min). */
+  private onTap = () => {
+    if (!this.configured || !this.linked || this.hasToken() || this.signing || !this.client) return;
+    if (!(this._status.pending > 0 || this.settingsDirty || this.wantSync)) return;
+    if (document.querySelector('.game-canvas')) return;   // never in the middle of a workout
+    if (Date.now() - this.lastAuto < 120_000) return;
+    this.lastAuto = Date.now();
+    void this.signIn();
+  };
+
   /** Must run from a tap (the browser only allows the Google window then). */
-  async signIn(): Promise<void> {
-    if (!this.configured) return;
+  signIn(): Promise<void> {
+    if (!this.configured) return Promise.resolve();
+    this.signing ??= this.doSignIn().finally(() => { this.signing = null; });
+    return this.signing;
+  }
+
+  private async doSignIn(): Promise<void> {
     this.set({ state: 'connecting', error: null });
     try {
-      const gis = await loadGis();
-      const resp = await new Promise<TokenResponse>((resolve, reject) => {
-        this.client ??= gis.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: DRIVE_SCOPES, callback: () => {} });
-        this.client.callback = (r) => (r.access_token ? resolve(r) : reject(new Error(r.error_description ?? r.error ?? 'sign-in failed')));
-        this.client.error_callback = (e) => reject(new Error(e.type === 'popup_closed' ? 'Sign-in window closed' : e.message ?? e.type ?? 'sign-in failed'));
-        // signed in before: no consent screen again, just pick the account
-        this.client.requestAccessToken(this.linked ? { prompt: '', login_hint: this.linked.email ?? undefined } : { prompt: 'consent' });
+      // signed in before: no consent screen again – Google just confirms the account, the window
+      // closes by itself. requestAccessToken runs synchronously here when the client is ready.
+      const ask = (client: TokenClient) => new Promise<TokenResponse>((resolve, reject) => {
+        client.callback = (r) => (r.access_token ? resolve(r) : reject(new Error(r.error_description ?? r.error ?? 'sign-in failed')));
+        client.error_callback = (e) => reject(new Error(
+          e.type === 'popup_closed' ? 'The Google window was closed.'
+            : e.type === 'popup_failed_to_open' ? 'The browser blocked the Google window – tap again.'
+              : e.message ?? e.type ?? 'sign-in failed'));
+        client.requestAccessToken(this.linked ? { prompt: '', login_hint: this.linked.email ?? undefined } : { prompt: 'consent' });
       });
+      const resp = await (this.client ? ask(this.client) : loadGis().then((g) => ask(this.initClient(g))));
       this.token = { value: resp.access_token!, exp: Date.now() + (resp.expires_in ?? 3600) * 1000 };
       write(TOKEN_KEY, this.token);
       const email = await this.fetchEmail().catch(() => this.linked?.email ?? null);
@@ -200,6 +255,8 @@ class DriveSync {
       this.linked = { ...this.linked!, lastSync: now };
       write(LINK_KEY, this.linked);
       await this.refreshPending();
+      this.settingsDirty = false;
+      this.wantSync = false;
       notifyHistoryChanged();
       this.set({ state: 'synced', lastSync: now });
     } catch (e) {
@@ -220,7 +277,10 @@ class DriveSync {
   private settingsChanged() {
     if (!this.configured || !this.linked) return;
     if (this.settingsTimer) clearTimeout(this.settingsTimer);
-    this.settingsTimer = setTimeout(() => { if (this.hasToken()) void this.sync(); }, 3000);
+    this.settingsTimer = setTimeout(() => {
+      if (this.hasToken()) void this.sync();
+      else { this.settingsDirty = true; this.set({ state: 'needs-login' }); }
+    }, 3000);
   }
 
   private async refreshPending() {

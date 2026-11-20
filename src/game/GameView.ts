@@ -6,7 +6,7 @@ import { formatDuration, formatPace } from '../rower/ftms';
 import { SimulatorSource } from '../rower/sources/simulator';
 import { BluetoothSource } from '../rower/sources/bluetooth';
 import { MIN_TRAINING_SECONDS, newTrainingId, type TrainingRecord } from '../history/history';
-import { SAVE_TEXT, saveTraining } from '../history/save';
+import { saveTraining, showSaveResult } from '../history/save';
 import type { RowerEvent, RowerSample } from '../rower/types';
 import { accuracy, isIn, isLow, newScore, stars, updateScore, type Zone } from '../workout/scoring';
 import { WorkoutTrace, summarize } from '../workout/trace';
@@ -221,7 +221,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
         early, device: session!.source instanceof BluetoothSource ? session!.source.deviceName : session!.source.info.label,
         summary: sum, accuracy: +accuracy(score).toFixed(3), stars: st, points: trace.points,
       };
-      void saveTraining(record).then((r) => { savedEl.textContent = SAVE_TEXT[r]; savedEl.hidden = false; savedEl.dataset.result = r; });
+      void saveTraining(record).then((r) => showSaveResult(savedEl, r));
     }
   }
 

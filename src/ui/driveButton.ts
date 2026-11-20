@@ -77,7 +77,7 @@ export function bindDriveButton(wrap: HTMLElement): () => void {
   pop.onclick = (e) => {
     const act = (e.target as HTMLElement).closest<HTMLElement>('[data-act]')?.dataset.act;
     if (act === 'signin') void drive.signIn();       // straight from the tap: the browser allows the Google window
-    else if (act === 'sync') void drive.sync();
+    else if (act === 'sync') void drive.connect();
     else if (act === 'signout') { drive.signOut(); close(); }
   };
   const onDoc = (e: PointerEvent) => { if (!wrap.contains(e.target as Node)) close(); };

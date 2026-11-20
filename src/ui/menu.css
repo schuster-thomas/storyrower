@@ -297,3 +297,8 @@ body:has(.menu) { background: #e6f0f8; }
 /* the results chart from the end screen, in the light menu colours */
 .hist .rc { --bg: #fff; --panel: #fff; --line: #d6e3ee; --text: #13244b; --muted: #607089; }
 .hist .rc-toggle { background: #eef4f9; color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
+.hist-sync { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 12px; padding: 12px 16px; background: #fff7e8; border: 1px solid #f0d49b; border-radius: 14px; color: var(--ink); }
+.hist-sync em { display: block; font-style: normal; font-size: 14px; color: #b03030; }
+.hist-sync .btn-navy:disabled { opacity: .6; }
+.hd-upload { background: #fff; color: var(--navy); border: 1.5px solid #c9d6e3; border-radius: 999px; padding: 8px 18px; font: inherit; font-weight: 800; cursor: pointer; }
+.hd-upload:disabled { opacity: .6; }
