@@ -1,3 +1,9 @@
+// Nunito comes with the app (not from Google's servers – no visitor IP goes to Google)
+import '@fontsource/nunito/600.css';
+import '@fontsource/nunito/700.css';
+import '@fontsource/nunito/800.css';
+import '@fontsource/nunito/900.css';
+import '@fontsource/nunito/900-italic.css';
 import './ui/styles.css';
 import './ui/menu.css';
 import './game/game.css';

@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <title>Gates</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap">
+
 <style>body{margin:0;background:#222;font:13px system-ui;color:#fff} #grid{display:grid;grid-template-columns:1fr 1fr;gap:4px} img{width:100%;display:block}</style>
 </head>
 <body>
 <div id="grid"></div>
 <script type="module">
 // Dev-only: renders the target and finish gates in a plain stand-in scene (sky, water, chase camera).
+import '@fontsource/nunito/800.css';
+import '@fontsource/nunito/900.css';
 import * as THREE from 'three';
 import { Gates } from '/src/game/scene/Gates.ts';
 
