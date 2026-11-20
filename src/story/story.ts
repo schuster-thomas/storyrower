@@ -1,4 +1,4 @@
-import type { Environment, Level } from '../game/levels/iceland';
+import type { Environment, Level } from '../game/levels/level';
 import { phaseSpans, type PhaseId, type Segment, type Workout } from '../workout/workout';
 
 /** One-shot effects the scene and the audio engine know how to play. */
@@ -11,10 +11,14 @@ export type EffectId = 'calm' | 'birds' | 'tremor' | 'calving' | 'ash' | 'erupti
 export type Anchor =
   | { at: 'phase-start'; phase: PhaseId; offset?: number }
   | { at: 'phase-fraction'; phase: PhaseId; fraction: number }
-  | { at: 'first-section'; kind: Segment['kind']; offset?: number };
+  | { at: 'first-section'; kind: Segment['kind']; offset?: number }
+  /** share of the whole workout, independent of the phases */
+  | { at: 'fraction'; fraction: number };
 
 export interface BeatDef {
   id: string;
+  /** Short name, e.g. for the start-at list on the setup screen */
+  name: string;
   anchor: Anchor;
   /** Short story line shown on screen */
   caption: string;
@@ -33,6 +37,7 @@ export function scheduleBeats(level: Level, workout: Workout): ScheduledBeat[] {
     const a = b.anchor;
     if (a.at === 'phase-start') { const s = span(a.phase); if (s) t = s.start + (a.offset ?? 0); }
     else if (a.at === 'phase-fraction') { const s = span(a.phase); if (s) t = s.start + (s.end - s.start) * a.fraction; }
+    else if (a.at === 'fraction') t = workout.duration * a.fraction;
     else {
       const seg = workout.segments.find((s) => s.kind === a.kind);
       if (seg) t = seg.start + (a.offset ?? 0);

@@ -1,7 +1,20 @@
 import { paceFromPower } from '../rower/ftms';
 
+/**
+ * How the targets move over the workout.
+ * - story:   the full adventure curve (warm-up, build-up, intervals, peak, cool-down)
+ * - steady:  the same targets from start to finish
+ * - buildup: targets get harder step by step up to the peak at the end
+ * - pyramid: easy → hardest in the middle → easy
+ * - waves:   up and down, several times
+ */
+export type WorkoutMode = 'story' | 'steady' | 'buildup' | 'pyramid' | 'waves';
+export const MODES: WorkoutMode[] = ['story', 'steady', 'buildup', 'pyramid', 'waves'];
+export type ShapedMode = Exclude<WorkoutMode, 'story'>;
+
 /** User settings before a workout. */
 export interface WorkoutSettings {
+  mode: WorkoutMode;
   minPower: number;   // W – easiest target (warm-up, cool-down)
   maxPower: number;   // W – hardest target (peak)
   minSpm: number;
@@ -9,9 +22,13 @@ export interface WorkoutSettings {
   durationMin: number;
   /** Shortest allowed section in seconds – fewer target changes with higher values. */
   minSegmentSec: number;
+  /** Steady mode: one power and one stroke-rate target instead of a range. */
+  steadyPower: number;
+  steadySpm: number;
 }
 
 export const DEFAULT_SETTINGS: WorkoutSettings = {
+  mode: 'story',
   // Based on the first Woodrower recordings: easy ≈ 55 W / 23 spm, hard ≈ 85–100 W / 27–30 spm
   minPower: 55,
   maxPower: 110,
@@ -19,6 +36,8 @@ export const DEFAULT_SETTINGS: WorkoutSettings = {
   maxSpm: 30,
   durationMin: 20,
   minSegmentSec: 30,
+  steadyPower: 80,
+  steadySpm: 26,
 };
 
 /** The five story phases every level maps its beats onto. */
@@ -26,6 +45,21 @@ export type PhaseId = 'idyll' | 'omens' | 'escalation' | 'finale' | 'winddown';
 export const PHASES: PhaseId[] = ['idyll', 'omens', 'escalation', 'finale', 'winddown'];
 
 export interface Band { lo: number; hi: number }
+
+/**
+ * Where the story phases sit on a shaped (non-story) workout: a share of the total time each,
+ * in story order (idyll → omens → escalation → finale → winddown; phases may be left out).
+ * Levels set these per mode (src/game/levels/level.ts).
+ */
+export interface PhaseShare { phase: PhaseId; share: number }
+
+/** Used when a level gives no plan for a mode. */
+export const DEFAULT_PHASE_PLANS: Record<ShapedMode, PhaseShare[]> = {
+  steady: [{ phase: 'idyll', share: 0.85 }, { phase: 'winddown', share: 0.15 }],
+  buildup: [{ phase: 'idyll', share: 0.25 }, { phase: 'omens', share: 0.25 }, { phase: 'escalation', share: 0.3 }, { phase: 'finale', share: 0.2 }],
+  pyramid: [{ phase: 'idyll', share: 0.2 }, { phase: 'omens', share: 0.2 }, { phase: 'escalation', share: 0.08 }, { phase: 'finale', share: 0.12 }, { phase: 'winddown', share: 0.4 }],
+  waves: [{ phase: 'idyll', share: 0.2 }, { phase: 'omens', share: 0.2 }, { phase: 'escalation', share: 0.45 }, { phase: 'winddown', share: 0.15 }],
+};
 
 export interface Segment {
   phase: PhaseId;
@@ -49,6 +83,7 @@ export interface Workout {
 }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const r10 = (x: number) => Math.round(x / 10) * 10;
 
 /** Target bands for a given intensity (0–1). */
 export function bandsFor(s: WorkoutSettings, intensity: number) {
@@ -62,26 +97,34 @@ export function bandsFor(s: WorkoutSettings, intensity: number) {
 }
 
 /**
- * Builds the training curve: warm-up (idyll) → build-up (omens) → intervals (escalation)
- * → peak (finale) → cool-down (wind-down). Works for any duration from 10 to 90 minutes.
+ * Builds the workout for the chosen mode, always between the easiest and hardest targets
+ * the user entered. `plan` places the story phases on shaped modes (the level's choice).
+ * Works for any duration from 10 to 90 minutes.
  */
-export function generateWorkout(settings: WorkoutSettings): Workout {
-  const s = { ...settings };
+export function generateWorkout(settings: WorkoutSettings, plan?: PhaseShare[]): Workout {
+  const s = { ...DEFAULT_SETTINGS, ...settings };
+  if (!MODES.includes(s.mode)) s.mode = 'story';
   if (s.maxPower < s.minPower) [s.minPower, s.maxPower] = [s.maxPower, s.minPower];
   if (s.maxSpm < s.minSpm) [s.minSpm, s.maxSpm] = [s.maxSpm, s.minSpm];
   const total = Math.max(10, Math.min(90, s.durationMin)) * 60;
+  // Shortest section, in whole 10 s steps
+  const minSeg = Math.max(10, Math.min(600, Math.ceil((s.minSegmentSec || 30) / 10) * 10));
+  s.minSegmentSec = minSeg;
+  const segs = s.mode === 'story' ? storyCurve(s, total, minSeg) : shapedCurve(s, s.mode, total, minSeg, plan ?? DEFAULT_PHASE_PLANS[s.mode]);
+  return { settings: s, duration: segs[segs.length - 1].end, segments: segs };
+}
 
+/**
+ * Story mode: warm-up (idyll) → build-up (omens) → intervals (escalation)
+ * → peak (finale) → cool-down (wind-down).
+ */
+function storyCurve(s: WorkoutSettings, total: number, minSeg: number): Segment[] {
   // Phase lengths, rounded to whole 10 s steps
-  const r10 = (x: number) => Math.round(x / 10) * 10;
   const idyll = r10(total * 0.2);
   const omens = r10(total * 0.15);
   const finale = r10(total * 0.1);
   const winddown = r10(total * 0.15);
   let escalation = total - idyll - omens - finale - winddown;
-
-  // Shortest section, in whole 10 s steps
-  const minSeg = Math.max(10, Math.min(600, Math.ceil((s.minSegmentSec || 30) / 10) * 10));
-  s.minSegmentSec = minSeg;
 
   // Intervals: 1 min hard / 1 min easy for longer workouts, 30 s / 30 s for short ones,
   // but never shorter than the minimum section length
@@ -124,8 +167,73 @@ export function generateWorkout(settings: WorkoutSettings): Workout {
     if (segs[i].end - segs[i].start < minSeg) { segs[i - 1].end = segs[i].end; segs.splice(i, 1); }
   }
   if (segs.length > 1 && segs[0].end - segs[0].start < minSeg) { segs[1].start = 0; segs.shift(); }
+  return segs;
+}
 
-  return { settings: s, duration: t, segments: segs };
+/** Intensity (0–1) of a shaped mode at u = 0…1 along the workout. */
+function shape(mode: ShapedMode, u: number, waves: number): number {
+  switch (mode) {
+    case 'steady': return 0.5;
+    case 'buildup': return u;
+    case 'pyramid': return 1 - Math.abs(2 * u - 1);
+    case 'waves': return 0.5 - 0.5 * Math.cos(2 * Math.PI * waves * u);
+  }
+}
+
+/**
+ * Steady, build-up, pyramid and waves: the workout is cut into equal steps (never shorter than
+ * the shortest section) and each step takes its targets from the mode's shape. The story phases
+ * are laid over the time by the level's plan, so scenery and story beats still follow along.
+ */
+function shapedCurve(settings: WorkoutSettings, mode: ShapedMode, total: number, minSeg: number, plan: PhaseShare[]): Segment[] {
+  // steady has a single target, not a range
+  const s = mode === 'steady'
+    ? { ...settings, minPower: settings.steadyPower, maxPower: settings.steadyPower, minSpm: settings.steadySpm, maxSpm: settings.steadySpm }
+    : settings;
+  // about 20 steps, 30 s to 3 min each
+  const stepLen = Math.max(minSeg, Math.min(180, Math.max(30, r10(total / 20))));
+  let n = Math.max(1, Math.floor(total / stepLen));
+  let waves = 1;
+  if (mode === 'pyramid' && n > 2 && n % 2 === 0) n -= 1; // odd, so one step sits exactly on the top
+  if (mode === 'waves' && n >= 3) {
+    // a wave every ~6 min, with at least three steps up and three down where there's room;
+    // n - 1 a multiple of 2·waves so every crest and trough lands on a step
+    waves = Math.max(1, Math.min(Math.round(total / 360), Math.floor((n - 1) / 6)));
+    n = 2 * waves * Math.max(1, Math.floor((n - 1) / (2 * waves))) + 1;
+  }
+
+  // step lengths in 10 s units, the remainder spread evenly so the total stays exact
+  const units = total / 10;
+  const base = Math.floor(units / n);
+  const extra = units - base * n;
+  const lens = Array.from({ length: n }, (_, i) => (base + Math.floor(((i + 1) * extra) / n) - Math.floor((i * extra) / n)) * 10);
+
+  // phase plan → cumulative boundaries (shares normalised)
+  const used = plan.filter((p) => p.share > 0);
+  const sum = used.reduce((a, p) => a + p.share, 0) || 1;
+  let acc = 0;
+  const bounds = used.map((p) => ({ phase: p.phase, end: (acc += p.share / sum) }));
+  const phaseAt = (x: number): PhaseId => (bounds.find((b) => x < b.end) ?? bounds[bounds.length - 1])?.phase ?? 'idyll';
+
+  const segs: Segment[] = [];
+  let t = 0;
+  let prev = -1;
+  for (let i = 0; i < n; i++) {
+    const len = lens[i];
+    const u = n === 1 ? 0.5 : i / (n - 1);
+    const intensity = Math.round(shape(mode, u, waves) * 100) / 100;
+    const phase = phaseAt((t + len / 2) / total);
+    const kind: Segment['kind'] = mode === 'steady' || i === 0 ? 'steady'
+      : intensity >= 0.995 ? (mode === 'waves' ? 'hard' : 'peak')
+      : intensity > prev ? 'ramp' : intensity < prev ? 'easy' : 'steady';
+    const last = segs[segs.length - 1];
+    // same targets in the same phase: one longer section rather than a "new target" with the same numbers
+    if (last && last.phase === phase && last.intensity === intensity) last.end += len;
+    else segs.push({ phase, start: t, end: t + len, intensity, kind, ...bandsFor(s, intensity) });
+    t += len;
+    prev = intensity;
+  }
+  return segs;
 }
 
 export function segmentAt(w: Workout, t: number): Segment {

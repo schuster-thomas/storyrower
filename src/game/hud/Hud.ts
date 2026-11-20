@@ -3,7 +3,7 @@ import type { RowerSample } from '../../rower/types';
 import { accuracy, type ScoreState, type Zone } from '../../workout/scoring';
 import type { Band, Segment, Workout } from '../../workout/workout';
 import { phaseSpans } from '../../workout/workout';
-import type { Level } from '../levels/iceland';
+import type { Level } from '../levels/level';
 
 export interface HudState {
   level: Level;

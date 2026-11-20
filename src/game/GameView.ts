@@ -10,7 +10,7 @@ import { WorkoutTrace, summarize } from '../workout/trace';
 import { mountResultsChart } from './hud/ResultsChart';
 import { nextSegment, segmentAt, type Segment, type Workout } from '../workout/workout';
 import { Hud } from './hud/Hud';
-import type { Level } from './levels/iceland';
+import type { Level } from './levels/level';
 import { AutoQuality, loadGraphics } from './scene/quality';
 import { RiverScene } from './scene/RiverScene';
 

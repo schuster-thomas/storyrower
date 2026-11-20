@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { EffectId, StoryState } from '../../story/story';
-import type { Environment } from '../levels/iceland';
+import type { Environment } from '../levels/level';
 import { Backdrop } from './Backdrop';
 import { Boat } from './Boat';
 import { Effects } from './Effects';

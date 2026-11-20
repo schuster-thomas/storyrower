@@ -1,35 +1,11 @@
-import type { BeatDef } from '../../story/story';
-import type { PhaseId } from '../../workout/workout';
+import type { Level } from './level';
 
-/** Look of the world for one story phase (greybox palette, refined in milestone 4). */
-export interface Environment {
-  sky: number;
-  fog: number;
-  fogNear: number;
-  fogFar: number;
-  sun: number;
-  sunIntensity: number;
-  ground: number;
-  water: number;
-  /** 0–1: lava glow on the volcano */
-  lava: number;
-  /** 0–1: ash/smoke amount */
-  smoke: number;
-  /** 0–1: how far the tidal wave is shown behind the boat */
-  wave: number;
-  /** 0–1: water roughness */
-  swell: number;
-  /** sun elevation (direction y component, ~0.1 = sunset, 0.5 = high) */
-  sunHeight: number;
-}
-
-export interface LevelPhase { id: PhaseId; name: string; env: Environment }
-
-export interface Level { id: string; title: string; phases: Record<PhaseId, LevelPhase>; beats: BeatDef[] }
+export type { Environment, Level, LevelPhase } from './level';
 
 export const ICELAND: Level = {
   id: 'iceland-volcano-run',
   title: 'Iceland Volcano Run',
+  tagline: 'Row through quiet fjords, past glaciers and a rumbling volcano.',
   phases: {
     idyll: {
       id: 'idyll', name: 'Fjord Morning',
@@ -52,16 +28,67 @@ export const ICELAND: Level = {
       env: { sky: 0xf3b27f, fog: 0xf6c9a0, fogNear: 160, fogFar: 900, sun: 0xffc48a, sunIntensity: 1.9, ground: 0x6c8f52, water: 0x3a7fa8, lava: 0.15, smoke: 0.25, wave: 0, swell: 0.15, sunHeight: 0.1 },
     },
   },
-  // The story, laid onto any training curve by the story engine (src/story/story.ts)
+  // Every story moment of the level, laid onto the training curve by the story engine (src/story/story.ts).
+  // Which of them happen in which mode is decided in `modes` below.
   beats: [
-    { id: 'calm', anchor: { at: 'phase-start', phase: 'idyll', offset: 3 }, effect: 'calm', caption: 'A calm morning on the fjord. Find your rhythm.' },
-    { id: 'birds', anchor: { at: 'phase-fraction', phase: 'idyll', fraction: 0.5 }, effect: 'birds', caption: 'Puffins circle above the waterfalls.' },
-    { id: 'tremor', anchor: { at: 'phase-start', phase: 'omens', offset: 0 }, effect: 'tremor', caption: 'The ground trembles…' },
-    { id: 'calving', anchor: { at: 'phase-fraction', phase: 'omens', fraction: 0.25 }, effect: 'calving', caption: 'The tremor breaks the glacier – ice crashes into the river!' },
-    { id: 'ash', anchor: { at: 'phase-fraction', phase: 'omens', fraction: 0.5 }, effect: 'ash', caption: 'Ash drifts down from the volcano.' },
-    { id: 'eruption', anchor: { at: 'first-section', kind: 'hard', offset: 0 }, effect: 'eruption', caption: 'ERUPTION! Row for your life!' },
-    { id: 'wave', anchor: { at: 'phase-start', phase: 'finale', offset: 0 }, effect: 'wave', caption: 'A tidal wave! Give it everything!' },
-    { id: 'escape', anchor: { at: 'phase-start', phase: 'winddown', offset: 0 }, effect: 'escape', caption: 'You outran the wave. Safe waters ahead.' },
-    { id: 'sunset', anchor: { at: 'phase-fraction', phase: 'winddown', fraction: 0.5 }, effect: 'sunset', caption: 'Ease off and let the boat glide into the sunset.' },
+    { id: 'calm', name: 'Calm morning', anchor: { at: 'phase-start', phase: 'idyll', offset: 3 }, effect: 'calm', caption: 'A calm morning on the fjord. Find your rhythm.' },
+    { id: 'birds', name: 'Puffins', anchor: { at: 'phase-fraction', phase: 'idyll', fraction: 0.5 }, effect: 'birds', caption: 'Puffins circle above the waterfalls.' },
+    { id: 'tremor', name: 'First tremor', anchor: { at: 'phase-start', phase: 'omens', offset: 0 }, effect: 'tremor', caption: 'The ground trembles…' },
+    { id: 'calving', name: 'Calving glacier', anchor: { at: 'phase-fraction', phase: 'omens', fraction: 0.25 }, effect: 'calving', caption: 'The tremor breaks the glacier – ice crashes into the river!' },
+    { id: 'ash', name: 'Ash rain', anchor: { at: 'phase-fraction', phase: 'omens', fraction: 0.5 }, effect: 'ash', caption: 'Ash drifts down from the volcano.' },
+    { id: 'eruption', name: 'Eruption', anchor: { at: 'first-section', kind: 'hard', offset: 0 }, effect: 'eruption', caption: 'ERUPTION! Row for your life!' },
+    { id: 'wave', name: 'Tidal wave', anchor: { at: 'phase-start', phase: 'finale', offset: 0 }, effect: 'wave', caption: 'A tidal wave! Give it everything!' },
+    { id: 'escape', name: 'Escape', anchor: { at: 'phase-start', phase: 'winddown', offset: 0 }, effect: 'escape', caption: 'You outran the wave. Safe waters ahead.' },
+    { id: 'sunset', name: 'Sunset', anchor: { at: 'phase-fraction', phase: 'winddown', fraction: 0.5 }, effect: 'sunset', caption: 'Ease off and let the boat glide into the sunset.' },
   ],
+  /**
+   * Which story elements each workout mode gets. `phases` places the scenery along the time
+   * (shares of the workout); `beats` lists the moments that happen, optionally moved or reworded.
+   */
+  modes: {
+    story: {
+      summary: 'Follow the adventure as your workout unfolds.',
+      beats: 'all',
+    },
+    steady: {
+      summary: 'A quiet row past puffins and the glacier – the volcano sleeps.',
+      phases: [{ phase: 'idyll', share: 0.85 }, { phase: 'winddown', share: 0.15 }],
+      beats: {
+        calm: true,
+        birds: { anchor: { at: 'phase-fraction', phase: 'idyll', fraction: 0.15 } },
+        calving: { anchor: { at: 'fraction', fraction: 0.5 }, caption: 'With a crack the glacier calves – ice crashes into the fjord!' },
+        sunset: { anchor: { at: 'phase-start', phase: 'winddown', offset: 0 }, caption: 'The sun sinks low over the fjord. Keep your rhythm.' },
+      },
+      // no eruption in this mode, so no smoke or lava glow at sunset either
+      env: { winddown: { lava: 0, smoke: 0 } },
+    },
+    buildup: {
+      summary: 'The volcano wakes slowly – the tidal wave hits at the very end.',
+      phases: [{ phase: 'idyll', share: 0.25 }, { phase: 'omens', share: 0.25 }, { phase: 'escalation', share: 0.3 }, { phase: 'finale', share: 0.2 }],
+      beats: {
+        calm: true, birds: true, tremor: true, calving: true, ash: true,
+        eruption: { anchor: { at: 'phase-start', phase: 'escalation', offset: 0 } },
+        wave: true,
+      },
+    },
+    pyramid: {
+      summary: 'Eruption and tidal wave wait at the top – then glide home.',
+      phases: [{ phase: 'idyll', share: 0.2 }, { phase: 'omens', share: 0.2 }, { phase: 'escalation', share: 0.08 }, { phase: 'finale', share: 0.12 }, { phase: 'winddown', share: 0.4 }],
+      beats: {
+        calm: true, birds: true, tremor: true, calving: true, ash: true,
+        eruption: { anchor: { at: 'phase-start', phase: 'escalation', offset: 0 } },
+        wave: true, escape: true, sunset: true,
+      },
+    },
+    waves: {
+      summary: 'The volcano erupts in bursts – push on every crest.',
+      phases: [{ phase: 'idyll', share: 0.2 }, { phase: 'omens', share: 0.2 }, { phase: 'escalation', share: 0.45 }, { phase: 'winddown', share: 0.15 }],
+      beats: {
+        calm: true, birds: true, tremor: true, calving: true, ash: true,
+        eruption: { anchor: { at: 'phase-start', phase: 'escalation', offset: 0 } },
+        escape: { caption: 'The eruption dies down. Safe waters ahead.' },
+        sunset: true,
+      },
+    },
+  },
 };
