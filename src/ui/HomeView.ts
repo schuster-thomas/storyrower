@@ -36,6 +36,7 @@ export function mountHome(root: HTMLElement): () => void {
           ${tile('#/diagnose', rowerCard, 'Devices &amp; Diagnostics', 'Connect your rower, check live data or try the simulator.')}
         </div>
       </main>
+      <footer class="menu-foot"><a href="privacy.html">Privacy</a></footer>
     </div>`;
 
   const offFs = bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);

@@ -31,7 +31,8 @@ const time = (iso: string | null) => (iso ? new Date(iso).toLocaleString([], { d
 export function bindDriveButton(wrap: HTMLElement): () => void {
   const btn = wrap.querySelector<HTMLButtonElement>('[data-drive]')!;
   const pop = wrap.querySelector<HTMLElement>('.drive-pop')!;
-  drive.preload();
+  // Google's sign-in script only loads for someone signed in, or once the menu is opened
+  if (drive.signedIn) drive.preload();
 
   const renderPop = (s: DriveStatus) => {
     const what = `Your trainings and settings are saved to a “${DRIVE_FOLDER}” folder in your Google Drive. StoryRower only sees the files it created there.`;
@@ -56,7 +57,7 @@ export function bindDriveButton(wrap: HTMLElement): () => void {
           <p class="drive-meta">${s.state === 'syncing' ? 'Syncing…' : `Last sync: ${time(s.lastSync)}`}</p>${waiting}${err}
           <button class="btn-navy" data-act="sync" ${s.state === 'syncing' ? 'disabled' : ''}>Sync now</button><button class="drive-link" data-act="signout">Sign out</button>`;
     }
-    pop.innerHTML = body;
+    pop.innerHTML = `${body}<a class="drive-privacy" href="privacy.html" target="_blank" rel="noopener">Privacy</a>`;
   };
 
   const render = (s: DriveStatus) => {
@@ -70,6 +71,7 @@ export function bindDriveButton(wrap: HTMLElement): () => void {
   const close = () => { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
   btn.onclick = () => {
     if (!pop.hidden) { close(); return; }
+    drive.preload();
     renderPop(drive.status);
     pop.hidden = false;
     btn.setAttribute('aria-expanded', 'true');

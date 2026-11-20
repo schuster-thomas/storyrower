@@ -305,3 +305,6 @@ body:has(.menu) { background: #e6f0f8; }
 .hist-sync .btn-navy:disabled { opacity: .6; }
 .hd-upload { background: #fff; color: var(--navy); border: 1.5px solid #c9d6e3; border-radius: 999px; padding: 8px 18px; font: inherit; font-weight: 800; cursor: pointer; }
 .hd-upload:disabled { opacity: .6; }
+.drive-pop .drive-privacy { display: block; margin-top: 10px; text-align: center; font-size: 13px; color: var(--ink-2); }
+.menu-foot { max-width: 1400px; margin: 18px auto 0; padding: 0 6px; text-align: right; font-size: 13px; }
+.menu-foot a { color: var(--ink-2); }
