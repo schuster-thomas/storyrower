@@ -1,7 +1,6 @@
 import { connection } from '../app/connection';
 import { LEVELS } from '../game/levels';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
-import { SimulatorSource } from '../rower/sources/simulator';
 import { ICON_GEAR, LOGO } from './icons';
 import { bindFullscreenButton, FS_BUTTON } from './fullscreen';
 import icelandCard from '../assets/ui/iceland-card.webp';
@@ -41,18 +40,15 @@ export function mountHome(root: HTMLElement): () => void {
   const render = () => {
     const s = connection.session;
     const connected = s?.state === 'connected';
-    const link = connection.rowerLink;
-    btn.textContent = !s ? 'Connect rower'
-      : s.source instanceof SimulatorSource ? (connected ? 'Simulator ready' : 'Simulator…')
-      : link === 'connected' ? 'Disconnect rower' : link === 'connecting' ? 'Cancel connecting' : 'Connect rower';
-    if (isWebBluetoothAvailable()) btn.title = link === 'connected' ? `${(s?.source as BluetoothSource).deviceName ?? 'Rower'} connected – tap to disconnect` : '';
+    // the one button up here: connect the rower, or disconnect whatever is running (rower, simulator, replay)
+    const a = connection.active;
+    btn.textContent = !a ? 'Connect rower' : a.state === 'connecting' ? 'Cancel connecting' : `Disconnect ${a.label}`;
+    btn.title = !a ? (isWebBluetoothAvailable() ? '' : 'No Web Bluetooth in this browser – use Chrome or Edge')
+      : a.label === 'rower' && connected ? `${(s?.source as BluetoothSource).deviceName ?? 'Rower'} connected – tap to disconnect` : '';
+    btn.disabled = !a && !isWebBluetoothAvailable();
     btn.classList.toggle('ok', connected);
   };
-  if (!isWebBluetoothAvailable()) { btn.disabled = true; btn.title = 'No Web Bluetooth in this browser – use Chrome or Edge'; }
-  btn.onclick = () => {
-    if (connection.rowerLink) connection.disconnectRower();
-    else if (connection.session?.state !== 'connected') void connection.use(new BluetoothSource(false));
-  };
+  btn.onclick = () => { if (connection.active) connection.disconnect(); else void connection.use(new BluetoothSource(false)); };
 
   let offSession: (() => void) | null = null;
   const follow = () => { offSession?.(); offSession = connection.session?.on((e) => { if (e.type === 'state') render(); }) ?? null; render(); };

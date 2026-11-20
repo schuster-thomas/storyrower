@@ -69,11 +69,21 @@ class Connection {
     return s.state === 'connected' ? 'connected' : s.state === 'connecting' ? 'connecting' : null;
   }
 
+  /** Whatever rows right now – rower, simulator or a replay – while it is connected or connecting. */
+  get active(): { label: string; state: 'connected' | 'connecting' } | null {
+    const s = this._session;
+    if (!s || (s.state !== 'connected' && s.state !== 'connecting')) return null;
+    const label = s.source instanceof BluetoothSource ? 'rower' : s.source.info.kind === 'simulator' ? 'simulator' : 'replay';
+    return { label, state: s.state };
+  }
+
   /**
-   * Disconnect the rower (also cancels a connect that hangs). The session and its recording stay,
-   * so the diagnostics download still has everything; the next Connect starts a new one.
+   * Disconnect the rower, stop the simulator or a replay (also cancels a connect that hangs). The
+   * session and its recording stay, so the diagnostics download still has everything; the next
+   * Connect starts a new one.
    */
-  disconnectRower() { trace('app', 'disconnect rower (button)'); this._session?.stop(); }
+  disconnect() { trace('app', `disconnect ${this.active?.label ?? 'source'} (button)`); this._session?.stop(); }
+  disconnectRower() { this.disconnect(); }
 }
 
 export const connection = new Connection();

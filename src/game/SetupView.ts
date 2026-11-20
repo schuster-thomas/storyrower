@@ -11,6 +11,7 @@ import { RiverScene } from './scene/RiverScene';
 import { levelForMode, levelModes, levelWorkout, pickMode, type Level } from './levels/level';
 import { PHASE_COLORS } from './phaseColors';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
+import { bindDisconnectButton, DISCONNECT_BUTTON } from '../ui/disconnect';
 import { BEAT_ICONS, ICON_ARROW, ICON_BACK, ICON_BT, ICON_CHECK, ICON_HEART, ICON_ROWER, LOGO, MODE_HINTS, MODE_ICONS, MODE_LABELS } from '../ui/icons';
 import icelandCard from '../assets/ui/iceland-card.webp';
 
@@ -71,7 +72,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
       <header class="set-bar">
         <a class="back-pill" href="#/">${ICON_BACK}Home</a>
         ${LOGO}
-        <div class="bar-right"><span class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></span>${FS_BUTTON}</div>
+        <div class="bar-right"><span class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></span>${DISCONNECT_BUTTON}${FS_BUTTON}</div>
       </header>
       <div class="set-banner">
         <img src="${icelandCard}" alt="">
@@ -147,6 +148,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
   const $a = <T extends HTMLElement = HTMLInputElement>(id: string) => root.querySelector<T>(`[data-a="${id}"]`)!;
 
   const offFs = bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
+  const offDisc = bindDisconnectButton(root.querySelector<HTMLButtonElement>('[data-disc]')!);
 
   // ---------- sound ----------
   const snd = loadAudioSettings();
@@ -281,6 +283,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     const link = connection.rowerLink;
     bt.querySelector('span')!.textContent = link === 'connected' ? 'Disconnect rower' : link === 'connecting' ? 'Cancel connecting' : 'Connect rower';
     $('simBtn').classList.toggle('ok', !!sim && connected);
+    $('simBtn').querySelector('span')!.textContent = sim && connected ? 'Disconnect simulator' : 'Use simulator';
     const hr = connection.heartRate;
     const hrBtn = $<HTMLButtonElement>('hrBtn');
     hrBtn.querySelector('span')!.textContent = hr.state === 'connected' ? 'Disconnect heart-rate monitor' : hr.state === 'connecting' ? 'Cancel connecting' : 'Connect heart-rate monitor';
@@ -297,10 +300,11 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     $<HTMLButtonElement>('btBtn').disabled = true;
   }
   $('btBtn').onclick = () => (connection.rowerLink ? connection.disconnectRower() : connection.use(new BluetoothSource(false)));
-  $('simBtn').onclick = () => connection.use(new SimulatorSource({ power: 0, heartRate: true, seed: Date.now() }));
+  $('simBtn').onclick = () => (connection.session?.source instanceof SimulatorSource && connection.active
+    ? connection.disconnect() : connection.use(new SimulatorSource({ power: 0, heartRate: true, seed: Date.now() })));
   $('hrBtn').onclick = () => (connection.heartRate.state === 'idle' || connection.heartRate.state === 'disconnected' || connection.heartRate.state === 'error'
     ? connection.connectHeartRate() : connection.disconnectHeartRate());
   $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource, jump });
 
-  return () => { offConn(); offSession?.(); ro.disconnect(); offFs(); };
+  return () => { offConn(); offSession?.(); ro.disconnect(); offFs(); offDisc(); };
 }
