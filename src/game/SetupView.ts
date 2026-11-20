@@ -135,9 +135,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
         <div class="set-card">
           <h2>Your rower</h2>
           <div class="notice-light" data-id="noBt" hidden>No Web Bluetooth in this browser – use Chrome or Edge, or try the simulator.</div>
-          <div class="rower">
-            <p data-id="rowerText">Pair your rower – close other rowing apps first.</p>
-          </div>
+          <p class="rower-hint">Pair your rower – close other rowing apps first.</p>
           <div class="stack">
             <button class="btn-big navy" data-id="btBtn">${ICON_ROWER}<span>Connect rower</span></button>
             <button class="btn-big navy" data-id="hrBtn">${ICON_HEART}<span>Connect heart-rate monitor</span></button>
@@ -316,12 +314,6 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     $<HTMLButtonElement>('startBtn').disabled = !connected;
     $('startHint').textContent = !connected ? 'Connect a rower or use the simulator.'
       : sim ? 'The simulator rows by itself and follows the targets.' : 'Ready – the workout starts with your first stroke.';
-    const rowerText = $('rowerText');
-    // with the simulator the status line has nothing to add
-    rowerText.parentElement!.hidden = !!sim;
-    rowerText.textContent = !s || sim ? 'Pair your rower – close other rowing apps first.'
-      : connected ? `${s.source.info.label} connected.` : s.state === 'connecting' ? 'Connecting…' : 'Not connected – turn on the rower and retry.';
-    rowerText.title = rowerText.textContent;
     const bt = $<HTMLButtonElement>('btBtn');
     bt.classList.toggle('ok', connected && !sim);
     const link = connection.rowerLink;
