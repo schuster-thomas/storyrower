@@ -95,15 +95,10 @@ export function mountDiagnostics(root: HTMLElement): () => void {
           <h2>Recording</h2>
           <p class="muted" style="margin:0 0 10px">Records automatically while a source is active: <b data-id="recCount">0</b> packets.</p>
           <div class="row">
-            <button data-id="downloadBtn">Download</button>
-            <button data-id="clearBtn">Clear log</button>
+            <button data-id="downloadBtn" title="One file with everything on this page: all packets, tiles, device, services, Bluetooth details and the log (it can still be played back)">Download</button>
+            <button data-id="reportBtn" title="The same as text, to paste into a message">Copy report</button>
           </div>
-          <h2 style="margin-top:16px">Device control (FTMS Control Point)</h2>
-          <div class="row">
-            <button data-id="cpRequest" disabled>Request control</button>
-            <button data-id="cpStart" disabled>Start</button>
-            <button data-id="cpStop" disabled>Stop</button>
-          </div>
+          <textarea data-id="reportBox" class="report-box" rows="8" readonly hidden></textarea>
           <h2 style="margin-top:16px">Device</h2>
           <pre class="kv" data-id="info">–</pre>
         </section>
@@ -118,7 +113,6 @@ export function mountDiagnostics(root: HTMLElement): () => void {
         <div class="row" style="margin-bottom:8px">
           <label class="muted"><input type="checkbox" data-id="showDup"> show duplicate packets</label>
           <label class="muted" title="Every raw Bluetooth event as the browser delivers it – which object fired, whether the value changed, the bytes"><input type="checkbox" data-id="btTrace"> Bluetooth details</label>
-          <button data-id="reportBtn" title="Everything on this page as text, to paste into a message">Copy report</button>
         </div>
         <details class="bt-tests">
           <summary class="muted">Bluetooth tests</summary>
@@ -126,8 +120,13 @@ export function mountDiagnostics(root: HTMLElement): () => void {
             <label class="muted"><input type="checkbox" data-id="btOnlyRower"> subscribe to Rower Data only (applies on the next connect)</label>
             <button data-id="btResub">Re-subscribe Rower Data</button>
           </div>
+          <div class="row" style="margin:0 0 8px" title="Commands to the rower's FTMS Control Point – not needed for rowing; a test in case a console only sends data after a start command">
+            <span class="muted">Control point:</span>
+            <button data-id="cpRequest" disabled>Request control</button>
+            <button data-id="cpStart" disabled>Start</button>
+            <button data-id="cpStop" disabled>Stop</button>
+          </div>
         </details>
-        <textarea data-id="reportBox" class="report-box" rows="8" readonly hidden></textarea>
         <div class="log" data-id="log"></div>
       </section>
     </main>`;
@@ -360,20 +359,39 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   $<HTMLInputElement>('btOnlyRower').checked = loadBtDebug().onlyRowerData;
   $<HTMLInputElement>('btOnlyRower').onchange = (ev) => saveBtDebug({ onlyRowerData: (ev.target as HTMLInputElement).checked });
   $('btResub').onclick = () => { const bt = btSource(); if (bt) void bt.resubscribeRowerData(); else log(0, 'Re-subscribe: no Bluetooth rower connected', 'warn'); };
-  $('reportBtn').onclick = async () => {
-    const tiles = Array.from(root.querySelectorAll<HTMLElement>('[data-tile]')).map((t) =>
-      `${t.querySelector('.label')?.textContent ?? t.dataset.tile}: ${t.querySelector('.value')?.textContent ?? ''} ${t.querySelector('.unit')?.textContent ?? ''} ${t.querySelector('.sub')?.textContent ?? ''}`.replace(/\s+/g, ' ').trim());
+  /** Everything the page knows – for the download (as data) and the copied report (as text). */
+  function buildReport() {
     const bt = btSource();
+    return {
+      time: new Date().toISOString(),
+      browser: navigator.userAgent,
+      screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`,
+      source: session?.source.info.label ?? 'none',
+      state: session?.state ?? null,
+      device: deviceName(),
+      testSwitches: loadBtDebug(),
+      tiles: Array.from(root.querySelectorAll<HTMLElement>('[data-tile]')).map((t) =>
+        `${t.querySelector('.label')?.textContent ?? t.dataset.tile}: ${t.querySelector('.value')?.textContent ?? ''} ${t.querySelector('.unit')?.textContent ?? ''} ${t.querySelector('.sub')?.textContent ?? ''}`.replace(/\s+/g, ' ').trim()),
+      deviceInfo: $('info').textContent ?? '',
+      services: bt?.services ?? [],
+      bluetoothTrace: bt?.trace.slice() ?? [],
+      log: Array.from(logEl.children).map((c) => c.textContent ?? ''),
+    };
+  }
+  $('downloadBtn').onclick = () => downloadRecording(session, buildReport());
+
+  $('reportBtn').onclick = async () => {
+    const r = buildReport();
     const report = [
       'StoryRower diagnostics report',
-      `time: ${new Date().toISOString()}`,
-      `browser: ${navigator.userAgent}`,
-      `source: ${session?.source.info.label ?? 'none'} · ${session?.state ?? '–'} · ${deviceName() ?? ''}`,
-      `test switches: ${JSON.stringify(loadBtDebug())}`,
-      '--- tiles ---', ...tiles,
-      '--- device ---', $('info').textContent ?? '',
-      `--- Bluetooth trace (last ${Math.min(250, bt?.trace.length ?? 0)} of ${bt?.trace.length ?? 0}) ---`, ...(bt?.trace.slice(-250) ?? ['(no Bluetooth source)']),
-      '--- log (last 150 lines) ---', ...Array.from(logEl.children).slice(-150).map((c) => c.textContent ?? ''),
+      `time: ${r.time}`, `browser: ${r.browser}`, `screen: ${r.screen}`,
+      `source: ${r.source} · ${r.state ?? '–'} · ${r.device ?? ''}`,
+      `test switches: ${JSON.stringify(r.testSwitches)}`,
+      '--- tiles ---', ...r.tiles,
+      '--- device ---', r.deviceInfo,
+      '--- services ---', ...r.services.map((s) => `${s.uuid} ${s.name}: ${s.characteristics.map((c) => `${c.name} [${c.properties.join(' ')}]`).join(', ')}`),
+      `--- Bluetooth trace (last ${Math.min(250, r.bluetoothTrace.length)} of ${r.bluetoothTrace.length}) ---`, ...(r.bluetoothTrace.length ? r.bluetoothTrace.slice(-250) : ['(no Bluetooth source)']),
+      '--- log (last 150 lines) ---', ...r.log.slice(-150),
     ].join('\n');
     const box = $<HTMLTextAreaElement>('reportBox');
     box.value = report;
@@ -413,8 +431,6 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   $('simPlus').onclick = () => simSet((sim()?.targetPower ?? 0) + 10);
   $<HTMLInputElement>('simRange').oninput = (ev) => simSet(Number((ev.target as HTMLInputElement).value));
   $('simPause').onclick = simTogglePause;
-  $('downloadBtn').onclick = () => { if (session) downloadRecording(session); };
-  $('clearBtn').onclick = () => { logEl.innerHTML = ''; };
   const cp = (bytes: number[], label: string) => session?.sendControl(bytes).then(() => log(session!.sample?.t ?? 0, `sent: ${label}`)).catch((err) => log(0, `${label} failed: ${err.message}`, 'error'));
   $('cpRequest').onclick = () => cp([...CONTROL.REQUEST_CONTROL], 'Request control');
   $('cpStart').onclick = () => cp([...CONTROL.START], 'Start');
