@@ -162,7 +162,6 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
           </div>
           <hr class="rule">
           <div class="opt-row"><span>Start at</span><select data-id="jump" aria-label="Start at"></select></div>
-          <p class="opt-hint">Jump to a story moment.</p>
           <button class="btn-start" data-id="startBtn" disabled>Start rowing ${ICON_ARROW}</button>
           <p class="start-hint" data-id="startHint">Connect a rower or use the simulator.</p>
         </div>
