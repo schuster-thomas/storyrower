@@ -3,6 +3,7 @@ import { LEVELS } from '../game/levels';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { SimulatorSource } from '../rower/sources/simulator';
 import { ICON_GEAR, LOGO } from './icons';
+import { bindFullscreenButton, FS_BUTTON } from './fullscreen';
 import icelandCard from '../assets/ui/iceland-card.webp';
 import rowerCard from '../assets/ui/rower-card.webp';
 
@@ -22,6 +23,7 @@ export function mountHome(root: HTMLElement): () => void {
         <a href="#/" class="menu-logo">${LOGO}</a>
         <div class="menu-bar-right">
           <button class="btn-navy" data-id="connect">Connect rower</button>
+          ${FS_BUTTON}
           <a class="icon-btn" href="#/diagnose" title="Devices &amp; diagnostics" aria-label="Devices &amp; diagnostics">${ICON_GEAR}</a>
         </div>
       </header>
@@ -34,6 +36,7 @@ export function mountHome(root: HTMLElement): () => void {
       </main>
     </div>`;
 
+  const offFs = bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
   const btn = root.querySelector<HTMLButtonElement>('[data-id="connect"]')!;
   const render = () => {
     const s = connection.session;
@@ -50,5 +53,5 @@ export function mountHome(root: HTMLElement): () => void {
   const follow = () => { offSession?.(); offSession = connection.session?.on((e) => { if (e.type === 'state') render(); }) ?? null; render(); };
   const offConn = connection.onChange(follow);
   follow();
-  return () => { offConn(); offSession?.(); };
+  return () => { offConn(); offSession?.(); offFs(); };
 }

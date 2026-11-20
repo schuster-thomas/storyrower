@@ -10,6 +10,7 @@ import { mountGame } from './GameView';
 import { RiverScene } from './scene/RiverScene';
 import { levelForMode, levelModes, levelWorkout, pickMode, type Level } from './levels/level';
 import { PHASE_COLORS } from './phaseColors';
+import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { BEAT_ICONS, ICON_ARROW, ICON_BACK, ICON_BT, ICON_CHECK, ICON_HEART, ICON_ROWER, LOGO, MODE_HINTS, MODE_ICONS, MODE_LABELS } from '../ui/icons';
 import icelandCard from '../assets/ui/iceland-card.webp';
 
@@ -70,7 +71,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
       <header class="set-bar">
         <a class="back-pill" href="#/">${ICON_BACK}Home</a>
         ${LOGO}
-        <span class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></span>
+        <div class="bar-right"><span class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></span>${FS_BUTTON}</div>
       </header>
       <div class="set-banner">
         <img src="${icelandCard}" alt="">
@@ -144,6 +145,8 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>(`[data-id="${id}"]`)!;
   const $a = <T extends HTMLElement = HTMLInputElement>(id: string) => root.querySelector<T>(`[data-a="${id}"]`)!;
+
+  const offFs = bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
 
   // ---------- sound ----------
   const snd = loadAudioSettings();
@@ -296,5 +299,5 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
   $('hrBtn').onclick = () => (connection.heartRate.state === 'connected' ? connection.disconnectHeartRate() : connection.connectHeartRate());
   $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource, jump });
 
-  return () => { offConn(); offSession?.(); ro.disconnect(); };
+  return () => { offConn(); offSession?.(); ro.disconnect(); offFs(); };
 }

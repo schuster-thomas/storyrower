@@ -8,6 +8,7 @@ import { SimulatorSource } from '../rower/sources/simulator';
 import type { RowerEvent, RowerSample } from '../rower/types';
 import { PowerChart } from './PowerChart';
 import { ICON_BACK, LOGO } from '../ui/icons';
+import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import rowerCard from '../assets/ui/rower-card.webp';
 import tenMinUrl from '../../poc/ble/recordings/woodrower-2026-11-16-19-13-47-10min.json?url';
 import shortUrl from '../../poc/ble/recordings/woodrower-2026-11-16-18-56-39.json?url';
@@ -29,7 +30,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     <header class="set-bar">
       <a class="back-pill" href="#/">${ICON_BACK}Home</a>
       ${LOGO}
-      <span class="pill" data-id="state">no source</span>
+      <div class="bar-right"><span class="pill" data-id="state">no source</span>${FS_BUTTON}</div>
     </header>
     <div class="set-banner">
       <img src="${rowerCard}" alt="">
@@ -141,6 +142,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     </div>`;
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>(`[data-id="${id}"]`)!;
+  bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
   const tile = (name: string) => root.querySelector<HTMLElement>(`[data-tile="${name}"]`)!;
   const setTile = (name: string, value: string | number | null | undefined, sub?: string) => {
     const t = tile(name);

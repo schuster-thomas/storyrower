@@ -4,6 +4,7 @@ import { accuracy, type ScoreState, type Zone } from '../../workout/scoring';
 import type { Band, Segment, Workout } from '../../workout/workout';
 import { phaseSpans } from '../../workout/workout';
 import type { Level } from '../levels/level';
+import { bindFullscreenButton } from '../../ui/fullscreen';
 
 export interface HudState {
   level: Level;
@@ -19,10 +20,6 @@ export interface HudState {
   strokes: number;
   message: { text: string; tone: 'info' | 'warn' | 'ok' } | null;
 }
-
-const FS_ICON = (d: string) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-const FS_ENTER_ICON = FS_ICON('M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5');
-const FS_EXIT_ICON = FS_ICON('M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5');
 
 const KIND_LABEL: Record<Segment['kind'], string> = { steady: 'Steady', ramp: 'Build', hard: 'Hard', easy: 'Easy', peak: 'All out' };
 
@@ -72,39 +69,7 @@ export class Hud {
         <div class="hud-tile" data-h="hr"><div class="lbl">Heart rate</div><div class="val"><b>–</b><span>bpm</span></div><div class="sub"></div></div>
       </div>`;
     parent.appendChild(this.el);
-    this.setupFullscreen();
-  }
-
-  /** Fullscreen toggle; stays hidden where the browser has no Fullscreen API (e.g. iPhone, some in-app browsers). */
-  private setupFullscreen() {
-    const b = this.q<HTMLButtonElement>('fsBtn');
-    const doc = document as Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => void; webkitFullscreenEnabled?: boolean };
-    const root = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
-    if (!(document.fullscreenEnabled || doc.webkitFullscreenEnabled)) return;
-    const isFs = () => !!(document.fullscreenElement ?? doc.webkitFullscreenElement);
-    const off = () => {
-      document.removeEventListener('fullscreenchange', render);
-      document.removeEventListener('webkitfullscreenchange', render);
-    };
-    const render = () => {
-      if (!this.el.isConnected && b.innerHTML) { off(); return; }
-      b.innerHTML = isFs() ? FS_EXIT_ICON : FS_ENTER_ICON;
-      b.title = isFs() ? 'Exit fullscreen' : 'Fullscreen';
-    };
-    document.addEventListener('fullscreenchange', render);
-    document.addEventListener('webkitfullscreenchange', render);
-    b.onclick = () => {
-      try {
-        if (isFs()) {
-          if (document.exitFullscreen) void document.exitFullscreen().catch(() => {});
-          else doc.webkitExitFullscreen?.();
-        } else if (root.requestFullscreen) {
-          void root.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
-        } else root.webkitRequestFullscreen?.();
-      } catch { /* not allowed here */ }
-    };
-    b.hidden = false;
-    render();
+    bindFullscreenButton(this.q<HTMLButtonElement>('fsBtn'));
   }
 
   onExit(fn: () => void) { this.q('exitBtn').onclick = fn; }
