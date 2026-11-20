@@ -72,9 +72,13 @@ export function levelModes(level: Level): WorkoutMode[] {
   return MODES.filter((m) => level.modes[m]);
 }
 
-/** The mode to use: the wanted one if the level has it, else its first. */
+/**
+ * The mode to use: the wanted one if the level has it, else build-up (the full adventure – also
+ * what a saved "story" setting from before becomes), else the level's first.
+ */
 export function pickMode(level: Level, mode: WorkoutMode): WorkoutMode {
-  return level.modes[mode] ? mode : levelModes(level)[0] ?? 'story';
+  if (level.modes[mode]) return mode;
+  return level.modes.buildup ? 'buildup' : levelModes(level)[0] ?? 'story';
 }
 
 /**

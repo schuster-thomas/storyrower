@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ICELAND } from '../game/levels/iceland';
-import { levelForMode, levelModes, levelWorkout } from '../game/levels/level';
+import { levelForMode, levelModes, levelWorkout, pickMode } from '../game/levels/level';
 import { scheduleBeats } from '../story/story';
 import { DEFAULT_SETTINGS, MODES, generateWorkout, phaseSpans, type WorkoutMode } from './workout';
 
@@ -75,8 +75,9 @@ describe('workout modes', () => {
 });
 
 describe('level mode config', () => {
-  it('Iceland offers every mode', () => {
-    expect(levelModes(ICELAND)).toEqual(MODES);
+  it('Iceland offers the four shaped modes, a saved story setting becomes build-up', () => {
+    expect(levelModes(ICELAND)).toEqual(['steady', 'buildup', 'pyramid', 'waves']);
+    expect(pickMode(ICELAND, 'story')).toBe('buildup');
   });
 
   it('only plays the beats a mode lists', () => {

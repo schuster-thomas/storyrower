@@ -47,11 +47,8 @@ export const ICELAND: Level = {
    * Which story elements each workout mode gets. `phases` places the scenery along the time
    * (shares of the workout); `beats` lists the moments that happen, optionally moved or reworded.
    */
+  // (no "story" mode any more – build-up, pyramid and waves cover the adventure)
   modes: {
-    story: {
-      summary: 'Follow the adventure as your workout unfolds.',
-      beats: 'all',
-    },
     steady: {
       summary: 'A quiet row past puffins and the glacier – the volcano sleeps.',
       phases: [{ phase: 'idyll', share: 0.85 }, { phase: 'winddown', share: 0.15 }],
