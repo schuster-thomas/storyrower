@@ -6,11 +6,10 @@ import { formatDuration, formatPace, paceFromPower, powerFromPace } from '../row
 import { scheduleBeats } from '../story/story';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { SimulatorSource } from '../rower/sources/simulator';
-import { phaseSpans, segmentAt, type WorkoutMode, type WorkoutSettings } from '../workout/workout';
+import { segmentAt, type WorkoutMode, type WorkoutSettings } from '../workout/workout';
 import { mountGame } from './GameView';
 import { RiverScene } from './scene/RiverScene';
 import { levelForMode, levelModes, levelWorkout, pickMode, type Level } from './levels/level';
-import { PHASE_COLORS } from './phaseColors';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { bindDisconnectPill } from '../ui/disconnect';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
@@ -53,6 +52,16 @@ export function mountPlay(root: HTMLElement, level: Level): () => void {
   };
   showSetup();
   return () => { cleanupGame?.(); cleanupSetup?.(); audio?.dispose(); audio = null; };
+}
+
+/** Preview colour by difficulty only: easy green → amber → hard red. */
+function difficultyColor(intensity: number): string {
+  const stops: [number, [number, number, number]][] = [[0, [102, 187, 106]], [0.5, [236, 178, 58]], [1, [229, 83, 61]]];
+  const x = Math.max(0, Math.min(1, intensity));
+  const i = x <= 0.5 ? 0 : 1;
+  const [a, ca] = stops[i], [b, cb] = stops[i + 1];
+  const k = (x - a) / (b - a);
+  return `rgb(${ca.map((v, j) => Math.round(v + (cb[j] - v) * k)).join(',')})`;
 }
 
 type SplitKey = 'minPower' | 'maxPower' | 'steadyPower';
@@ -120,7 +129,6 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
             <div class="pv-head"><h2>Workout preview</h2><b data-id="pvTotal"></b></div>
             <div class="pv" data-id="preview"></div>
             <div class="pv-axis"><span>0 min</span><span data-id="pvEnd"></span></div>
-            <div class="pv-legend" data-id="legend"></div>
           </section>
         </div>
 
@@ -276,7 +284,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     const plotW = Math.max(200, pv.clientWidth - 8);
     const rowEnd = ROWS.map(() => -Infinity);
     pv.innerHTML = `<div class="pv-bars">${w.segments.map((s) =>
-      `<i style="flex:${s.end - s.start} 1 0;height:${(height(s) * 100).toFixed(1)}%;background:${PHASE_COLORS[s.phase]}" title="${played.phases[s.phase].name} · ${formatPace(s.pace.target)} /500 m (${s.power.target} W) · ${s.spm.target} spm · ${formatDuration(s.end - s.start)}"></i>`).join('')}</div>` +
+      `<i style="flex:${s.end - s.start} 1 0;height:${(height(s) * 100).toFixed(1)}%;background:${difficultyColor(s.intensity)}" title="${played.phases[s.phase].name} · ${formatPace(s.pace.target)} /500 m (${s.power.target} W) · ${s.spm.target} spm · ${formatDuration(s.end - s.start)}"></i>`).join('')}</div>` +
       beats.map((b) => {
         const seg = segmentAt(w, b.t);
         const x = (b.t / w.duration) * plotW;
@@ -285,14 +293,12 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
         rowEnd[row] = x;
         const top = ROWS[row];
         const barTop = BARS_TOP + (PV_H - BARS_TOP) * (1 - height(seg));
-        return `<button type="button" class="pv-beat${b.id === jump ? ' on' : ''}" data-beat="${b.id}" style="top:${top}px;left:calc(4px + (100% - 8px) * ${(b.t / w.duration).toFixed(4)});background:${PHASE_COLORS[seg.phase]};--stem:${Math.max(0, barTop - top - MARK).toFixed(0)}px"
+        return `<button type="button" class="pv-beat${b.id === jump ? ' on' : ''}" data-beat="${b.id}" style="top:${top}px;left:calc(4px + (100% - 8px) * ${(b.t / w.duration).toFixed(4)});background:${difficultyColor(seg.intensity)};--stem:${Math.max(0, barTop - top - MARK).toFixed(0)}px"
           title="Start at: ${b.name} (${formatDuration(b.t)})" aria-label="Start at ${b.name}"><svg viewBox="0 0 16 16">${BEAT_ICONS[b.effect]}</svg></button>`;
       }).join('');
     pv.querySelectorAll<HTMLButtonElement>('.pv-beat').forEach((btn) => {
       btn.onclick = () => { jump = btn.dataset.beat === jump ? null : btn.dataset.beat ?? null; renderPreview(); };
     });
-    $('legend').innerHTML = phaseSpans(w).map((p) =>
-      `<span><i style="background:${PHASE_COLORS[p.phase]}"></i><b>${played.phases[p.phase].name}</b> · ${formatDuration(p.end - p.start)}</span>`).join('');
   }
   renderMode();
   renderPreview();
