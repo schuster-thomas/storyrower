@@ -11,7 +11,7 @@ import type { RowerEvent, RowerSample } from '../rower/types';
 import { PowerChart } from './PowerChart';
 import { ICON_BACK, LOGO } from '../ui/icons';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
-import { bindDisconnectButton, DISCONNECT_BUTTON } from '../ui/disconnect';
+import { bindDisconnectPill } from '../ui/disconnect';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
 import rowerCard from '../assets/ui/rower-card.webp';
 import tenMinUrl from '../../poc/ble/recordings/woodrower-2026-11-16-19-13-47-10min.json?url';
@@ -34,7 +34,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     <header class="set-bar">
       <a class="back-pill" href="#/">${ICON_BACK}Home</a>
       ${LOGO}
-      <div class="bar-right"><span class="pill" data-id="state">no source</span>${DISCONNECT_BUTTON}${DRIVE_BUTTON}${FS_BUTTON}</div>
+      <div class="bar-right"><button type="button" class="pill" data-id="state"><span>no source</span></button>${DRIVE_BUTTON}${FS_BUTTON}</div>
     </header>
     <div class="set-banner">
       <img src="${rowerCard}" alt="">
@@ -147,7 +147,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>(`[data-id="${id}"]`)!;
   bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
-  const offDisc = bindDisconnectButton(root.querySelector<HTMLButtonElement>('[data-disc]')!);
+  const offDisc = bindDisconnectPill($('state'));
   const offDrive = bindDriveButton(root.querySelector<HTMLElement>('.drive-wrap')!);
   const tile = (name: string) => root.querySelector<HTMLElement>(`[data-tile="${name}"]`)!;
   const setTile = (name: string, value: string | number | null | undefined, sub?: string) => {
@@ -206,7 +206,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     session = next;
     chart.clear();
     packetTimes = []; changeTimes = [];
-    if (!session) { $('state').textContent = 'no source'; $('state').className = 'pill'; return; }
+    if (!session) { $('state').querySelector('span')!.textContent = 'no source'; $('state').className = 'pill'; return; }
     const s = session.source;
     unsubscribe = session.on(onEvent);
     onEvent({ type: 'state', state: session.state });
@@ -246,7 +246,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
       case 'state': {
         const pill = $('state');
         const labels = { idle: 'ready', connecting: 'connecting…', connected: 'connected', disconnected: 'disconnected', error: 'error' };
-        pill.textContent = `${labels[e.state]}${e.detail ? ` · ${e.detail}` : ''}`;
+        pill.querySelector('span')!.textContent = `${labels[e.state]}${e.detail ? ` · ${e.detail}` : ''}`;
         pill.className = `pill ${e.state === 'connected' ? 'ok' : e.state === 'error' || e.state === 'disconnected' ? 'err' : 'warn'}`;
         const isBt = session?.source instanceof BluetoothSource;
         const link = connection.rowerLink;
@@ -256,7 +256,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
         const canCp = e.state === 'connected' && isBt && (session!.source as BluetoothSource).canSendControl;
         for (const id of ['cpRequest', 'cpStart', 'cpStop']) ($(id) as HTMLButtonElement).disabled = !canCp;
         if (e.state === 'connected') { requestWakeLock(); if (isBt) renderServices(session!.source as BluetoothSource); }
-        log(session?.sample?.t ?? 0, `State: ${pill.textContent}`, e.state === 'error' ? 'error' : '');
+        log(session?.sample?.t ?? 0, `State: ${pill.querySelector('span')!.textContent}`, e.state === 'error' ? 'error' : '');
         break;
       }
       case 'raw': {

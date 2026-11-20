@@ -213,13 +213,14 @@ body:has(.menu) { background: #e6f0f8; }
 .diag .svc code { color: #0b6a9e; }
 .diag kbd { background: #fff; }
 
-/* disconnect button in the menu headers */
-.menu .disc-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 999px; border: 1.5px solid #c9d6e3; background: #fff; color: var(--navy); font: inherit; font-weight: 800; font-size: 16px; cursor: pointer; white-space: nowrap; flex: none; }
-.menu .disc-btn[hidden] { display: none; }
-.menu .disc-btn svg { width: 18px; height: 18px; }
-.menu .disc-btn:hover { border-color: #e48a8a; color: #b03030; background: #fff5f5; }
-/* icon only where the header gets tight (the centred logo needs the room) */
-@media (max-width: 1100px) { .menu .disc-btn { padding: 0; width: 44px; height: 44px; justify-content: center; } .menu .disc-btn span { display: none; } }
+/* the status pill is the disconnect button too: an ✕ appears while something is connected */
+.menu .state-pill, .diag .pill { min-height: 0; cursor: default; display: inline-flex; align-items: center; gap: 8px; }
+.menu .state-pill span, .diag .pill span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu .state-pill[data-disc="on"], .diag .pill[data-disc="on"] { cursor: pointer; }
+.pill-x { display: none; flex: none; width: 18px; height: 18px; margin: 0 -4px 0 2px; padding-left: 8px; border-left: 1.5px solid currentColor; box-sizing: content-box; opacity: .7; }
+.pill-x svg { width: 18px; height: 18px; display: block; }
+[data-disc="on"] > .pill-x { display: block; }
+.menu .state-pill[data-disc="on"]:hover, .diag .pill[data-disc="on"]:hover { border-color: #e48a8a; color: #b03030; background: #fff5f5; }
 
 /* Google Drive status in the menu headers */
 .drive-wrap { position: relative; flex: none; }

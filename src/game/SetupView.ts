@@ -12,7 +12,7 @@ import { RiverScene } from './scene/RiverScene';
 import { levelForMode, levelModes, levelWorkout, pickMode, type Level } from './levels/level';
 import { PHASE_COLORS } from './phaseColors';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
-import { bindDisconnectButton, DISCONNECT_BUTTON } from '../ui/disconnect';
+import { bindDisconnectPill } from '../ui/disconnect';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
 import { BEAT_ICONS, ICON_ARROW, ICON_BACK, ICON_BT, ICON_CHECK, ICON_HEART, ICON_ROWER, LOGO, MODE_HINTS, MODE_ICONS, MODE_LABELS } from '../ui/icons';
 import icelandCard from '../assets/ui/iceland-card.webp';
@@ -89,7 +89,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
       <header class="set-bar">
         <a class="back-pill" href="#/">${ICON_BACK}Home</a>
         ${LOGO}
-        <div class="bar-right"><span class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></span>${DISCONNECT_BUTTON}${DRIVE_BUTTON}${FS_BUTTON}</div>
+        <div class="bar-right"><button type="button" class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></button>${DRIVE_BUTTON}${FS_BUTTON}</div>
       </header>
       <div class="set-banner">
         <img src="${icelandCard}" alt="">
@@ -165,7 +165,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
   const $a = <T extends HTMLElement = HTMLInputElement>(id: string) => root.querySelector<T>(`[data-a="${id}"]`)!;
 
   const offFs = bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
-  const offDisc = bindDisconnectButton(root.querySelector<HTMLButtonElement>('[data-disc]')!);
+  const offDisc = bindDisconnectPill($('state'));
   const offDrive = bindDriveButton(root.querySelector<HTMLElement>('.drive-wrap')!);
 
   // ---------- sound ----------
