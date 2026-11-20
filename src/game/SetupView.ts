@@ -318,8 +318,9 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     $('startHint').textContent = !connected ? 'Connect a rower or use the simulator.'
       : sim ? 'The simulator rows by itself and follows the targets.' : 'Ready – the workout starts with your first stroke.';
     const rowerText = $('rowerText');
-    rowerText.textContent = !s ? 'Pair your rower – close other rowing apps first.'
-      : sim ? 'Simulator running – it follows the targets.'
+    // with the simulator the status line has nothing to add
+    rowerText.parentElement!.hidden = !!sim;
+    rowerText.textContent = !s || sim ? 'Pair your rower – close other rowing apps first.'
       : connected ? `${s.source.info.label} connected.` : s.state === 'connecting' ? 'Connecting…' : 'Not connected – turn on the rower and retry.';
     rowerText.title = rowerText.textContent;
     const bt = $<HTMLButtonElement>('btBtn');
