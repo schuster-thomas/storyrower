@@ -1,8 +1,27 @@
+import { trace } from '../rower/btTrace';
 import type { RowerSession } from '../rower/session';
 import { BluetoothSource } from '../rower/sources/bluetooth';
 
+const isIOS = () => /iPad|iPhone/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+
 function save(json: unknown, fileName: string) {
   const blob = new Blob([JSON.stringify(json, null, 1)], { type: 'application/json' });
+  // iPad (Bluefy, Safari): an app's web view often ignores <a download> – offer the share sheet
+  // ("Save to Files", AirDrop, mail) and fall back to the link if that is not available
+  if (isIOS() && typeof navigator.share === 'function') {
+    const file = new File([blob], fileName, { type: 'application/json' });
+    if (navigator.canShare?.({ files: [file] })) {
+      navigator.share({ files: [file], title: fileName }).catch((e: Error) => {
+        trace('app', `share sheet for ${fileName}: ${e.name}: ${e.message}`);
+        if (e.name !== 'AbortError') saveViaLink(blob, fileName);
+      });
+      return;
+    }
+  }
+  saveViaLink(blob, fileName);
+}
+
+function saveViaLink(blob: Blob, fileName: string) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = fileName;

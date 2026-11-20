@@ -1,3 +1,4 @@
+import { trace } from '../rower/btTrace';
 import { Emitter } from '../rower/emitter';
 import { RowerSession } from '../rower/session';
 import { HeartRateSource } from '../rower/sources/heartRate';
@@ -25,6 +26,7 @@ class Connection {
 
   /** Replace the rower source. The old session is closed, a connected HR monitor moves over. */
   async use(source: PacketSource): Promise<RowerSession> {
+    trace('app', `use source: ${source.info.label}${this._session ? ` (replaces ${this._session.source.info.label}, state ${this._session.state})` : ''}`);
     this.detachHr?.();
     this.detachHr = null;
     this._session?.dispose();

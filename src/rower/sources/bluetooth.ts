@@ -1,3 +1,4 @@
+import { trace, type TraceKind } from '../btTrace';
 import { Emitter } from '../emitter';
 import { OPTIONAL_SERVICES, UUID, nameOf, normUuid, toHex } from '../ftms';
 import type { PacketSource, PacketSourceEvents, RawPacket } from '../types';
@@ -22,6 +23,10 @@ const hexOf = (v: DataView | null | undefined) => (v ? toHex(v) : '–');
 
 export const isWebBluetoothAvailable = (): boolean => typeof navigator !== 'undefined' && !!navigator.bluetooth;
 
+let instances = 0;
+/** No Rower Data this long while connected → a line in the trace (the device sends ~4 per second). */
+const GAP_MS = 3000;
+
 /**
  * Rowing machine via Web Bluetooth (Chrome/Edge on Android, Windows, macOS, ChromeOS).
  * Timestamps run continuously from the first connection – including across reconnects.
@@ -37,21 +42,29 @@ export class BluetoothSource implements PacketSource {
   /** The live characteristic behind each entry in `services` (for the explorer on the diagnostics page). */
   private chars = new Map<CharacteristicDescription, BluetoothRemoteGATTCharacteristic>();
   /**
-   * Low-level trace for the diagnostics page: every step of the connection and every raw
-   * notification as the browser delivers it (which object fired, whether the value object is
-   * reused, the bytes on the event's characteristic vs. on ours). Kept from the very start of the
-   * connection, so nothing is lost before the page listens; the last 600 lines.
+   * Low-level trace for the diagnostics download (see btTrace): every step of the connection,
+   * every error and disconnect, and every raw notification as the browser delivers it (which
+   * object fired, whether the value object is reused, the bytes on the event's characteristic vs.
+   * on ours). Each line also carries `t`, the packet time, to match it with the recorded packets.
    */
-  readonly trace: string[] = [];
-  onTrace: ((line: string) => void) | null = null;
+  private readonly tag = `rower${++instances}`;
+  private attempts = 0;
+  private connectedAt: number | null = null;
+  private notifyTotal = 0;
+  private lastRowerAt: number | null = null;
+  private timers: ReturnType<typeof setTimeout>[] = [];
   private rowerChars: BluetoothRemoteGATTCharacteristic[] = [];
 
-  private tr(msg: string) {
-    const line = `${(this.now() / 1000).toFixed(2).padStart(8)}s  ${msg}`;
-    this.trace.push(line);
-    if (this.trace.length > 600) this.trace.shift();
-    this.onTrace?.(line);
+  private tr(msg: string, kind: TraceKind = 'event') {
+    trace(this.tag, `t=${this.t0 == null ? '–' : `${(this.now() / 1000).toFixed(2)}s`}  ${msg}`, kind);
   }
+
+  private setState(s: Parameters<PacketSourceEvents['state']>[0], detail?: string) {
+    this.tr(`state → ${s}${detail ? ` (${detail})` : ''}`);
+    this.emitter.emit('state', s, detail);
+  }
+
+  private clearTimers() { this.timers.forEach(clearTimeout); this.timers = []; }
 
   /** @param acceptAll true = offer all Bluetooth devices, not just FTMS */
   constructor(private acceptAll = false) {}
@@ -69,31 +82,53 @@ export class BluetoothSource implements PacketSource {
     this.emitter.emit('packet', { t: this.now(), uuid, data: copy, kind });
   }
 
-  private log(msg: string, level: 'info' | 'warn' | 'error' = 'info') { this.emitter.emit('log', msg, level); }
+  private log(msg: string, level: 'info' | 'warn' | 'error' = 'info') {
+    if (level !== 'info') this.tr(`${level}: ${msg}`);
+    this.emitter.emit('log', msg, level);
+  }
 
   /** Connects. The first time (or after forget()) Chrome opens the device picker. */
   async start(): Promise<void> {
-    if (!isWebBluetoothAvailable()) throw new Error('Web Bluetooth is not available in this browser');
+    this.tr(`start · attempt ${++this.attempts} · ${this.acceptAll ? 'all devices' : 'FTMS filter'} · device ${this.device ? `"${this.device.name ?? ''}" (known)` : 'not chosen yet'}`);
+    if (!isWebBluetoothAvailable()) { this.tr('navigator.bluetooth is missing'); throw new Error('Web Bluetooth is not available in this browser'); }
     this.manualStop = false;
+    this.clearTimers();
+    let step = 'requestDevice';
+    const began = performance.now();
+    const ms = () => `${Math.round(performance.now() - began)} ms`;
     try {
       if (!this.device) {
-        this.emitter.emit('state', 'connecting', 'choose a device…');
+        this.setState('connecting', 'choose a device…');
+        this.tr('requestDevice() – device picker open');
         this.device = await navigator.bluetooth.requestDevice(this.acceptAll
           ? { acceptAllDevices: true, optionalServices: OPTIONAL_SERVICES }
           : { filters: [{ services: [UUID.FTMS] }], optionalServices: OPTIONAL_SERVICES });
         this.device.addEventListener('gattserverdisconnected', this.onDisconnected);
+        this.tr(`device chosen after ${ms()}: "${this.device.name ?? '(unnamed)'}" id ${this.device.id} · gatt ${this.device.gatt ? 'present' : 'MISSING'}`);
         this.log(`Device selected: ${this.device.name ?? '(unnamed)'}`);
       }
-      this.emitter.emit('state', 'connecting', `connecting to ${this.device.name ?? 'device'}…`);
+      step = 'gatt.connect';
+      this.setState('connecting', `connecting to ${this.device.name ?? 'device'}…`);
+      this.tr(`gatt.connect() · gatt.connected before: ${this.device.gatt?.connected ?? '–'}`);
+      // a connect that never returns is a known failure mode – say so while it hangs
+      for (const sec of [10, 30, 60]) this.timers.push(setTimeout(() => this.tr(`… still waiting in ${step} after ${sec} s`), sec * 1000));
       const server = await this.device.gatt!.connect();
       if (this.t0 == null) this.t0 = performance.now();
+      this.connectedAt = performance.now();
       this.log('GATT connected');
-      this.tr(`GATT connected · device "${this.device.name ?? ''}" id ${this.device.id} · ${navigator.userAgent}`);
+      this.tr(`GATT connected after ${ms()} · server.connected ${server.connected}`);
+      step = 'setup (services, characteristics, subscriptions)';
       await this.setup(server);
-      this.emitter.emit('state', 'connected', this.device.name ?? undefined);
+      this.clearTimers();
+      const subscribed = this.services.flatMap((sv) => sv.characteristics).filter((c) => c.subscribed).map((c) => c.name);
+      this.tr(`setup done after ${ms()} · subscribed: ${subscribed.join(', ') || 'NOTHING'}`);
+      this.watchFirstData();
+      this.setState('connected', this.device.name ?? undefined);
     } catch (e) {
+      this.clearTimers();
       const err = e as Error;
-      this.emitter.emit('state', 'error', `${err.name}: ${err.message}`);
+      this.tr(`FAILED in ${step} after ${ms()}: ${err?.name ?? typeof e}: ${err?.message ?? String(e)} · gatt.connected ${this.device?.gatt?.connected ?? '–'}`);
+      this.setState('error', `${err.name}: ${err.message}`);
       if (err.name === 'NotFoundError') {
         this.log('No device selected or none with FTMS found. Is e-Connected/Kinomap still running?', 'warn');
       } else this.log(`Connection error: ${err.name}: ${err.message}`, 'error');
@@ -101,13 +136,28 @@ export class BluetoothSource implements PacketSource {
     }
   }
 
+  /** "Connected" but nothing arrives is the other typical failure – note it in the trace. */
+  private watchFirstData() {
+    const startedAt = performance.now();
+    for (const sec of [5, 15]) {
+      this.timers.push(setTimeout(() => {
+        if ((this.lastRowerAt == null || this.lastRowerAt < startedAt) && this.device?.gatt?.connected) {
+          this.tr(`no Rower Data ${sec} s after subscribing (notifications of any kind so far: ${this.notifyTotal}) – the rower may need a stroke, or the data is not reaching the browser`);
+        }
+      }, sec * 1000));
+    }
+  }
+
   stop() {
+    this.tr('stop() – disconnect requested by the app');
     this.manualStop = true;
+    this.clearTimers();
     this.device?.gatt?.disconnect();
   }
 
   /** Forget the device; the next start() shows the picker again. */
   forget() {
+    this.tr('forget() – the next start shows the device picker');
     this.stop();
     this.device?.removeEventListener('gattserverdisconnected', this.onDisconnected);
     this.device = null;
@@ -141,8 +191,13 @@ export class BluetoothSource implements PacketSource {
   }
 
   private onDisconnected = () => {
+    this.clearTimers();
+    const since = (at: number | null) => (at == null ? 'never' : `${((performance.now() - at) / 1000).toFixed(1)} s ago`);
+    this.tr(`gattserverdisconnected · ${this.manualStop ? 'requested by the app' : 'UNEXPECTED'} · connected since ${since(this.connectedAt)}` +
+      ` · last Rower Data ${since(this.lastRowerAt)} · notifications so far: ${this.notifyTotal}`);
     this.controlPoint = null;
-    this.emitter.emit('state', 'disconnected', this.manualStop ? 'disconnected' : 'connection lost');
+    this.connectedAt = null;
+    this.setState('disconnected', this.manualStop ? 'disconnected' : 'connection lost');
     if (!this.manualStop) this.log('Connection to the device lost', 'warn');
   };
 
@@ -196,9 +251,16 @@ export class BluetoothSource implements PacketSource {
       const target = ev.target as BluetoothRemoteGATTCharacteristic | null;
       const v = target?.value ?? ch.value;
       const t = this.now();
+      this.notifyTotal++;
+      if (count === 0) this.tr(`first notification of ${nameOf(chUuid)}`);
+      if (chUuid === UUID.ROWER_DATA) {
+        const at = performance.now();
+        if (this.lastRowerAt != null && at - this.lastRowerAt > GAP_MS) this.tr(`Rower Data again after a gap of ${((at - this.lastRowerAt) / 1000).toFixed(1)} s`);
+        this.lastRowerAt = at;
+      }
       this.tr(`notify ${nameOf(chUuid)} #${++count} +${Math.round(t - lastT)}ms · target ${target === ch ? 'ours' : target ? 'other object' : 'none'}` +
         ` · value object ${v === lastView ? 'SAME as before' : 'new'} · len ${v?.byteLength ?? '–'} off ${v?.byteOffset ?? '–'} buf ${v?.buffer.byteLength ?? '–'}` +
-        ` · target [${hexOf(target?.value)}]${target !== ch ? ` · ours [${hexOf(ch.value)}]` : ''}`);
+        ` · target [${hexOf(target?.value)}]${target !== ch ? ` · ours [${hexOf(ch.value)}]` : ''}`, 'notify');
       lastView = v ?? null;
       lastT = t;
       if (v) this.emitPacket(chUuid, v, 'notify');

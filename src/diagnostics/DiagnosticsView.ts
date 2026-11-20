@@ -1,6 +1,8 @@
 import { CONTROL, formatDuration, formatPace, nameOf } from '../rower/ftms';
 import { connection } from '../app/connection';
 import { downloadRecording } from '../app/download';
+import { platformInfo } from '../app/platform';
+import { onTraceLine, traceEvents, traceLines } from '../rower/btTrace';
 import type { RowerSession } from '../rower/session';
 import { BluetoothSource, isWebBluetoothAvailable, loadBtDebug, saveBtDebug } from '../rower/sources/bluetooth';
 import { ReplaySource } from '../rower/sources/replay';
@@ -203,11 +205,6 @@ export function mountDiagnostics(root: HTMLElement): () => void {
     if (!session) { $('state').textContent = 'no source'; $('state').className = 'pill'; return; }
     const s = session.source;
     unsubscribe = session.on(onEvent);
-    if (s instanceof BluetoothSource) {
-      s.onTrace = (line) => { if ($<HTMLInputElement>('btTrace').checked) logLine(line, 'bt'); };
-      // everything before this page started listening (device picker, GATT, subscriptions)
-      if ($<HTMLInputElement>('btTrace').checked) s.trace.forEach((l) => logLine(l, 'bt'));
-    }
     onEvent({ type: 'state', state: session.state });
     if (session.sample) renderSample(session.sample);
     if (Object.keys(session.info).length) onEvent({ type: 'deviceInfo', info: session.info });
@@ -224,8 +221,6 @@ export function mountDiagnostics(root: HTMLElement): () => void {
 
   /** Stop listening – the connection itself stays open for the game. */
   function unbind() {
-    const bt = btSource();
-    if (bt) bt.onTrace = null;
     if (replayTimer) clearInterval(replayTimer);
     replayTimer = null;
     unsubscribe?.();
@@ -385,45 +380,59 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   document.addEventListener('visibilitychange', onVisible);
 
   // ---------- Bluetooth details, tests and the report ----------
+  // the trace is app-wide (all attempts, rower and heart-rate monitor, page lifecycle)
   $<HTMLInputElement>('btTrace').onchange = (ev) => {
-    if ((ev.target as HTMLInputElement).checked) btSource()?.trace.forEach((l) => logLine(l, 'bt'));
+    if ((ev.target as HTMLInputElement).checked) traceLines().forEach((l) => logLine(l, 'bt'));
   };
+  const offTrace = onTraceLine((line) => { if ($<HTMLInputElement>('btTrace').checked) logLine(line, 'bt'); });
   $<HTMLInputElement>('btOnlyRower').checked = loadBtDebug().onlyRowerData;
   $<HTMLInputElement>('btOnlyRower').onchange = (ev) => saveBtDebug({ onlyRowerData: (ev.target as HTMLInputElement).checked });
   $('btResub').onclick = () => { const bt = btSource(); if (bt) void bt.resubscribeRowerData(); else log(0, 'Re-subscribe: no Bluetooth rower connected', 'warn'); };
   /** Everything the page knows – for the download (as data) and the copied report (as text). */
-  function buildReport() {
+  // gathered up front: a click has to stay a "user gesture" for clipboard/share on iOS
+  const platformP = platformInfo().catch((e) => ({ error: String(e) }));
+  async function buildReport() {
     const bt = btSource();
     return {
       time: new Date().toISOString(),
-      browser: navigator.userAgent,
-      screen: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`,
+      platform: await platformP,
       source: session?.source.info.label ?? 'none',
       state: session?.state ?? null,
       device: deviceName(),
+      heartRateMonitor: connection.heartRate,
       testSwitches: loadBtDebug(),
       tiles: Array.from(root.querySelectorAll<HTMLElement>('[data-tile]')).map((t) =>
         `${t.querySelector('.label')?.textContent ?? t.dataset.tile}: ${t.querySelector('.value')?.textContent ?? ''} ${t.querySelector('.unit')?.textContent ?? ''} ${t.querySelector('.sub')?.textContent ?? ''}`.replace(/\s+/g, ' ').trim()),
       deviceInfo: $('info').textContent ?? '',
       services: bt?.services ?? [],
-      bluetoothTrace: bt?.trace.slice() ?? [],
+      /** Connection history of the whole page visit: every attempt, error, disconnect, page lifecycle. */
+      connectionEvents: traceEvents(),
+      /** The same merged with the latest raw notifications, in time order. */
+      bluetoothTrace: traceLines(),
       log: Array.from(logEl.children).map((c) => c.textContent ?? ''),
     };
   }
-  $('downloadBtn').onclick = () => downloadRecording(session, buildReport());
+  $('downloadBtn').onclick = async () => {
+    const btn = $<HTMLButtonElement>('downloadBtn');
+    btn.disabled = true;
+    try { downloadRecording(session, await buildReport()); } finally { btn.disabled = false; }
+  };
 
   $('reportBtn').onclick = async () => {
-    const r = buildReport();
+    const r = await buildReport();
     const report = [
       'StoryRower diagnostics report',
-      `time: ${r.time}`, `browser: ${r.browser}`, `screen: ${r.screen}`,
+      `time: ${r.time}`,
+      '--- platform ---', ...Object.entries(r.platform).map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`),
       `source: ${r.source} · ${r.state ?? '–'} · ${r.device ?? ''}`,
+      `heart-rate monitor: ${r.heartRateMonitor.state}${r.heartRateMonitor.name ? ` · ${r.heartRateMonitor.name}` : ''}${r.heartRateMonitor.detail ? ` · ${r.heartRateMonitor.detail}` : ''}`,
       `test switches: ${JSON.stringify(r.testSwitches)}`,
       '--- tiles ---', ...r.tiles,
       '--- device ---', r.deviceInfo,
       '--- services ---', ...r.services.map((s) => `${s.uuid} ${s.name}: ${s.characteristics.map((c) => `${c.name} [${c.properties.join(' ')}]`).join(', ')}`),
-      `--- Bluetooth trace (last ${Math.min(250, r.bluetoothTrace.length)} of ${r.bluetoothTrace.length}) ---`, ...(r.bluetoothTrace.length ? r.bluetoothTrace.slice(-250) : ['(no Bluetooth source)']),
-      '--- log (last 150 lines) ---', ...r.log.slice(-150),
+      `--- connection events (last ${Math.min(300, r.connectionEvents.length)} of ${r.connectionEvents.length}) ---`, ...r.connectionEvents.slice(-300),
+      '--- latest raw notifications ---', ...r.bluetoothTrace.filter((l) => / notify /.test(l)).slice(-40),
+      '--- log (last 100 lines) ---', ...r.log.slice(-100),
     ].join('\n');
     const box = $<HTMLTextAreaElement>('reportBox');
     box.value = report;
@@ -478,6 +487,7 @@ export function mountDiagnostics(root: HTMLElement): () => void {
   return () => {
     unbind();
     offConnection();
+    offTrace();
     clearInterval(rateTimer);
     chart.dispose();
     window.removeEventListener('keydown', onKey);

@@ -1,3 +1,4 @@
+import { trace } from './btTrace';
 import { Emitter } from './emitter';
 import {
   UUID, nameOf, parseControlPointResponse, parseFeature, parseHeartRate, parseMachineStatus,
@@ -93,7 +94,10 @@ export class RowerSession {
 
   private emit(e: RowerEvent) { this.emitter.emit('event', e); }
 
-  private log(msg: string, level: 'info' | 'warn' | 'error' = 'info') { this.emit({ type: 'log', t: this.lastT, msg, level }); }
+  private log(msg: string, level: 'info' | 'warn' | 'error' = 'info') {
+    trace('session', `t=${(this.lastT / 1000).toFixed(2)}s  ${level}: ${msg}`);
+    this.emit({ type: 'log', t: this.lastT, msg, level });
+  }
 
   /** Public for tests and replay: process a single packet. */
   handlePacket(p: RawPacket) {
