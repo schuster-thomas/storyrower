@@ -31,6 +31,8 @@ function route() {
   scrollTo(0, 0);
 }
 
+// back from a Google sign-in in this tab (Bluefy): take the token out of the address first
+drive.takeRedirectResult();
 window.addEventListener('hashchange', route);
 route();
 // count trainings waiting for Google Drive, and sync right away if the last sign-in is still valid

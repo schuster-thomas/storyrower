@@ -6,7 +6,7 @@ import { DRIVE_FOLDER, DRIVE_SCOPES, GOOGLE_CLIENT_ID } from './config';
 /**
  * Google Drive sync: every training as one JSON file and the latest settings as settings.json in a
  * "StoryRower" folder of the user's Drive. Sign-in runs in the browser (Google Identity Services,
- * token model): an access token lasts about an hour and there is no refresh token, so when it has
+ * token model; in Bluefy the page itself goes to Google and back instead of a window): an access token lasts about an hour and there is no refresh token, so when it has
  * run out the icon asks to sign in again (one tap, no consent screen the second time) and
  * everything that waited is uploaded then. Nothing is lost meanwhile – the history lives on this
  * device first.
@@ -35,7 +35,28 @@ interface Token { value: string; exp: number }
 
 const LINK_KEY = 'storyrower.drive';
 const TOKEN_KEY = 'storyrower.driveToken';
+/** '1' = sign in by leaving for Google in this tab (set after a blocked window, or by hand to test) */
+const REDIRECT_MODE_KEY = 'storyrower.driveRedirect';
+/** the sign-in that left for Google: its state value and the page to come back to */
+const PENDING_KEY = 'storyrower.driveRedirectPending';
 const API = 'https://www.googleapis.com';
+
+/**
+ * Bluefy (the iPad browser with Web Bluetooth) opens Google's window as a separate tab that cannot
+ * report back – the sign-in goes round in circles. There the sign-in leaves this tab for Google
+ * and comes back with the token in the address instead. Bluefy often reports a desktop Mac user
+ * agent: an Apple touch device with Web Bluetooth is Bluefy (or one like it – Safari has none).
+ */
+function useRedirect(): boolean {
+  if (localStorage.getItem(REDIRECT_MODE_KEY) === '1') return true;
+  const ua = navigator.userAgent;
+  if (/Bluefy/i.test(ua)) return true;
+  const appleTouch = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  return appleTouch && 'bluetooth' in navigator;
+}
+
+/** Must match an "Authorised redirect URI" of the OAuth client exactly (with the trailing slash). */
+const redirectUri = () => location.origin + import.meta.env.BASE_URL;
 
 class AuthError extends Error {}
 
@@ -85,6 +106,8 @@ class DriveSync {
   /** a page asked for fresh data (the history: trainings from other devices) */
   private wantSync = false;
   private lastAuto = 0;
+  /** what the redirect sign-in brought back (taken from the address before the router ran) */
+  private returned: { resp?: TokenResponse; error?: string } | null = null;
   private _status: DriveStatus;
 
   constructor() {
@@ -120,7 +143,7 @@ class DriveSync {
    * opened right inside a tap, so by then everything has to be ready.
    */
   preload() {
-    if (this.configured) loadGis().then((g) => this.initClient(g)).catch(() => {});
+    if (this.configured && !useRedirect()) loadGis().then((g) => this.initClient(g)).catch(() => {});
   }
 
   private initClient(gis: Gis) {
@@ -131,6 +154,15 @@ class DriveSync {
   /** Start-up: count what waits, and sync if the last sign-in is still valid. */
   async init() {
     if (!this.configured) return;
+    const back = this.returned;
+    this.returned = null;
+    if (back?.resp) {
+      this.set({ state: 'connecting', error: null });
+      await this.refreshPending();
+      await this.signedInWith(back.resp).catch((e) => this.set({ state: this.baseState(), error: (e as Error).message }));
+      return;
+    }
+    if (back?.error) this.set({ error: back.error });
     if (this.linked) this.preload();
     await this.refreshPending();
     if (this.linked && this.hasToken()) void this.sync();
@@ -156,7 +188,8 @@ class DriveSync {
 
   /** Something waits for Drive and the sign-in has run out: renew it on this tap (at most every 2 min). */
   private onTap = () => {
-    if (!this.configured || !this.linked || this.hasToken() || this.signing || !this.client) return;
+    // (not with the redirect sign-in: a tap on anything would leave the page for Google)
+    if (!this.configured || !this.linked || this.hasToken() || this.signing || !this.client || useRedirect()) return;
     if (!(this._status.pending > 0 || this.settingsDirty || this.wantSync)) return;
     if (document.querySelector('.game-canvas')) return;   // never in the middle of a workout
     if (Date.now() - this.lastAuto < 120_000) return;
@@ -167,10 +200,50 @@ class DriveSync {
   /** Must run from a tap (the browser only allows the Google window then). */
   signIn(): Promise<void> {
     if (!this.configured) return Promise.resolve();
+    if (useRedirect()) { this.leaveForGoogle(); return Promise.resolve(); }
     this.signing ??= this.doSignIn().finally(() => { this.signing = null; });
     return this.signing;
   }
 
+  /** Redirect sign-in: this page goes to Google and comes back with "#access_token=…". */
+  private leaveForGoogle() {
+    const state = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+    write(PENDING_KEY, { state, hash: location.hash, at: Date.now() });
+    const q = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri(),
+      response_type: 'token',
+      scope: DRIVE_SCOPES,
+      include_granted_scopes: 'true',
+      state,
+    });
+    // signed in before: no consent screen again, Google just confirms the account
+    if (this.linked?.email) q.set('login_hint', this.linked.email);
+    if (!this.linked) q.set('prompt', 'consent');
+    this.set({ state: 'connecting', error: null });
+    location.assign(`https://accounts.google.com/o/oauth2/v2/auth?${q}`);
+  }
+
+  /**
+   * Back from Google (redirect sign-in): take the token out of the address and put the page that
+   * was open back in its place. Runs before the router looks at the address.
+   */
+  takeRedirectResult() {
+    const h = location.hash;
+    if (!/^#(.*&)?(access_token|error)=/.test(h)) return;
+    const p = new URLSearchParams(h.slice(1));
+    const pending = read<{ state: string; hash: string; at: number }>(PENDING_KEY);
+    write(PENDING_KEY, null);
+    history.replaceState(null, '', location.pathname + location.search + (pending?.hash ?? ''));
+    if (!pending || p.get('state') !== pending.state) { this.returned = { error: 'The Google sign-in could not be matched – please try again.' }; return; }
+    const token = p.get('access_token');
+    if (!token) {
+      const err = p.get('error');
+      this.returned = { error: err === 'access_denied' ? 'The Google sign-in was cancelled.' : `Google sign-in: ${p.get('error_description') ?? err}` };
+      return;
+    }
+    this.returned = { resp: { access_token: token, expires_in: Number(p.get('expires_in')) || 3600 } };
+  }
   private async doSignIn(): Promise<void> {
     this.set({ state: 'connecting', error: null });
     try {
@@ -178,28 +251,40 @@ class DriveSync {
       // closes by itself. requestAccessToken runs synchronously here when the client is ready.
       const ask = (client: TokenClient) => new Promise<TokenResponse>((resolve, reject) => {
         client.callback = (r) => (r.access_token ? resolve(r) : reject(new Error(r.error_description ?? r.error ?? 'sign-in failed')));
-        client.error_callback = (e) => reject(new Error(
-          e.type === 'popup_closed' ? 'The Google window was closed.'
-            : e.type === 'popup_failed_to_open' ? 'The browser blocked the Google window – tap again.'
-              : e.message ?? e.type ?? 'sign-in failed'));
+        client.error_callback = (e) => {
+          // the window cannot open here: sign in within this tab from the next tap on
+          if (e.type === 'popup_failed_to_open') localStorage.setItem(REDIRECT_MODE_KEY, '1');
+          reject(new Error(
+            e.type === 'popup_closed' ? 'The Google window was closed.'
+              : e.type === 'popup_failed_to_open' ? 'The browser blocked the Google window – tap again, the sign-in then opens in this tab.'
+                : e.message ?? e.type ?? 'sign-in failed'));
+        };
         client.requestAccessToken(this.linked ? { prompt: '', login_hint: this.linked.email ?? undefined } : { prompt: 'consent' });
       });
       const resp = await (this.client ? ask(this.client) : loadGis().then((g) => ask(this.initClient(g))));
-      this.token = { value: resp.access_token!, exp: Date.now() + (resp.expires_in ?? 3600) * 1000 };
-      write(TOKEN_KEY, this.token);
-      const email = await this.fetchEmail().catch(() => this.linked?.email ?? null);
-      this.linked = { email, folderId: this.linked?.folderId ?? null, lastSync: this.linked?.lastSync ?? null };
-      write(LINK_KEY, this.linked);
-      this.set({ email });
-      await this.sync();
+      await this.signedInWith(resp);
     } catch (e) {
       this.set({ state: this.baseState(), error: (e as Error).message });
     }
   }
 
+  /** A token arrived (window or redirect): remember it and the account, then sync. */
+  private async signedInWith(resp: TokenResponse) {
+    this.token = { value: resp.access_token!, exp: Date.now() + (resp.expires_in ?? 3600) * 1000 };
+    write(TOKEN_KEY, this.token);
+    const email = await this.fetchEmail().catch(() => this.linked?.email ?? null);
+    this.linked = { email, folderId: this.linked?.folderId ?? null, lastSync: this.linked?.lastSync ?? null };
+    write(LINK_KEY, this.linked);
+    this.set({ email });
+    await this.sync();
+  }
+
   /** Forget the Google account on this device; the trainings stay here and in Drive. */
   signOut() {
-    if (this.token) window.google?.accounts.oauth2.revoke(this.token.value);
+    if (this.token) {
+      if (window.google) window.google.accounts.oauth2.revoke(this.token.value);
+      else void fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(this.token.value)}`, { method: 'POST', mode: 'no-cors' }).catch(() => {});
+    }
     this.token = null; this.linked = null;
     write(TOKEN_KEY, null); write(LINK_KEY, null);
     this.set({ state: this.baseState(), email: null, lastSync: null, error: null });
