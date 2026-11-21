@@ -3,7 +3,7 @@ import type { Level } from './level';
 
 /**
  * Mauritius Shark Madness: a turquoise lagoon off the south-west coast – the open sea on the left,
- * a palm beach and the great basalt monolith on the right. Snorkelers, surfers and a water-skier
+ * a palm beach and the great basalt monolith on the right. Paddle boarders, a windsurfer and a water-skier
  * enjoy the morning; then clouds gather and a fin appears far out. A thunderstorm breaks, the fin
  * circles closer and closer – and at the peak the shark attacks the boat. Once the rower has
  * escaped, the storm passes and the evening ends in a soft, low sunset over the sea.
@@ -44,7 +44,7 @@ export const MAURITIUS: Level = {
   },
   beats: [
     { id: 'calm', name: 'The lagoon', anchor: { at: 'phase-start', phase: 'idyll', offset: 3 }, effect: 'calm', caption: 'Turquoise water, white sand, palms. Find your rhythm.' },
-    { id: 'visitors', name: 'Water-skier', anchor: { at: 'phase-fraction', phase: 'idyll', fraction: 0.45 }, effect: 'visitors', caption: 'Snorkelers, surfers, a water-skier – paradise is busy this morning.' },
+    { id: 'visitors', name: 'Water-skier', anchor: { at: 'phase-fraction', phase: 'idyll', fraction: 0.45 }, effect: 'visitors', caption: 'Paddle boarders, a windsurfer, a water-skier – paradise is busy this morning.' },
     { id: 'clouds', name: 'Clouds gather', anchor: { at: 'phase-start', phase: 'omens', offset: 0 }, effect: 'clouds', caption: 'Dark clouds over the ocean… the swimmers head for the beach.' },
     { id: 'fin', name: 'A fin', anchor: { at: 'phase-fraction', phase: 'omens', fraction: 0.5 }, effect: 'fin', caption: 'A fin! Something is circling far out there…' },
     { id: 'storm', name: 'Thunderstorm', anchor: { at: 'first-section', kind: 'hard', offset: 0 }, effect: 'thunderstorm', caption: 'THUNDERSTORM! Lightning over the sea – and the fin is coming closer.' },

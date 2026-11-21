@@ -7,6 +7,22 @@ import { lengthScale, type MauritiusKit } from './kit';
 
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 
+/**
+ * The stand-up paddler models (no paddle – the game adds one), measured with
+ * scripts/levels/hands.mjs: the turn that lays the board along +z with the person facing forward,
+ * the torso (x, z) and both fists after that turn, in units of the figure's height. The paddle is
+ * held like a real one: the T-grip in the top fist, the shaft through the lower fist.
+ */
+const PADDLERS = [
+  { yaw: 0.026, torso: [0.012, -0.065], top: [-0.031, 0.822, 0.193], low: [0.103, 0.615, 0.088] },
+  { yaw: 3.323, torso: [0.137, 0.009], top: [-0.023, 0.769, 0.143], low: [0.341, 0.439, 0.317] },
+] as const;
+/** hip height (share of the figure's height): the upper body bends forward about it */
+const HIP = 0.5;
+const PADDLER_HEIGHT = 1.95;    // the figure from the board to the top of the head (m)
+const STROKE = 2.2;             // seconds per paddle stroke
+const FADE_IN = 3;              // seconds a new paddler takes to appear
+
 /** How the windsurf rig sits on the surfer model (found by eye: the model's arms reach across the board). */
 const RIG = { x: -0.6, y: 0.05, z: 0.35, yaw: 0.6, lean: -0.22, boardYaw: 0 };
 
@@ -19,7 +35,18 @@ const SURF_COURSE = new THREE.CatmullRomCurve3([
 ].map(([x, z]) => new THREE.Vector3(x, 0, z)));
 const SURF_SPEED = 7;   // m/s along the course
 
-interface Swimmer { obj: THREE.Group; x: number; z: number; heading: number; drift: number; kick: number; on: boolean }
+/**
+ * A stand-up paddler: `speed` along the heading, `stroke` the phase of the paddle stroke (0–1),
+ * `side` the side the paddle is on (±1, from the model's lower fist), `fade` 0–1 while appearing.
+ */
+interface Paddler {
+  obj: THREE.Group; paddle: THREE.Group; mats: THREE.Material[];
+  /** the fists and the hip pivot (y, z) in the figure's frame (board along +z), metres */
+  top: THREE.Vector3; low: THREE.Vector3; hip: THREE.Vector2;
+  /** how far the upper body is bent forward (radians, a uniform of its materials) */
+  bend: { value: number };
+  x: number; z: number; heading: number; speed: number; stroke: number; side: number; fade: number; on: boolean;
+}
 interface Runner { obj: THREE.Group; x: number; z: number; speed: number; on: boolean; t: number; spray: number }
 
 /** A copy of a normalised model, `length` metres long, its front turned to +z (yaw in radians). */
@@ -32,15 +59,17 @@ function figure(m: Model, length: number, frontYaw: number, shadows: boolean) {
 }
 
 /**
- * People enjoying the lagoon while the weather is fine: snorkelers in pairs floating face down in
- * the shallows – low in the water, a big yellow snorkel sticking up, an orange snorkel buoy on a line
- * behind each, their fins splashing (a lying figure alone reads as a flat slab from the boat) –, a speedboat towing a water-skier that overtakes the rower on the
- * open-sea side, and a windsurfer with a bright sail who comes in from the left, sails a loop out ahead and
- * leaves to the left again. When the clouds gather nobody new comes out.
+ * People enjoying the lagoon while the weather is fine: stand-up paddlers scattered over the water
+ * (upright figures read from the low rowing camera, people lying in the water didn't), a speedboat
+ * towing a water-skier that overtakes the rower on the open-sea side, and a windsurfer with a
+ * bright sail who comes in from the left, sails a loop out ahead and leaves to the left again.
+ * When the clouds gather nobody new comes out.
  */
 export class Visitors {
   readonly group = new THREE.Group();
-  private swimmers: Swimmer[] = [];
+  private paddlers: Paddler[] = [];
+  /** the first paddlers are in place (later ones start far ahead) */
+  private placed = false;
   private boat: Runner | null = null;
   private skier: THREE.Group | null = null;
   private rope: THREE.Mesh;
@@ -49,21 +78,69 @@ export class Visitors {
   private turn = 0;
   private tmp = new THREE.Vector3();
   private tmp2 = new THREE.Vector3();
-  /** shared by every snorkeler's snorkel, buoy and line */
+  private down = new THREE.Vector3(0, -1, 0);
+  private fwd = new THREE.Vector3(0, 0, 1);
+  private q = new THREE.Quaternion();
+  /** geometry and materials of the windsurf rig */
   private gear: { dispose(): void }[] = [];
+  private paddleParts: { shaft: THREE.BufferGeometry; blade: THREE.BufferGeometry; grip: THREE.BufferGeometry; dark: THREE.Material; blue: THREE.Material } | null = null;
   /** the windsurfer's mast, sail and boom (in the board's frame) */
   private rig: THREE.Group | null = null;
 
   constructor(private host: WorldHost, kit: MauritiusKit, private water: Water) {
-    const { snorkeler, speedboat, skier, surfer } = kit.models;
+    const { paddler, paddler2, speedboat, skier, surfer } = kit.models;
     const shadows = host.shadows;
-    // the snorkeler's head points to +x in the model
-    if (snorkeler) for (let i = 0; i < 4; i++) {
-      const obj = figure(snorkeler, 1.85, -Math.PI / 2, shadows);
-      obj.add(...this.snorkelGear(i === 0));
+    // stand-up paddlers: two models, alternating, each with its own paddle and its own materials (to fade in)
+    const sups = [paddler, paddler2];
+    for (let i = 0; i < 5; i++) {
+      const k = i % 2, m = sups[k] ?? sups[1 - k];
+      if (!m) break;
+      const scale = PADDLER_HEIGHT;
+      const obj = figure(m, scale * Math.max(1, m.width, m.depth), PADDLERS[k].yaw, shadows);
+      const cfg = PADDLERS[k];
+      const top = new THREE.Vector3(...cfg.top).multiplyScalar(scale), low = new THREE.Vector3(...cfg.low).multiplyScalar(scale);
+      // the forward direction and the torso in the model's own (unturned) space, for the shader
+      const fx = -Math.sin(cfg.yaw), fz = Math.cos(cfg.yaw);
+      const tgx = cfg.torso[0] * Math.cos(cfg.yaw) - cfg.torso[1] * Math.sin(cfg.yaw), tgz = cfg.torso[0] * Math.sin(cfg.yaw) + cfg.torso[1] * Math.cos(cfg.yaw);
+      const bend = { value: 0 };
+      const mats: THREE.Material[] = [];
+      // own materials (to fade in), and the upper body bending forward at the hips
+      obj.traverse((o) => {
+        const mesh = o as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const mat = (mesh.material as THREE.Material).clone();
+        mat.onBeforeCompile = (sh) => {
+          sh.uniforms.uBend = bend;
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
+            uniform float uBend;`).replace('#include <begin_vertex>', `#include <begin_vertex>
+            {
+              // model space: height 0–1; everything above the hips leans forward about them
+              vec2 f = vec2(${fx.toFixed(4)}, ${fz.toFixed(4)});
+              float a = uBend * smoothstep(${(HIP - 0.08).toFixed(2)}, ${(HIP + 0.06).toFixed(2)}, transformed.y);
+              float qy = transformed.y - ${HIP.toFixed(2)};
+              float qz = dot(transformed.xz - vec2(${tgx.toFixed(4)}, ${tgz.toFixed(4)}), f);
+              float c = cos(a), s = sin(a);
+              transformed.y = ${HIP.toFixed(2)} + qy * c - qz * s;
+              transformed.xz += f * (qy * s + qz * c - qz);
+            }`);
+        };
+        // three.js shares compiled shaders by the hook's source text, which is the same for both
+        // models – without its own key one model would bend the wrong way
+        mat.customProgramCacheKey = () => `paddler-bend-${k}`;
+        mesh.material = mat;
+        mats.push(mat);
+      });
+      const paddle = this.paddle();
+      paddle.traverse((o) => {
+        const mesh = o as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        mesh.material = (mesh.material as THREE.Material).clone();
+        mats.push(mesh.material);
+      });
+      obj.add(paddle);
       obj.visible = false;
       this.group.add(obj);
-      this.swimmers.push({ obj, x: 0, z: 0, heading: 0, drift: 0, kick: Math.random(), on: false });
+      this.paddlers.push({ obj, paddle, mats, top, low, hip: new THREE.Vector2(HIP * scale, cfg.torso[1] * scale), bend, x: 0, z: 0, heading: 0, speed: 0, stroke: Math.random(), side: Math.sign(cfg.low[0] - cfg.top[0]) || 1, fade: 1, on: false });
     }
     // the speedboat's bow points to +z; the skier's ski tips to -z
     if (speedboat) {
@@ -95,34 +172,26 @@ export class Visitors {
   }
 
   /**
-   * What makes a snorkeler readable from a distance: a big J-shaped yellow snorkel standing up from
-   * the head (+z), and an orange torpedo buoy floating on a line behind the fins.
+   * A stand-up paddle held at the very end: the T-grip at the origin (in the fists), the shaft down
+   * along −y, the blade at its end. It turns about the hands, so it never leaves them.
    */
-  private snorkelGear(first: boolean): THREE.Object3D[] {
-    if (first) {
-      const tube = new THREE.CylinderGeometry(0.045, 0.045, 0.62, 8);
-      tube.translate(0, 0.31, 0);
-      const buoy = new THREE.CapsuleGeometry(0.14, 0.55, 4, 10);
-      buoy.rotateX(Math.PI / 2);
-      const line = new THREE.CylinderGeometry(0.008, 0.008, 1, 3);
-      line.translate(0, 0.5, 0);
-      line.rotateX(Math.PI / 2);
-      const yellow = new THREE.MeshStandardMaterial({ color: 0xffd21a, emissive: 0x6b4a00, roughness: 0.4 });
-      const orange = new THREE.MeshStandardMaterial({ color: 0xff5a14, emissive: 0x5a1400, roughness: 0.35 });
-      const rope = new THREE.MeshBasicMaterial({ color: 0xf2f2f2 });
-      this.gear.push(tube, buoy, line, yellow, orange, rope);
+  private paddle() {
+    if (!this.paddleParts) {
+      const shaft = new THREE.CylinderGeometry(0.018, 0.018, 1.7, 5);
+      shaft.translate(0, -0.85, 0);
+      const blade = new THREE.BoxGeometry(0.2, 0.42, 0.025);
+      blade.translate(0, -1.85, 0.02);
+      const grip = new THREE.BoxGeometry(0.13, 0.035, 0.035);
+      const dark = new THREE.MeshStandardMaterial({ color: 0x23262e, roughness: 0.45 });
+      const blue = new THREE.MeshStandardMaterial({ color: 0x1d5fd6, roughness: 0.4 });
+      this.gear.push(shaft, blade, grip, dark, blue);
+      this.paddleParts = { shaft, blade, grip, dark, blue };
     }
-    const [tube, buoy, line, yellow, orange, rope] = this.gear as [THREE.BufferGeometry, THREE.BufferGeometry, THREE.BufferGeometry, THREE.Material, THREE.Material, THREE.Material];
-    const snorkel = new THREE.Mesh(tube, yellow);
-    snorkel.position.set(0.09, 0.12, 0.62);
-    snorkel.rotation.x = -0.15;
-    const float = new THREE.Mesh(buoy, orange);
-    float.position.set(0.25, 0.04, -2.6);
-    const tether = new THREE.Mesh(line, rope);
-    tether.position.set(0.05, 0.12, -0.25);
-    tether.scale.set(1, 1, 2.36);
-    tether.lookAt(0.25, 0.04, -2.6);
-    return [snorkel, float, tether];
+    const p = this.paddleParts;
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(p.shaft, p.dark), new THREE.Mesh(p.blade, p.blue), new THREE.Mesh(p.grip, p.dark));
+    g.rotation.order = 'YXZ';
+    return g;
   }
 
   /**
@@ -201,47 +270,78 @@ export class Visitors {
     const surface = (x: number, z: number) => this.water.surfaceAt(x, z, time, f.swell);
     const out = f.visitors > 0.5;
 
-    // ---------- snorkelers: scattered over the lagoon ahead, drifting ----------
-    for (const s of this.swimmers) {
-      if (!s.on || s.z > f.boatZ + 25) {
-        s.on = false;
-        s.obj.visible = false;
+    // ---------- stand-up paddlers: scattered over the lagoon, paddling gently, hardly moving ----------
+    for (const p of this.paddlers) {
+      if (!p.on || p.z > f.boatZ + 25) {
+        p.on = false;
+        p.obj.visible = false;
         if (!out) continue;
-        // a new one further ahead, between the boat's lane and the beach
-        // in pairs: the second of each pair swims close to its buddy
-        const buddy = this.swimmers[this.swimmers.indexOf(s) ^ 1];
-        if (buddy?.on && buddy.z < f.boatZ - 40) {
-          s.z = buddy.z + rnd(-2.5, 2.5);
-          s.x = buddy.x + rnd(1.8, 3) * (Math.random() < 0.5 ? -1 : 1);
-          s.heading = buddy.heading + rnd(-0.4, 0.4);
-        } else {
-          s.z = f.boatZ - rnd(90, 320);
-          s.x = rnd(8, beachX(s.z) - 5);
-          s.heading = rnd(0, Math.PI * 2);
-        }
-        s.drift = rnd(0.2, 0.5);
-        s.on = true;
-        s.obj.visible = true;
+        // a new one far ahead in the haze – small at first, bigger as the boat comes closer, until it
+        // rows past (at the start of the game they are spread over the whole stretch); mostly in the
+        // lagoon towards the beach, now and then on the sea side, never in the rowing lane
+        p.z = f.boatZ - (this.placed ? rnd(260, 450) : rnd(40, 450));
+        p.x = Math.random() < 0.7 ? rnd(9, beachX(p.z) - 4) : -rnd(10, 26);
+        p.heading = rnd(0, Math.PI * 2);
+        p.speed = rnd(0.1, 0.25);
+        // the first ones are simply there when the scene appears (like the palms); later ones fade in far out
+        p.fade = this.placed ? 0 : 1;
+        for (const m of p.mats) { m.transparent = p.fade < 1; m.opacity = p.fade; m.needsUpdate = true; }
+        p.on = true;
+        p.obj.visible = true;
       }
-      s.heading += Math.sin(time * 0.2 + s.kick * 9) * dt * 0.15;
-      s.x += Math.sin(s.heading) * s.drift * dt;
-      s.z += Math.cos(s.heading) * s.drift * dt;
-      // they stay clear of the rowing lane and off the beach: turn back when they get close
-      const lo = 7.5, hi = beachX(s.z) - 4;
-      if ((s.x < lo && Math.sin(s.heading) < 0) || (s.x > hi && Math.sin(s.heading) > 0)) s.heading = -s.heading;
-      s.x = Math.max(lo - 0.5, Math.min(hi + 0.5, s.x));
-      s.obj.position.set(s.x, surface(s.x, s.z) - 0.06, s.z);
-      s.obj.rotation.set(Math.sin(time * 1.3 + s.kick * 5) * 0.04, s.heading, Math.sin(time * 1.1 + s.kick) * 0.06);
-      // the fins kick little splashes now and then
-      s.kick += dt * 3.2;
-      if (s.kick >= 1) {
-        s.kick -= 1;
-        const side = Math.random() < 0.5 ? -0.15 : 0.15;
-        const feet = this.tmp.set(side, 0, -1).applyAxisAngle(this.tmp2.set(0, 1, 0), s.heading).add(s.obj.position);
-        feet.y = 0;
-        this.host.effects.bladeSplash(feet, 0.55);
+      if (p.fade < 1) {
+        p.fade = Math.min(1, p.fade + dt / FADE_IN);
+        const see = p.fade < 1;
+        // (transparent switches the shader variant: recompile only when it changes)
+        for (const m of p.mats) { if (m.transparent !== see) { m.transparent = see; m.needsUpdate = true; } m.opacity = p.fade; }
+      }
+      // the stroke, as in the reference (assets.mjs 'sup-stroke'), driven by the body: (1) reach &
+      // catch – bent forward at the hips, the blade goes in in front; (2) pull – straightening up,
+      // the blade moves back along the board; (3) exit at the feet; (4) recovery – the blade swings
+      // forward out to the side above the water. Both fists stay on the paddle (a little give in the
+      // recovery, when the lower hand would turn the shaft).
+      const before = p.stroke;
+      p.stroke = (p.stroke + dt / STROKE) % 1;
+      const k = p.stroke;
+      const ease = (x: number) => { const c = Math.max(0, Math.min(1, x)); return c * c * (3 - 2 * c); };
+      const lerp = (a: number, b: number, x: number) => a + (b - a) * ease(x);
+      let bend: number, roll: number;
+      if (k < 0.1) { bend = 0.55; roll = 0; }                                                  // catch
+      else if (k < 0.55) { bend = lerp(0.55, 0.05, (k - 0.1) / 0.45); roll = 0; }              // pull
+      else if (k < 0.68) { const t = (k - 0.55) / 0.13; bend = lerp(0.05, 0.12, t); roll = lerp(0, 0.35, t); }   // exit
+      else { const t = (k - 0.68) / 0.32; bend = lerp(0.12, 0.55, t); roll = lerp(0.35, 0, Math.max(0, t * 1.5 - 0.5)); }   // recovery
+      p.bend.value = bend;
+      // both fists follow the bend about the hips; the paddle hangs from the top fist through the lower one
+      const c = Math.cos(bend), sn = Math.sin(bend);
+      const bent = (v: THREE.Vector3, out: THREE.Vector3) => {
+        const y = v.y - p.hip.x, z = v.z - p.hip.y;
+        return out.set(v.x, p.hip.x + y * c - z * sn, p.hip.y + y * sn + z * c);
+      };
+      const t1 = bent(p.top, this.tmp), t2 = bent(p.low, this.tmp2);
+      p.paddle.position.copy(t1);
+      p.paddle.quaternion.setFromUnitVectors(this.down, t2.sub(t1).normalize());
+      // recovery: the blade swings out and up to the side, about the top fist
+      if (roll) p.paddle.quaternion.premultiply(this.q.setFromAxisAngle(this.fwd, -p.side * roll));
+      // the board glides only a little, surging with each pull
+      const pull = k >= 0.1 && k < 0.55;
+      const surge = pull ? Math.sin(((k - 0.1) / 0.45) * Math.PI) : 0;
+      p.heading += Math.sin(time * 0.12 + p.x) * dt * 0.04 - p.side * surge * dt * 0.03;
+      p.x += Math.sin(p.heading) * p.speed * (0.4 + surge) * dt;
+      p.z += Math.cos(p.heading) * p.speed * (0.4 + surge) * dt;
+      if (p.x > 0) p.x = Math.max(8, Math.min(beachX(p.z) - 3, p.x));
+      else p.x = Math.min(-8, p.x);
+      p.obj.position.set(p.x, surface(p.x, p.z) - 0.06 + Math.sin(time * 1.9 + p.x) * 0.02, p.z);
+      p.obj.rotation.set(Math.sin(time * 1.3 + p.z) * 0.02, p.heading, Math.sin(time * 1.1 + p.x) * 0.03 + p.side * 0.02);
+      if (p.fade > 0.5 && ((before < 0.1 && k >= 0.1) || (before < 0.58 && k >= 0.58))) {
+        // the blade going in (splash) and coming out (a swirl stays behind)
+        p.obj.updateMatrixWorld(true);
+        const blade = this.tmp.set(0, -1.85, 0).applyMatrix4(p.paddle.matrixWorld);
+        blade.y = 0;
+        if (k < 0.3) this.host.effects.bladeSplash(blade, 0.55); else this.host.effects.puddle(blade);
       }
     }
+
+    this.placed = true;
 
     // ---------- now and then a speedboat with a water-skier, or a surfer ----------
     if (out) {
@@ -323,5 +423,6 @@ export class Visitors {
   dispose() {
     this.rope.geometry.dispose(); (this.rope.material as THREE.Material).dispose();
     for (const g of this.gear) g.dispose();
+    for (const p of this.paddlers) for (const m of p.mats) m.dispose();
   }
 }

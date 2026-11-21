@@ -19,7 +19,8 @@ const MODELS = [
   // the concept's tow rope was erased by hand (the game draws its own rope)
   { id: 'skier', ref: 'skier-ref.png', faces: 5000, tex: 512 },
   { id: 'surfer', ref: 'surfer-concept.png', faces: 5000, tex: 512 },
-  { id: 'snorkeler', ref: 'snorkeler-concept.png', faces: 4000, tex: 512 },
+  { id: 'paddler', ref: 'paddler-concept.png', faces: 5000, tex: 512 },
+  { id: 'paddler2', ref: 'paddler2-concept.png', faces: 5000, tex: 512 },
   { id: 'loungers', ref: 'loungers-concept.png', faces: 4000, tex: 512 },
   { id: 'hut', ref: 'hut-concept.png', faces: 4000, tex: 512 },
   { id: 'pirogue', ref: 'pirogue-concept.png', faces: 3000, tex: 512 },

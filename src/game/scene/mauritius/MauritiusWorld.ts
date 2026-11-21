@@ -29,7 +29,7 @@ const smooth = (x: number) => { const c = Math.max(0, Math.min(1, x)); return c 
 /**
  * Mauritius Shark Madness: a lagoon off the south-west coast of the island. On the left only the
  * open sea with surf on the reef; on the right a white beach with palms, loungers and black rocks,
- * jungle hills and the great basalt monolith behind. People snorkel, surf and water-ski. Then
+ * jungle hills and the great basalt monolith behind. People paddle, windsurf and water-ski. Then
  * clouds gather, a fin appears far out, a thunderstorm breaks with rain and lightning, the fin
  * circles closer – until the shark attacks the boat. After the escape the storm clears and the
  * rower glides into a low, soft sunset over the sea.

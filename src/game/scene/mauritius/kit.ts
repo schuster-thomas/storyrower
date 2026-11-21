@@ -11,7 +11,8 @@ import pirogueUrl from '../../../assets/levels/mauritius/models/pirogue.glb?url'
 import speedboatUrl from '../../../assets/levels/mauritius/models/speedboat.glb?url';
 import skierUrl from '../../../assets/levels/mauritius/models/skier.glb?url';
 import surferUrl from '../../../assets/levels/mauritius/models/surfer.glb?url';
-import snorkelerUrl from '../../../assets/levels/mauritius/models/snorkeler.glb?url';
+import paddlerUrl from '../../../assets/levels/mauritius/models/paddler.glb?url';
+import paddler2Url from '../../../assets/levels/mauritius/models/paddler2.glb?url';
 import sharkUrl from '../../../assets/levels/mauritius/models/shark.glb?url';
 
 /**
@@ -22,7 +23,7 @@ import sharkUrl from '../../../assets/levels/mauritius/models/shark.glb?url';
 
 const TEX = { sand, scrub, jungle };
 export type TexKey = keyof typeof TEX;
-const MODELS = { loungers: loungersUrl, hut: hutUrl, pirogue: pirogueUrl, speedboat: speedboatUrl, skier: skierUrl, surfer: surferUrl, snorkeler: snorkelerUrl };
+const MODELS = { loungers: loungersUrl, hut: hutUrl, pirogue: pirogueUrl, speedboat: speedboatUrl, skier: skierUrl, surfer: surferUrl, paddler: paddlerUrl, paddler2: paddler2Url };
 export type ModelKey = keyof typeof MODELS;
 
 export interface MauritiusKit {
