@@ -19,7 +19,8 @@ interface Panel {
 }
 
 const NS = 'http://www.w3.org/2000/svg';
-const LEFT = 40, RIGHT = 12, STRIP = 8, PANEL = 76, GAP = 16, AXIS = 20;
+// STRIP: phase strip on top; TITLE: room for each panel's title above its plot area
+const LEFT = 40, RIGHT = 12, STRIP = 8, TITLE = 18, GAP = 10, AXIS = 20;
 
 function el<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number>, parent?: Element) {
   const e = document.createElementNS(NS, tag);
@@ -35,7 +36,8 @@ function niceStep(range: number, count: number) {
   return [1, 2, 5, 10].map((m) => m * p).find((s) => s >= raw) ?? 10 * p;
 }
 
-export function mountResultsChart(host: HTMLElement, points: TracePoint[], phaseName: (p: PhaseId) => string): () => void {
+export function mountResultsChart(host: HTMLElement, points: TracePoint[], phaseName: (p: PhaseId) => string, opts: { panelHeight?: number } = {}): () => void {
+  const PANEL = opts.panelHeight ?? 76;
   const hasHr = points.some((p) => p.hr != null);
   const panels: Panel[] = [
     { title: 'Power', unit: 'W', color: 'var(--s-power)', value: (p) => p.power, band: (p) => p.powerBand },
@@ -73,11 +75,11 @@ export function mountResultsChart(host: HTMLElement, points: TracePoint[], phase
   let dots: SVGCircleElement[] = [];
   let x = (t: number) => t;
   const ys: ((v: number) => number)[] = [];
-  const panelTop = (i: number) => STRIP + 10 + i * (PANEL + GAP);
+  const panelTop = (i: number) => STRIP + 10 + TITLE + i * (TITLE + PANEL + GAP);
 
   function render() {
     const width = Math.max(280, plot.clientWidth);
-    const height = panelTop(panels.length) - GAP + AXIS;
+    const height = panelTop(panels.length) - TITLE - GAP + AXIS;
     svg?.remove();
     svg = el('svg', { width, height, viewBox: `0 0 ${width} ${height}`, class: 'rc-svg', role: 'img', 'aria-label': 'Power, stroke rate and heart rate over the workout' });
     plot.prepend(svg);
@@ -126,13 +128,13 @@ export function mountResultsChart(host: HTMLElement, points: TracePoint[], phase
       }
       el('path', { d, class: 'rc-line', style: `stroke:${pn.color}` }, svg!);
       // title: a short line key in the series colour, the words in text ink
-      el('line', { x1: LEFT + 2, x2: LEFT + 16, y1: top - 4, y2: top - 4, class: 'rc-key', style: `stroke:${pn.color}` }, svg!);
-      const title = el('text', { x: LEFT + 22, y: top, class: 'rc-ptitle' }, svg!);
+      el('line', { x1: LEFT + 2, x2: LEFT + 16, y1: top - 12, y2: top - 12, class: 'rc-key', style: `stroke:${pn.color}` }, svg!);
+      const title = el('text', { x: LEFT + 22, y: top - 8, class: 'rc-ptitle' }, svg!);
       title.textContent = `${pn.title} (${pn.unit})${pn.band ? ' · target band shaded' : ''}`;
     });
 
     // time axis under the last panel
-    const axisY = panelTop(panels.length) - GAP + 14;
+    const axisY = panelTop(panels.length) - TITLE - GAP + 14;
     const span = Math.max(1, t1 - t0);
     const stepMin = [1, 2, 5, 10, 15, 20, 30].find((m) => span / (m * 60) <= 6) ?? 30;
     for (let s = Math.ceil(t0 / (stepMin * 60)) * stepMin * 60; s <= t1; s += stepMin * 60) {

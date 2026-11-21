@@ -204,8 +204,10 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     overlay.className = 'game-overlay show';
     overlay.innerHTML = `
       <div class="card-big results-card">
-        <h2>${early ? 'Workout ended' : `${level.phases.winddown.name} – you made it!`}</h2>
-        <div class="stars">${'★'.repeat(st)}<span>${'★'.repeat(3 - st)}</span></div>
+        <div class="results-head">
+          <h2>${early ? 'Workout ended' : `${level.phases.winddown.name} – you made it!`}</h2>
+          <div class="stars">${'★'.repeat(st)}<span>${'★'.repeat(3 - st)}</span></div>
+        </div>
         <div class="results">
           ${tile(`${Math.round(dist)} m`, 'distance')}
           ${tile(formatDuration(sum.time), 'time')}
@@ -222,15 +224,13 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
         <div class="row" style="justify-content:center">
           <button class="primary" data-a="again">Row again</button>
           <button data-a="back">Back to setup</button>
-        </div>
-        <div class="row" style="justify-content:center">
           <button data-a="rec">Download recording</button>
         </div>
       </div>`;
     overlay.querySelector<HTMLButtonElement>('[data-a="again"]')!.onclick = opts.onRestart;
     overlay.querySelector<HTMLButtonElement>('[data-a="back"]')!.onclick = opts.onExit;
     overlay.querySelector<HTMLButtonElement>('[data-a="rec"]')!.onclick = () => downloadRecording(session!);
-    unmountChart = mountResultsChart(overlay.querySelector<HTMLElement>('.results-chart')!, trace.points, (p) => level.phases[p].name);
+    unmountChart = mountResultsChart(overlay.querySelector<HTMLElement>('.results-chart')!, trace.points, (p) => level.phases[p].name, { panelHeight: 120 });
     const savedEl = overlay.querySelector<HTMLElement>('[data-a="saved"]')!;
     void saving?.then((r) => showSaveResult(savedEl, r));
     }
