@@ -7,13 +7,15 @@
 #               camera (UVs = camera projection), exports <out>/section.glb and renders previews
 #               from the boat's point of view
 #
-#   blender --background --factory-startup --python scripts/blender/painted_shore.py -- <outdir> --kind cliffs|glacier [--paint painted.png]
+#   blender --background --factory-startup --python scripts/blender/painted_shore.py -- <outdir> --kind cliffs|glacier|garden|city [--paint painted.png]
+#   (garden and city are the banks of "Tokyo Super Row": a Japanese garden behind a granite wall on the
+#   left, a promenade with high-rises on the right – the city is mirrored onto the right bank like the glacier)
 #
 # Coordinates: Blender Z-up, the river runs along +Y (= -Z in three.js). Every section is built as
 # the LEFT bank (inland = -X); the game mirrors the glacier to the right bank. Sections alternate
 # normal / mirrored along the river, so neighbours meet without a seam; the bank lines are symmetric
 # about every multiple of LENGTH (same functions in src/game/scene/Fjord.ts).
-import bpy, bmesh, math, os, sys
+import bpy, bmesh, math, os, random, sys
 from mathutils import Vector, noise
 from bpy_extras.object_utils import world_to_camera_view
 
@@ -29,7 +31,7 @@ os.makedirs(OUT, exist_ok=True)
 LENGTH = 120.0
 DEPTH = 230.0             # how far inland the terrain goes
 # distance from the boat's lane to the waterline (left bank: cliffs, right bank: glacier front)
-BASE = {'cliffs': 14.0, 'glacier': 16.0}[KIND]
+BASE = {'cliffs': 14.0, 'glacier': 16.0, 'garden': 14.0, 'city': 16.0}[KIND]
 
 def bank(y):
     """symmetric about every multiple of LENGTH, almost straight so every face looks onto the river"""
@@ -142,8 +144,157 @@ def glacier_colour(cx, cy, cz, ny, d):
         return COL['crevasse']
     return COL['ice'] if cz > 2.0 else COL['iceDeep']
 
-height = cliffs_height if KIND == 'cliffs' else glacier_height
-face_colour = cliffs_colour if KIND == 'cliffs' else glacier_colour
+# ---------------------------------------------------------------- Tokyo: Japanese garden (left bank)
+# Flat hint colours, each one a thing the painter has to recognise (see scripts/painted/paint.mjs).
+COL.update({
+    'stone': lin(0xb9ae98), 'stoneWet': lin(0x5a564c), 'lawn': lin(0x8cc85a), 'gravel': lin(0xe6dcc0),
+    'azalea': lin(0xff4fa8), 'pine': lin(0x2c6a3a), 'blossom': lin(0xffb8d4), 'house': lin(0xc98a4a), 'roof': lin(0x434a5c),
+    'forest': lin(0x4f8f4a), 'water2': lin(0x2a8fb0),
+    'paving': lin(0xe2ddd2), 'street': lin(0x77777a), 'verge': lin(0x7fbf55), 'rail': lin(0xf0f0f0),
+    'glass': lin(0x6fa8dc), 'office': lin(0xf4f4f2), 'flats': lin(0xd9b98c), 'teal': lin(0x5cc4b0), 'roofTop': lin(0x5a5e66),
+})
+G_WALL = 1.8           # top of the granite wall above the water (src/game/scene/tokyo – keep in sync)
+C_WALL = 2.4           # top of the city embankment
+
+def garden_layout():
+    """bushes, pines, a tea house and cherry-blossom groves – nothing within 7 m of the section
+    ends, so a, a mirrored, b, b mirrored meet without a seam"""
+    r = random.Random(11 if VARIANT == 'a' else 23)
+    f = []
+    y = 9.0
+    while y < LENGTH - 9:      # azalea bushes along the wall
+        f.append(('azalea', y, r.uniform(1.6, 3.2), r.uniform(1.4, 2.4), r.uniform(1.0, 1.8)))
+        y += r.uniform(5, 11)
+    y = 12.0
+    while y < LENGTH - 12:     # pruned pines behind the gravel path
+        f.append(('pine', y, r.uniform(10, 14), r.uniform(2.5, 3.6), r.uniform(3.5, 5.5)))
+        y += r.uniform(16, 30)
+    house_y = r.uniform(30, 90)
+    y = 10.0
+    while y < LENGTH - 10:     # the cherry grove: big pink canopies in two rows
+        if abs(y - house_y) > 12:
+            f.append(('blossom', y, r.uniform(16, 24), r.uniform(6, 9), r.uniform(9, 13)))
+        f.append(('blossom', y + r.uniform(-4, 4), r.uniform(30, 44), r.uniform(7, 11), r.uniform(11, 15)))
+        y += r.uniform(9, 15)
+    return f, house_y
+GARDEN, HOUSE_Y = garden_layout() if KIND == 'garden' else ([], 0.0)
+
+def garden_feature(d, y):
+    """(height, what is there) at d metres inland"""
+    if d < 0:
+        return -3.0 + d * 0.05, 'stoneWet'
+    if d < 0.45:               # the granite wall, straight up out of the water
+        return G_WALL * smooth(0.0, 0.45, d), 'stone'
+    h = G_WALL + 0.1 + 0.25 * n1(d, y, 0.2, 3.0) * smooth(1, 4, d)
+    tag = 'gravel' if 7.0 < d < 9.5 else 'lawn'
+    # rolling hills behind the garden, partly blossoming
+    hill = smooth(50, 130, d) * (14 + 12 * n1(0, y, 0.02, 5.0)) + smooth(130, 230, d) * (12 + 14 * n1(0, y, 0.015, 8.0))
+    if hill > 0.5:
+        h += hill
+        tag = 'blossom' if n1(d, y, 0.04, 2.0) > 0.25 else 'forest'
+    # the tea house: a wooden box with a hipped roof
+    hd, hy = d - 16.0, y - HOUSE_Y
+    if abs(hy) < 5.5 and abs(hd) < 4.0:
+        roof = 2.4 * min(1 - abs(hy) / 5.5, 1 - abs(hd) / 4.0) * 1.6
+        if abs(hy) < 4.6 and abs(hd) < 3.2:
+            return G_WALL + 3.4 + min(2.4, roof), 'roof' if roof > 0.5 else 'house'
+        return G_WALL + 3.0 + min(0.6, roof * 0.3), 'roof'
+    for kind, fy, fd, rad, top in GARDEN:
+        dist = math.hypot(d - fd, (y - fy) * (0.8 if kind == 'blossom' else 1.0))
+        if dist < rad:
+            dome = G_WALL + top * math.sqrt(1 - (dist / rad) ** 2) + 0.4 * n1(d, y, 0.5, 4.0)
+            if dome > h:
+                h, tag = dome, kind
+    return h, tag
+
+def garden_height(d, y):
+    return garden_feature(d, y)[0]
+
+def garden_colour(cx, cy, cz, ny, d):
+    h, tag = garden_feature(d, cy)
+    if d < 0.6 or tag in ('stone', 'stoneWet'):
+        return COL['stoneWet'] if cz < 0.25 else COL['stone']
+    if tag == 'lawn' and ny < 0.5:
+        return COL['stone']
+    return COL[tag]
+
+# ---------------------------------------------------------------- Tokyo: city (built as left bank, shown on the right)
+def city_layout():
+    """rows of high-rises: (y centre, length along the river, d from the bank, depth, height, style)"""
+    r = random.Random(5 if VARIANT == 'a' else 17)
+    out = []
+    for d0, d1, h0, h1 in ((12.0, 15.0, 22.0, 42.0), (36.0, 46.0, 40.0, 68.0), (80.0, 100.0, 60.0, 95.0)):
+        y = 6.0 + r.uniform(0, 4)
+        while True:
+            w = r.uniform(12, 24)
+            if y + w > LENGTH - 6:
+                break
+            out.append((y + w / 2, w, r.uniform(d0, d1), r.uniform(14, 22), r.uniform(h0, h1), r.choice(['glass', 'office', 'flats', 'teal'])))
+            y += w + r.uniform(3, 8)
+    return out
+CITY = city_layout() if KIND == 'city' else []
+
+def city_height(d, y):
+    if d < 0:
+        return -3.0 + d * 0.05
+    if d < 0.45:
+        return C_WALL * smooth(0.0, 0.45, d)
+    return C_WALL + 0.02
+
+def city_colour(cx, cy, cz, ny, d):
+    if d < 0.6 or ny < 0.5:
+        return COL['stoneWet'] if cz < 0.25 else COL['stone']
+    if d < 9.0:
+        return COL['paving']
+    if d < 11.0:
+        return COL['verge']
+    return COL['street']
+
+def buildings():
+    """one box per building; the face towards the river shows its style, the others a darker shade"""
+    objs = []
+    for i, (yc, w, d0, depth, hgt, style) in enumerate(CITY):
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=1.0)
+        for v in bm.verts:
+            v.co.x = -bank(yc) - d0 - depth / 2 + v.co.x * depth
+            v.co.y = yc + v.co.y * w
+            v.co.z = C_WALL + (v.co.z + 0.5) * hgt
+        me = bpy.data.meshes.new(f'Bldg_{i}')
+        bm.to_mesh(me); bm.free()
+        o = bpy.data.objects.new(f'Bldg_{i}', me)
+        o['style'] = style
+        scene.collection.objects.link(o)
+        objs.append(o)
+    return objs
+
+# ---------------------------------------------------------------- Tokyo: geometry fitted to the painting
+# The image model keeps a blockout's layout only roughly, so for the Tokyo banks the projected
+# geometry is raised to the silhouette of the painting instead (skyline.json, scripts/painted/align.mjs):
+# the wall and lawn / promenade at the water, then a slope (garden) or a straight facade (city) up to
+# exactly the painted skyline – every painted crown and roof lands on geometry of its height.
+SKY_D = {'garden': 24.0, 'city': 14.0}.get(KIND, 0.0)   # how far inland the painted silhouette stands
+SKY_Z = None                                             # height of the skyline per metre of river (set below)
+
+def fitted_height(d, y):
+    if d < 0:
+        return -3.0 + d * 0.05
+    wall = G_WALL if KIND == 'garden' else C_WALL
+    if d < 0.45:
+        return wall * smooth(0.0, 0.45, d)
+    i = max(0, min(len(SKY_Z) - 2, int(y)))
+    top = SKY_Z[i] + (SKY_Z[i + 1] - SKY_Z[i]) * (y - i)
+    if KIND == 'city':
+        # promenade, then one facade straight up to the painted rooftops
+        return wall + 0.02 if d < SKY_D - 0.6 else max(wall, top) + (0.0 if d < SKY_D + 40 else -2.0)
+    base = wall + 0.1
+    # the lawn at the water, then crowns, roofs and hills rising to the painted silhouette
+    return base + (max(base, top) - base) * smooth(4.0, SKY_D, d)
+
+HEIGHT = {'cliffs': cliffs_height, 'glacier': glacier_height, 'garden': garden_height, 'city': city_height}
+COLOUR = {'cliffs': cliffs_colour, 'glacier': glacier_colour, 'garden': garden_colour, 'city': city_colour}
+height = HEIGHT[KIND]
+face_colour = COLOUR[KIND]
 
 # ---------------------------------------------------------------- build
 for o in list(bpy.data.objects):
@@ -154,7 +305,8 @@ def terrain(y0=0.0, y1=LENGTH, cols=72):
     """the bank from y0 to y1; the blockout render uses a much longer stretch, so the painting shows
     land from edge to edge instead of an island with sky at both ends"""
     bm = bmesh.new()
-    ROWS, COLS = 64, cols                # inland × along (dense near the water, coarse inland)
+    # inland × along (dense near the water, coarse inland); the garden has small bushes: finer
+    ROWS, COLS = (110, cols * 2) if KIND == 'garden' else (64, cols)
     grid = []
     for j in range(COLS + 1):
         y = y0 + (y1 - y0) * j / COLS
@@ -190,14 +342,17 @@ def rock():
     scene.collection.objects.link(o)
     return o
 
-def paint_hints(o, is_rock=False):
+def paint_hints(o, is_rock=False, style=None):
     me = o.data
     attr = me.color_attributes.new('Hint', 'FLOAT_COLOR', 'CORNER')
     mw = o.matrix_world
     for p in me.polygons:
         c = mw @ p.center
         n = (mw.to_3x3() @ p.normal).normalized()
-        if is_rock:
+        if style:
+            # a building: roof on top, the style colour on every wall
+            col = COL['roofTop'] if n.z > 0.5 else COL[style]
+        elif is_rock:
             col = COL['moss'] if n.z > 0.55 and c.z > 1.2 else COL['rock']
         else:
             col = face_colour(c.x, c.y, c.z, abs(n.z), -c.x - bank(c.y))
@@ -205,9 +360,53 @@ def paint_hints(o, is_rock=False):
             attr.data[li].color = col
     for p in me.polygons: p.use_smooth = False
 
+if PAINT and KIND in ('garden', 'city'):
+    import json
+    sk = json.load(open(os.path.join(os.path.dirname(PAINT), 'skyline.json')))
+    # the side painting camera (same as PaintCam below)
+    _D, _Z, _T = 52.0, 8.0, {'city': 9.0, 'garden': 9.0}[KIND]
+    cam0 = bpy.data.objects.new('SkyCam', bpy.data.cameras.new('SkyCam'))
+    scene.collection.objects.link(cam0)
+    cam0.location = (_D - BASE, LENGTH / 2, _Z)
+    cam0.rotation_mode = 'QUATERNION'
+    cam0.rotation_quaternion = (Vector((-BASE - 40, LENGTH / 2, _Z + (_D + 40) * math.tan(math.radians(_T)))) - Vector(cam0.location)).to_track_quat('-Z', 'Y')
+    cam0.data.sensor_fit = 'HORIZONTAL'
+    cam0.data.lens = 18 / math.tan(math.atan((LENGTH / 2 + 4) / _D))
+    scene.camera = cam0
+    scene.render.resolution_x, scene.render.resolution_y = 3072, 1024
+    bpy.context.view_layer.update()
+    SKY_Z = []
+    for yi in range(int(LENGTH) + 2):
+        y = float(min(yi, LENGTH))
+        x = -bank(y) - SKY_D
+        u = world_to_camera_view(scene, cam0, Vector((x, y, 10.0))).x
+        col = max(0, min(sk['width'] - 1, int(u * sk['width'])))
+        v_sky = 1.0 - sk['rows'][col] / sk['height']             # 0 = bottom of the picture
+        lo, hi = 0.0, 140.0
+        for _ in range(30):                                       # the height whose image sits on the skyline
+            mid = (lo + hi) / 2
+            if world_to_camera_view(scene, cam0, Vector((x, y, mid))).y < v_sky: lo = mid
+            else: hi = mid
+        SKY_Z.append(lo)
+    bpy.data.objects.remove(cam0, do_unlink=True)
+    height = fitted_height
+    print('skyline heights: min %.1f, max %.1f m' % (min(SKY_Z), max(SKY_Z)))
+    # where the quake can break pieces off the city: markers on the facade every 12 m (scale z = height)
+    if KIND == 'city':
+        for k, ys in enumerate(range(8, int(LENGTH) - 6, 12)):
+            if SKY_Z[ys] < 16: continue
+            e = bpy.data.objects.new(f'Spot_{k}', None)
+            scene.collection.objects.link(e)
+            e.location = (-bank(ys) - SKY_D, float(ys), C_WALL)
+            e.scale = (1.0, 1.0, SKY_Z[ys] - C_WALL)
+
 bank_obj = terrain() if PAINT else terrain(-260.0, LENGTH + 260.0, 360)
 paint_hints(bank_obj)
 projected = [bank_obj]
+if KIND == 'city' and not PAINT:
+    for b in buildings():
+        paint_hints(b, style=b['style'])
+        projected.append(b)
 if KIND == 'cliffs':
     rock_obj = rock()
     paint_hints(rock_obj, is_rock=True)
@@ -234,7 +433,8 @@ for li in range(len(water.data.loops)): wa.data[li].color = lin(0x2a8fb0)
 # painting cameras: one across the river looking at the whole section (it may stand inside the far
 # bank – only this bank is rendered), and two on the river looking along it, for the faces that
 # point up- or downstream (the side camera sees those edge-on, which smeared the painting)
-DIST, CAM_Z, TILT = 52.0, 8.0, 6.5
+DIST, CAM_Z, TILT = 52.0, 8.0, {'city': 9.0, 'garden': 9.0}.get(KIND, 6.5)
+ALONG_Z = {'city': 22.0, 'garden': 9.0}.get(KIND, 11.0)   # height the cameras along the river look at
 def make_cam(name, loc, look, res, hfov):
     c = bpy.data.objects.new(name, bpy.data.cameras.new(name))
     scene.collection.objects.link(c)
@@ -250,8 +450,8 @@ CAMS = {
     'side': make_cam('PaintCam', (DIST - BASE, LENGTH / 2, CAM_Z),
                      (-BASE - 40, LENGTH / 2, CAM_Z + (DIST + 40) * math.tan(math.radians(TILT))),
                      (3072, 1024), 2 * math.atan((LENGTH / 2 + 4) / DIST)),
-    'up': make_cam('PaintCamUp', (-4.0, -32.0, 4.0), (-BASE - 14, 52.0, 11.0), (1536, 1024), math.radians(64)),
-    'down': make_cam('PaintCamDown', (-4.0, LENGTH + 32.0, 4.0), (-BASE - 14, LENGTH - 52.0, 11.0), (1536, 1024), math.radians(64)),
+    'up': make_cam('PaintCamUp', (-4.0, -32.0, 4.0), (-BASE - 14, 52.0, ALONG_Z), (1536, 1024), math.radians(64)),
+    'down': make_cam('PaintCamDown', (-4.0, LENGTH + 32.0, 4.0), (-BASE - 14, LENGTH - 52.0, ALONG_Z), (1536, 1024), math.radians(64)),
 }
 cam = CAMS['side']
 def use_cam(c):
@@ -281,7 +481,8 @@ from mathutils.bvhtree import BVHTree
 paint_files = {'side': PAINT}
 for name in ('up', 'down'):
     f = os.path.join(os.path.dirname(PAINT), f'painted-{name}.png')
-    if os.path.exists(f): paint_files[name] = f
+    # the Tokyo geometry follows the side painting; the views along the river would not match it
+    if os.path.exists(f) and KIND not in ('garden', 'city'): paint_files[name] = f
 names = list(paint_files)
 mats, pixels = [], {}
 for name in names:
@@ -364,7 +565,7 @@ for o in projected:
     # cut the terrain at the painted skyline: faces whose painting shows sky rise above what was
     # painted and would be smeared with sky colour; the panorama shows behind instead.
     # Cliffs only – the glacier's blue ice would read as sky.
-    if KIND == 'cliffs' and o is bank_obj:
+    if KIND in ('cliffs', 'garden') and o is bank_obj:
         sky_face = set()
         for i, p in enumerate(me.polygons):
             if centres[i].z <= 4.0: continue

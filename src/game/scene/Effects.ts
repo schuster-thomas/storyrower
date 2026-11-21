@@ -419,6 +419,12 @@ export class Effects {
     }
   }
 
+  /** Something heavy hits the water (Tokyo: debris, laser hits): a splash ring and a burst of white spray. */
+  impact(at: THREE.Vector3, puffs = 10, spread = 1.5) {
+    this.splash(at);
+    for (let n = 0; n < puffs; n++) this.puff(at, 1, rnd(-spread, spread), rnd(1.5, 4), rnd(-spread, spread));
+  }
+
   private splash(at: THREE.Vector3) {
     const r = this.rings.find((x) => !x.active);
     if (!r) return;

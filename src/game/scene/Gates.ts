@@ -25,16 +25,22 @@ export interface GateInfo {
   spm?: string;
 }
 
+/** buoys with a light arch (Iceland) or vermilion torii standing in the water (Tokyo) */
+export type GateStyle = 'buoys' | 'torii';
+
 /** How long before the change the gate appears (s). */
 const LEAD = 16;
 /** No further away than this (inside the haze). */
 const MAX_AHEAD = 280;
 const ARCH_R = 6;        // half the gate width – the oars reach ~3.2 m to each side
 const FINISH_HALF = 6.8;
+const TORII_HALF = 7.2;  // torii pillars stand clear of the oars
+const TORII_TOP = 8.6;   // height of the top beam
 
 const lighter = (c: number, k: number) => new THREE.Color(c).lerp(new THREE.Color(0xffffff), k);
 
 interface Gate {
+  style: GateStyle;
   key: string;
   kind: GateInfo['kind'];
   color: number;
@@ -152,6 +158,8 @@ export class Gates {
   /** a gate was passed – the scene flashes, the finish throws confetti */
   onPass: ((kind: GateInfo['kind'], color: number) => void) | null = null;
 
+  constructor(private style: GateStyle = 'buoys') {}
+
   update(f: { dt: number; time: number; boatZ: number; speed: number; moving: boolean; info: GateInfo | null; surfaceAt: (x: number, z: number) => number }) {
     const { dt, boatZ } = f;
     if (f.moving && f.speed > 0.3) this.speedAvg += (f.speed - this.speedAvg) * (1 - Math.exp(-dt / 6));
@@ -167,7 +175,7 @@ export class Gates {
     // a new gate is due soon: put it where the boat will be then
     if (info && info.timeTo <= LEAD && !this.gates.some((g) => g.key === info.key)) {
       const v = this.speedAvg > 1 ? this.speedAvg : Math.max(f.speed, 6);
-      const g = info.kind === 'finish' ? this.buildFinish(info) : this.buildTarget(info);
+      const g = this.style === 'torii' ? this.buildTorii(info) : info.kind === 'finish' ? this.buildFinish(info) : this.buildTarget(info);
       g.z = boatZ - Math.min(MAX_AHEAD, Math.max(12, v * info.timeTo));
       this.gates.push(g);
       this.group.add(g.group);
@@ -192,7 +200,7 @@ export class Gates {
       g.group.position.set(0, 0, g.z);
       for (const o of g.floats) o.position.y = f.surfaceAt(o.position.x, g.z) + (o.userData.lift as number);
       this.animateSparkles(g, f.time);
-      g.pennants.forEach((p, i) => { p.rotation.y = Math.sin(f.time * 5 + i) * 0.35; });
+      g.pennants.forEach((p, i) => { if (g.style === 'torii') p.rotation.z = Math.sin(f.time * 1.6 + i) * 0.08; else p.rotation.y = Math.sin(f.time * 5 + i) * 0.35; });
       if (g.passed && behind > 70) { this.group.remove(g.group); g.dispose(); this.gates.splice(this.gates.indexOf(g), 1); }
     }
     this.updateConfetti(dt);
@@ -249,7 +257,7 @@ export class Gates {
     const { pts, seed } = sparkles(46, lighter(color, 0.5).getHex(), 0.22);
     keep(pts.geometry); fade(pts.material as THREE.PointsMaterial);
     group.add(pts);
-    return { key: info.key, kind: 'target', color, group, z: 0, fade: 0, passed: false, fades, floats, sparkles: pts, sparkleSeed: seed, pennants: [], dispose: () => disposables.forEach((d) => d.dispose()) };
+    return { style: 'buoys', key: info.key, kind: 'target', color, group, z: 0, fade: 0, passed: false, fades, floats, sparkles: pts, sparkleSeed: seed, pennants: [], dispose: () => disposables.forEach((d) => d.dispose()) };
   }
 
   // ---------- finish gate: golden spar buoys and a checkered glass banner ----------
@@ -300,7 +308,98 @@ export class Gates {
     const { pts, seed } = sparkles(90, 0xffe08a, 0.24);
     keep(pts.geometry); fade(pts.material as THREE.PointsMaterial);
     group.add(pts);
-    return { key: info.key, kind: 'finish', color: 0xffc83d, group, z: 0, fade: 0, passed: false, fades, floats, sparkles: pts, sparkleSeed: seed, pennants, dispose: () => disposables.forEach((d) => d.dispose()) };
+    return { style: 'buoys', key: info.key, kind: 'finish', color: 0xffc83d, group, z: 0, fade: 0, passed: false, fades, floats, sparkles: pts, sparkleSeed: seed, pennants, dispose: () => disposables.forEach((d) => d.dispose()) };
+  }
+
+  // ---------- Tokyo: a vermilion torii standing in the river ----------
+
+  /**
+   * Target gate: the sign with the new target hangs under the lower beam, framed in the colour of
+   * the coming section, with two paper lanterns glowing in that colour. Finish: a checkered banner
+   * instead, golden lanterns and confetti with cherry petals.
+   */
+  private buildTorii(info: GateInfo): Gate {
+    const group = new THREE.Group();
+    const finish = info.kind === 'finish';
+    const color = finish ? 0xffc83d : info.color;
+    const fades: Gate['fades'] = [];
+    const disposables: { dispose(): void }[] = [];
+    const keep = <T extends { dispose(): void }>(x: T) => { disposables.push(x); return x; };
+    const fade = <M extends THREE.Material & { opacity: number }>(m: M) => { m.transparent = true; fades.push([m, m.opacity]); return keep(m); };
+    const vermilion = fade(new THREE.MeshStandardMaterial({ color: 0xe8442a, emissive: 0x8a1a08, emissiveIntensity: 0.25, roughness: 0.55, opacity: 1 }));
+    const black = fade(new THREE.MeshStandardMaterial({ color: 0x1d1a1c, roughness: 0.6, opacity: 1 }));
+    // pillars with black footings, leaning in a little
+    const pillarGeo = keep(new THREE.CylinderGeometry(0.34, 0.42, TORII_TOP - 0.2, 20));
+    const footGeo = keep(new THREE.CylinderGeometry(0.55, 0.6, 1.4, 20));
+    for (const x of [-TORII_HALF, TORII_HALF]) {
+      const p = new THREE.Mesh(pillarGeo, vermilion);
+      p.position.set(x, (TORII_TOP - 0.2) / 2 - 0.3, 0);
+      p.rotation.z = Math.sign(x) * 0.025;
+      const f = new THREE.Mesh(footGeo, black);
+      f.position.set(x, 0.1, 0);
+      group.add(p, f);
+    }
+    // the lower beam (nuki), reaching past the pillars
+    const nuki = new THREE.Mesh(keep(new THREE.BoxGeometry(TORII_HALF * 2 + 2.2, 0.5, 0.36)), vermilion);
+    nuki.position.y = TORII_TOP - 1.9;
+    // the top beams: vermilion (shimaki) under black (kasagi), both sweeping up at the ends
+    const sweep = (w: number, h: number, d: number, lift: number) => {
+      const geo = keep(new THREE.BoxGeometry(w, h, d, 24, 1, 1));
+      const pos = geo.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < pos.count; i++) { const u = pos.getX(i) / (w / 2); pos.setY(i, pos.getY(i) + lift * u * u * u * u); }
+      geo.computeVertexNormals();
+      return geo;
+    };
+    const shimaki = new THREE.Mesh(sweep(TORII_HALF * 2 + 3.2, 0.55, 0.62, 0.55), vermilion);
+    shimaki.position.y = TORII_TOP - 0.25;
+    const kasagi = new THREE.Mesh(sweep(TORII_HALF * 2 + 4.4, 0.42, 0.85, 0.95), black);
+    kasagi.position.y = TORII_TOP + 0.24;
+    // the short strut in the middle (gakuzuka)
+    const strut = new THREE.Mesh(keep(new THREE.BoxGeometry(0.7, 1.4, 0.3)), vermilion);
+    strut.position.y = TORII_TOP - 1.2;
+    group.add(nuki, shimaki, kasagi, strut);
+
+    // the sign (target) or the checkered banner (finish), hanging under the lower beam
+    const hangY = TORII_TOP - 1.9 - 0.25;
+    if (finish) {
+      const banGeo = keep(new THREE.PlaneGeometry(TORII_HALF * 2 - 1, 2, 24, 1));
+      const banner = new THREE.Mesh(banGeo, fade(new THREE.MeshBasicMaterial({ map: keep(checkerTexture()), opacity: 1, side: THREE.DoubleSide, depthWrite: false })));
+      banner.position.y = hangY - 1.05;
+      group.add(banner);
+    } else {
+      const tex = keep(signTexture(color, info.split ?? '', info.spm ?? ''));
+      const signGeo = keep(new THREE.PlaneGeometry(5.4, 2.1));
+      const signMat = fade(new THREE.MeshBasicMaterial({ map: tex, opacity: 1, depthWrite: false }));
+      const front = new THREE.Mesh(signGeo, signMat);
+      const back = new THREE.Mesh(signGeo, signMat);
+      back.rotation.y = Math.PI;
+      const sign = new THREE.Group();
+      sign.add(front, back);
+      sign.position.y = hangY - 1.45;
+      const cordGeo = keep(new THREE.CylinderGeometry(0.025, 0.025, 0.45, 6));
+      const cordMat = fade(new THREE.MeshBasicMaterial({ color: 0x2a2224, opacity: 1 }));
+      for (const x of [-1.9, 1.9]) { const c = new THREE.Mesh(cordGeo, cordMat); c.position.set(x, 1.25, 0); sign.add(c); }
+      group.add(sign);
+    }
+    // paper lanterns hanging from the lower beam, glowing in the section colour
+    const lanternGeo = keep(new THREE.SphereGeometry(0.42, 18, 12));
+    lanternGeo.scale(1, 1.3, 1);
+    const lanternMat = fade(new THREE.MeshBasicMaterial({ color: lighter(color, 0.35), opacity: 0.95 }));
+    const capGeo = keep(new THREE.CylinderGeometry(0.22, 0.22, 0.12, 12));
+    const pennants: THREE.Mesh[] = [];
+    for (const x of [-TORII_HALF + 1.2, TORII_HALF - 1.2]) {
+      const l = new THREE.Mesh(lanternGeo, lanternMat);
+      l.position.set(x, hangY - 0.75, 0);
+      const top = new THREE.Mesh(capGeo, black); top.position.y = 0.58;
+      const bottom = new THREE.Mesh(capGeo, black); bottom.position.y = -0.58;
+      l.add(top, bottom);
+      group.add(l);
+      pennants.push(l);
+    }
+    const { pts, seed } = sparkles(finish ? 90 : 46, lighter(color, 0.5).getHex(), 0.22);
+    keep(pts.geometry); fade(pts.material as THREE.PointsMaterial);
+    group.add(pts);
+    return { style: 'torii', key: info.key, kind: info.kind, color, group, z: 0, fade: 0, passed: false, fades, floats: [], sparkles: pts, sparkleSeed: seed, pennants, dispose: () => disposables.forEach((d) => d.dispose()) };
   }
 
   /** Little lights drifting along the arch (target) or twinkling around the banner (finish). */
@@ -309,7 +408,13 @@ export class Gates {
     const s = g.sparkleSeed;
     const n = arr.length / 3;
     for (let i = 0; i < n; i++) {
-      if (g.kind === 'target') {
+      if (g.style === 'torii') {
+        // drifting down from the top beam past the pillars
+        const u = (s[i * 3] + time * (0.02 + s[i * 3 + 1] * 0.03)) % 1;
+        arr[i * 3] = (s[i * 3 + 2] - 0.5) * (TORII_HALF * 2 + 4) + Math.sin(time + i) * 0.3;
+        arr[i * 3 + 1] = TORII_TOP + 0.8 - u * (TORII_TOP + 0.5);
+        arr[i * 3 + 2] = (s[i * 3 + 1] - 0.5) * 1.2;
+      } else if (g.kind === 'target') {
         const u = (s[i * 3] + time * (0.03 + s[i * 3 + 1] * 0.04)) % 1;
         const a = Math.PI * (1 - u);
         const r = ARCH_R + (s[i * 3 + 2] - 0.5) * 0.9;
@@ -332,7 +437,7 @@ export class Gates {
     this.clearConfetti();
     const n = 260;
     const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = new Float32Array(n * 3);
-    const palette = [0xffc83d, 0xe53935, 0x2fd3c0, 0x4aa8ff, 0xff4fa3, 0xffffff].map((c) => new THREE.Color(c));
+    const palette = (this.style === 'torii' ? [0xffc1d6, 0xff9ec0, 0xffffff, 0xffc83d, 0xe8442a, 0xffd6e4] : [0xffc83d, 0xe53935, 0x2fd3c0, 0x4aa8ff, 0xff4fa3, 0xffffff]).map((c) => new THREE.Color(c));
     for (let i = 0; i < n; i++) {
       pos[i * 3] = (Math.random() - 0.5) * FINISH_HALF * 2;
       pos[i * 3 + 1] = 6 + Math.random() * 3;

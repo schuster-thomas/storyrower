@@ -14,7 +14,6 @@ import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { bindDisconnectPill } from '../ui/disconnect';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
 import { BEAT_ICONS, ICON_ARROW, ICON_BACK, ICON_BT, ICON_CHECK, ICON_HEART, ICON_ROWER, LOGO, MODE_HINTS, MODE_ICONS, MODE_LABELS } from '../ui/icons';
-import icelandCard from '../assets/ui/iceland-card.webp';
 
 
 /** "#/play/<level>": workout settings, rower and heart-rate connection, then the game. */
@@ -28,7 +27,7 @@ export function mountPlay(root: HTMLElement, level: Level): () => void {
 
   const showSetup = () => {
     // load the 3D world while the settings are on screen, so the game starts in its final look
-    void RiverScene.preload();
+    void RiverScene.preload(level.world);
     cleanupGame?.(); cleanupGame = null;
     audio?.ctx.suspend().catch(() => {});
     cleanupSetup = mountSetup(root, level, jump, (opts) => { autopilot = opts.autopilot; jump = opts.jump; startGame(); });
@@ -101,7 +100,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
         <div class="bar-right"><button type="button" class="state-pill" data-id="state">${ICON_BT}<span>Not connected</span></button>${DRIVE_BUTTON}${FS_BUTTON}</div>
       </header>
       <div class="set-banner">
-        <img src="${icelandCard}" alt="">
+        <img src="${level.art}" alt="">
         <div><h1>${level.title}</h1><p>Workout settings</p></div>
       </div>
       <div class="set-grid">

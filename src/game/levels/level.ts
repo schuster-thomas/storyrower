@@ -1,4 +1,6 @@
 import type { Anchor, BeatDef } from '../../story/story';
+import type { GateStyle } from '../scene/Gates';
+import type { WorldId } from '../scene/World';
 import { generateWorkout, MODES, type PhaseId, type PhaseShare, type Workout, type WorkoutMode, type WorkoutSettings } from '../../workout/workout';
 
 /** Look of the world for one story phase. */
@@ -32,6 +34,8 @@ export interface LevelPhase {
    * look right after the escape; the world drifts to this over the first part of the phase.
    */
   settled?: Partial<Environment>;
+  /** Hint when the power is too low in this phase, e.g. "the dragon is closing in" (default: "A little more power"). */
+  chase?: string;
 }
 
 /** A beat used in one mode: as the level defines it, or moved / reworded for that mode. */
@@ -60,6 +64,14 @@ export interface Level {
   title: string;
   /** One line for the start page tile. */
   tagline: string;
+  /** Picture for the start page tile and the setup banner. */
+  art: string;
+  /** The level's 3D world (banks, backdrop, set piece, threat – src/game/scene/World.ts). */
+  world: WorldId;
+  /** Look of the gates at target changes and the finish (default: buoys). */
+  gates?: GateStyle;
+  /** Shown while the world loads, e.g. "Loading the fjord…". */
+  loadingText: string;
   phases: Record<PhaseId, LevelPhase>;
   /** Every story beat the level has; modes pick from these. */
   beats: BeatDef[];

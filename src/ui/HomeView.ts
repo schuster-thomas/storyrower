@@ -3,13 +3,9 @@ import { LEVELS } from '../game/levels';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { LOGO } from './icons';
 import { bindFullscreenButton, FS_BUTTON } from './fullscreen';
-import icelandCard from '../assets/ui/iceland-card.webp';
 import rowerCard from '../assets/ui/rower-card.webp';
 import historyCard from '../assets/ui/history-card.svg';
 import { bindDriveButton, DRIVE_BUTTON } from './driveButton';
-
-/** Tile art per level id. */
-const LEVEL_ART: Record<string, string> = { 'iceland-volcano-run': icelandCard };
 
 /** "#/": pick a level (only levels that exist), or go to devices & diagnostics. */
 export function mountHome(root: HTMLElement): () => void {
@@ -31,7 +27,7 @@ export function mountHome(root: HTMLElement): () => void {
       <main class="menu-page">
         <h1 class="menu-title">Choose your adventure</h1>
         <div class="tile-grid">
-          ${LEVELS.map((l) => tile(`#/play/${l.id}`, LEVEL_ART[l.id] ?? icelandCard, l.title, l.tagline)).join('')}
+          ${LEVELS.map((l) => tile(`#/play/${l.id}`, l.art, l.title, l.tagline)).join('')}
           ${tile('#/history', historyCard, 'Training history', 'Every workout you rowed – results, charts and settings to row it again.')}
           ${tile('#/diagnose', rowerCard, 'Devices &amp; Diagnostics', 'Connect your rower, check live data or try the simulator.')}
         </div>

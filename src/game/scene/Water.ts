@@ -58,6 +58,7 @@ const fragment = /* glsl */ `
   #include <fog_pars_fragment>
   uniform float uTime;
   uniform vec3 uMilk;
+  uniform float uMilkAmount;
   uniform float uBoatZ;
   uniform float uSpeed;
   uniform vec3 uDeep;
@@ -91,7 +92,7 @@ const fragment = /* glsl */ `
     float toIce = glacierFront(vWorld.z) - vWorld.x;      // 0 at the glacier front
     float shore = min(toLeft, toIce);
     vec3 col = mix(uShallow, uDeep, smoothstep(0.5, 6.0, toLeft));
-    col = mix(col, uMilk, (1.0 - smoothstep(0.0, 16.0, toIce)) * 0.55);
+    col = mix(col, uMilk, (1.0 - smoothstep(0.0, 16.0, toIce)) * uMilkAmount);
 
     // Sky reflection at grazing angles
     float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 5.0);
@@ -155,7 +156,7 @@ export class Water {
 
   constructor(segments: [number, number]) {
     this.uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
-      uTime: { value: 0 }, uSwell: { value: 0.1 }, uMilk: { value: new THREE.Color(0x5cc3c8) }, uBoatZ: { value: 0 }, uSpeed: { value: 0 },
+      uTime: { value: 0 }, uSwell: { value: 0.1 }, uMilk: { value: new THREE.Color(0x5cc3c8) }, uMilkAmount: { value: 0.55 }, uBoatZ: { value: 0 }, uSpeed: { value: 0 },
       uDeep: { value: new THREE.Color(0x1f6390) }, uShallow: { value: new THREE.Color(0x4fa3c0) }, uSky: { value: new THREE.Color(0xbfe2f2) },
       uSunDir: { value: new THREE.Vector3(-0.4, 0.5, -0.75).normalize() }, uSunColor: { value: new THREE.Color(0xfff3d6) }, uLight: { value: 1 },
       tReflect: { value: null }, uReflect: { value: 0 }, uTextureMatrix: { value: new THREE.Matrix4() },
@@ -187,6 +188,9 @@ export class Water {
     const h = (dx: number, dz: number) => waterHeight(x0 + dx * this.segWidth, z0 + dz * this.segLen, t, swell);
     return (h(0, 0) * (1 - fx) + h(1, 0) * fx) * (1 - fz) + (h(0, 1) * (1 - fx) + h(1, 1) * fx) * fz;
   }
+
+  /** How milky the water gets towards the right bank (glacier meltwater in Iceland; 0 = none). */
+  set milk(amount: number) { this.uniforms.uMilkAmount.value = amount; }
 
   setSegments(segments: [number, number]) {
     this.mesh.geometry.dispose();

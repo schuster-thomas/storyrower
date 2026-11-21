@@ -2,7 +2,9 @@ import type { Environment, Level } from '../game/levels/level';
 import { phaseSpans, type PhaseId, type Segment, type Workout } from '../workout/workout';
 
 /** One-shot effects the scene and the audio engine know how to play. */
-export type EffectId = 'calm' | 'birds' | 'tremor' | 'calving' | 'ash' | 'eruption' | 'wave' | 'escape' | 'sunset';
+export type EffectId = 'calm' | 'birds' | 'tremor' | 'calving' | 'ash' | 'eruption' | 'wave' | 'escape' | 'sunset'
+  // Tokyo Super Row
+  | 'blossom' | 'quake' | 'dragon';
 
 /**
  * Where a beat sits on the training curve. Anchors are resolved against the generated
@@ -64,6 +66,16 @@ export interface StoryState {
   cooling: number;
   /** seconds until the glacier calves (-1 when it has happened or is not in this workout) */
   calvingIn: number;
+  /** 0–1 the earth shakes and buildings shed parts: from the great quake to the escape, stronger in hard sections */
+  quake: number;
+  /** seconds since the great quake began (-1 before it) */
+  quakeAge: number;
+  /** 0–1 the dragon is there: from its arrival on, it leaves (fades) with the happy end */
+  dragon: number;
+  /** seconds since the dragon appeared (-1 before it) */
+  dragonAge: number;
+  /** 0–1 how hard the dragon attacks (lasers): heavier in hard sections and in the finale, 0 after the escape */
+  attack: number;
 }
 
 /**
@@ -84,6 +96,9 @@ export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number
   const seg = workout.segments.find((s) => t < s.end) ?? workout.segments[workout.segments.length - 1];
   const ramp = (from: number, len: number) => Math.max(0, Math.min(1, (t - from) / len));
   const erupted = t >= when('eruption') && t < winddown;
+  const shaking = t >= when('quake') && t < winddown;
+  const dragonHere = t >= when('dragon');
+  const effort = seg.kind === 'easy' ? 0.35 : seg.kind === 'peak' ? 1 : seg.kind === 'hard' ? 0.85 : 0.6;
   return {
     // bombs follow the effort: heavier in hard sections and in the finale
     lavaBombs: erupted ? (seg.kind === 'easy' ? 0.35 : seg.kind === 'peak' ? 1 : 0.75) : 0,
@@ -95,6 +110,12 @@ export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number
     eruptionAge: t >= when('eruption') ? t - when('eruption') : -1,
     cooling,
     calvingIn: Number.isFinite(when('calving')) && t < when('calving') ? when('calving') - t : -1,
+    // the aftershocks follow the effort; once the dragon is there they ease off a little
+    quake: shaking ? effort * (dragonHere ? 0.5 : 1) : 0,
+    quakeAge: t >= when('quake') ? t - when('quake') : -1,
+    dragon: dragonHere ? (t < winddown ? 1 : 1 - cooling) : 0,
+    dragonAge: dragonHere ? t - when('dragon') : -1,
+    attack: dragonHere && t < winddown ? effort : 0,
   };
 }
 

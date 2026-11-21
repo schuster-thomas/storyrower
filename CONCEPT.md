@@ -178,8 +178,8 @@ Kept from the BLE PoC on purpose:
 | 3 ✅ | Story engine | Beats, intensity levels, camera/light/weather react, **audio engine with music layers** | 1–2 weekends |
 | 4 🔶 | First polished level | "Iceland Volcano Run" with assets, effects, music and sounds – banks, boat and rower done; volcano, puffins, wave, sound open ([§11](#11-next-steps)) | several weeks |
 | 5 🔶 | Results & PWA | ✅ results screen with totals (distance, time, strokes, avg/max power, split, stroke rate, heart rate, kcal) and the workout as a time series; open: **local workout history (IndexedDB)**, JSON export, installable, offline | 1 weekend |
-| 6 | Level kit | Iceland split into engine + level content, level registry and level choice on the setup screen, scripts take `--level` ([§12](#12-building-further-levels)) | 1 weekend |
-| 7 | Second level | Built with the kit, as the test that the pattern carries | 2–3 weekends |
+| 6 🔶 | Level kit | ✅ engine + level worlds (`src/game/scene/World.ts`: Iceland and Tokyo are lazy-loaded worlds; shared boat, water, sky, gates, effects), level registry, level tiles on the start page, painted-bank kinds as script options; open: environment channels still use Iceland names (lava/smoke/wave) | 1 weekend |
+| 7 🔶 | Second level | **Tokyo Super Row** (2026-11-21): banks modelled in 3D – the matte-painting trick did not hold up for a city seen at grazing angles – with tileable painted textures repeated in metres (`scripts/tokyo/textures.mjs`), painted cut-outs for trees (`scripts/tokyo/assets.mjs`), Tripo3D models (pagoda, tea house, lantern, the dragon), painted Fuji and skyline rings, torii gates, arched bridges, a tunnel of torii, petals, quake debris, lasers | 2–3 weekends |
 | 8 | iPad | Capacitor build + BLE plugin | 1–2 weekends |
 
 ---

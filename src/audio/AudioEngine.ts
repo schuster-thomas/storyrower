@@ -1,4 +1,5 @@
 import type { EffectId } from '../story/story';
+import type { WorldSound } from '../game/scene/World';
 import { SampleBank } from './SampleBank';
 
 export interface AudioSettings { effects: number; muted: boolean }
@@ -245,7 +246,89 @@ export class AudioEngine {
       case 'ash':
       case 'calm':
         break;
+      case 'blossom':
+        // a temple bell far away: a low, long strike with a soft overtone
+        this.templeBell(t, 0.5);
+        break;
+      case 'quake': {
+        // the great quake: a deep roll, then the city cracks and the first parts crash into the river
+        const src = this.noiseSource(t, 6);
+        const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 110;
+        const g = c.createGain();
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.6, t + 0.6); g.gain.linearRampToValueAtTime(0, t + 5.5);
+        src.connect(f).connect(g).connect(this.sfxBus);
+        this.thump(t + 0.1, 34, 0.9, 4);
+        this.play('quake', { vol: 1 });
+        this.play('rumble', { at: t + 0.5, vol: 0.8 });
+        this.thump(t + 1.2, 420, 0.35, 0.25, 90);
+        break;
+      }
+      case 'dragon':
+        this.roar(t, 1);
+        this.roar(t + 2.6, 0.6);
+        break;
     }
+  }
+
+  /** A sound of the level world (Tokyo: debris falling into the river, laser beams and their hits). */
+  worldSound(id: WorldSound, distance: number) {
+    const t = this.ctx.currentTime;
+    const vol = Math.max(0.15, 1 - distance / 80);
+    switch (id) {
+      case 'debris': this.bombLanded(distance); break;
+      case 'laser': {
+        // a bright, falling zap
+        const o = this.ctx.createOscillator(); o.type = 'sawtooth';
+        o.frequency.setValueAtTime(1800, t); o.frequency.exponentialRampToValueAtTime(220, t + 0.5);
+        const f = this.ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 2;
+        o.connect(f).connect(this.envelope(t, 0.22 * vol, 0.55, 0.01)).connect(this.sfxBus);
+        o.start(t); o.stop(t + 0.6);
+        break;
+      }
+      case 'laser-hit': {
+        // hissing steam where the beam hits the water
+        const src = this.noiseSource(t, 1.4);
+        const f = this.ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1500;
+        src.connect(f).connect(this.envelope(t, 0.45 * vol, 1.2, 0.02)).connect(this.sfxBus);
+        this.play('rock-splash', { vol: 0.5 * vol, spread: 0.15, lowpass: 3000 + 5000 * vol });
+        break;
+      }
+    }
+  }
+
+  /** Low temple bell: a few inharmonic partials that ring out slowly. */
+  private templeBell(t: number, vol: number) {
+    const c = this.ctx;
+    for (const [ratio, gain, decay] of [[1, 1, 6], [2.76, 0.35, 3], [5.4, 0.15, 1.5]] as const) {
+      const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = 98 * ratio;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol * gain * 0.4, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + decay);
+      o.connect(g).connect(this.sfxBus);
+      o.start(t); o.stop(t + decay + 0.1);
+    }
+  }
+
+  /** The dragon's roar: a growling, falling saw tone through a sweeping filter, with breath noise. */
+  private roar(t: number, vol: number) {
+    const c = this.ctx;
+    const len = 2.2;
+    for (const det of [0, 7, -5]) {
+      const o = c.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(150 + det, t); o.frequency.linearRampToValueAtTime(210 + det, t + 0.5); o.frequency.exponentialRampToValueAtTime(70 + det, t + len);
+      const lfo = c.createOscillator(); lfo.frequency.value = 28 + det;
+      const lg = c.createGain(); lg.gain.value = 18;
+      lfo.connect(lg).connect(o.frequency);
+      const f = c.createBiquadFilter(); f.type = 'lowpass';
+      f.frequency.setValueAtTime(400, t); f.frequency.linearRampToValueAtTime(1600, t + 0.5); f.frequency.exponentialRampToValueAtTime(300, t + len);
+      o.connect(f).connect(this.envelope(t, 0.16 * vol, len, 0.15)).connect(this.sfxBus);
+      o.start(t); o.stop(t + len + 0.1); lfo.start(t); lfo.stop(t + len + 0.1);
+    }
+    const n = this.noiseSource(t, len);
+    const nf = c.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 700; nf.Q.value = 0.7;
+    n.connect(nf).connect(this.envelope(t, 0.35 * vol, len, 0.2)).connect(this.sfxBus);
+    this.thump(t, 60, 0.5 * vol, 1.5);
   }
 
   /** A puffin or gull call (whichever are loaded, mixed at random); false if neither is. */

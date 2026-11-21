@@ -50,4 +50,10 @@ export const BEAT_ICONS: Record<EffectId, string> = {
   wave: `<path d="M1.5 13.5C2.5 7 8 3 13.5 5.5 10 5.5 8.5 8.5 11 11c1.2 1.2 2.6 1.3 3.5 1V13.5Z" fill="#fff"/>`,
   escape: `<path d="M4 14.5V2l8.5 3.2L4 8.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
   sunset: `<path d="M1.5 12.5h13M4 12.5a4 4 0 0 1 8 0M8 3.5v2M3 6l1.3 1.3M13 6l-1.3 1.3" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`,
+  // a five-petal blossom
+  blossom: `<g fill="#fff"><circle cx="8" cy="4" r="2.3"/><circle cx="11.8" cy="6.8" r="2.3"/><circle cx="10.4" cy="11.3" r="2.3"/><circle cx="5.6" cy="11.3" r="2.3"/><circle cx="4.2" cy="6.8" r="2.3"/></g>`,
+  // a tower with a crack, leaning
+  quake: `<path d="M5 14.5V4.5L8.5 2v12.5Z" fill="#fff"/><path d="M10.5 6.5 12 8.5l-1.5 1.5 2 2.5M1 14.5h14" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`,
+  // a winged head breathing a beam
+  dragon: `<path d="M2 6.5 6 4l3 1.5 4-3-1.5 4.5L14 9l-4 .5-2.5 2.5L6 9 2 6.5Z" fill="#fff"/><path d="M7 12l-3 3" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`,
 };

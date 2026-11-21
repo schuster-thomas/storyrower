@@ -66,7 +66,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
 
   const graphics = loadGraphics();
   const auto = graphics.quality === 'auto' ? new AutoQuality('medium') : null;
-  const scene = new RiverScene(canvas, level.phases.idyll.env, auto ? auto.level : graphics.quality === 'auto' ? 'medium' : graphics.quality);
+  const scene = new RiverScene(canvas, level.phases.idyll.env, auto ? auto.level : graphics.quality === 'auto' ? 'medium' : graphics.quality, { world: level.world, gates: level.gates });
   if (import.meta.env.DEV) (window as unknown as { __scene: RiverScene }).__scene = scene; // debugging aid in dev builds only
   const hud = new Hud(wrap);
   // Show the world only once boat, painted layers and model kit are in (preloaded on the setup
@@ -77,7 +77,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   wrap.classList.add('loading');
   const loading = document.createElement('div');
   loading.className = 'game-loading';
-  loading.textContent = 'Loading the fjord…';
+  loading.textContent = level.loadingText;
   wrap.appendChild(loading);
   scene.ready.then(() => { worldReady = true; });
   const overlay = document.createElement('div');
@@ -116,6 +116,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   hud.onMute(() => audio?.toggleMute() ?? false);
   hud.onAnnounce = () => audio?.targetChange();
   scene.onBombLanded = (d) => audio?.bombLanded(d);
+  scene.onWorldSound = (id, d) => audio?.worldSound(id, d);
   const score = newScore();
 
   // ---------- simulator helpers ----------
@@ -326,7 +327,8 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     scene.update(dt, speed, score.threat, seg.intensity, story);
     audio?.update({
       dt, intensity: storyIntensity(seg), danger: env.wave * (1 - score.threat), speed,
-      smoke: env.smoke, birds: story.birds, ash: story.ashfall,
+      // the earthquake rumbles like the volcano (Tokyo); 0 in levels without one
+      smoke: Math.max(env.smoke, story.quake * 0.7), birds: story.birds, ash: story.ashfall,
     });
 
     hud.update({
@@ -376,7 +378,8 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       if (!rowing) return { text: 'Paused – row to continue', tone: 'info' };
       if (!zones) return null;
       const waveShown = level.phases[seg.phase].env.wave > 0;
-      if (isLow(zones.power) && zones.power === 'low') return { text: waveShown ? 'More power – the wave is catching up!' : 'A little more power', tone: 'warn' };
+      const chase = level.phases[seg.phase].chase;
+      if (isLow(zones.power) && zones.power === 'low') return { text: waveShown ? 'More power – the wave is catching up!' : chase ?? 'A little more power', tone: 'warn' };
       if (zones.power === 'high') return { text: 'Save your strength!', tone: 'info' };
       if (isIn(zones.power) && score.combo > 15 && score.combo < 18) return { text: 'In the zone!', tone: 'ok' };
       return null;
@@ -387,6 +390,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
   return () => {
     cancelAnimationFrame(frame);
     scene.onBombLanded = null;
+    scene.onWorldSound = null;
     off();
     ro.disconnect();
     canvas.removeEventListener('webglcontextlost', onContextLost);

@@ -1,3 +1,4 @@
+import icelandCard from '../../assets/ui/iceland-card.webp';
 import type { Level } from './level';
 
 export type { Environment, Level, LevelPhase } from './level';
@@ -6,6 +7,9 @@ export const ICELAND: Level = {
   id: 'iceland-volcano-run',
   title: 'Iceland Volcano Run',
   tagline: 'Row through quiet fjords, past glaciers and a rumbling volcano.',
+  art: icelandCard,
+  world: 'iceland',
+  loadingText: 'Loading the fjord…',
   phases: {
     idyll: {
       id: 'idyll', name: 'Fjord Morning',
