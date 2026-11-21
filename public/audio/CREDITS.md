@@ -56,6 +56,28 @@ All recordings are CC0 (public domain) unless noted – no attribution required,
 - "Rock Splash 2" by deadrobotmusic – https://freesound.org/people/deadrobotmusic/sounds/609941/ (CC0)
 - "Rock Splash 1" by deadrobotmusic – https://freesound.org/people/deadrobotmusic/sounds/609942/ (CC0)
 
+## city
+- "urban_ambience_outside_apartment__sunny_day.wav" by njlyczko – https://freesound.org/people/njlyczko/sounds/580646/ (CC0)
+
+## garden-birds
+- "Japanese bush warbler (uguisu) in a city ambiance" by warukunai – https://freesound.org/people/warukunai/sounds/524526/ (CC0)
+
+## shishi-odoshi
+- "A Japanese bamboo water fountain (shishi-odoshi) in a quiet garden: a single hollow, resonant wooden clack as the bamboo tube tips over and strikes a stone, a little trickle of water before and after, calm, no music, no voices" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)
+- "A Japanese bamboo water fountain (shishi-odoshi) in a quiet garden: a single hollow, resonant wooden clack as the bamboo tube tips over and strikes a stone, a little trickle of water before and after, calm, no music, no voices" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)
+
+## wind-chime
+- "Furin japanese wind chime.wav" by ayustat2001 – https://freesound.org/people/ayustat2001/sounds/501168/ (CC0)
+- "Glass Wind Chimes Jangling in a Soft Breeze" by bassimat – https://freesound.org/people/bassimat/sounds/867567/ (CC0)
+
+## crow
+- "Crow Caw" by Jofae – https://freesound.org/people/Jofae/sounds/361470/ (CC0)
+- "Hooded Crow: Cawing" by Mish7913 – https://freesound.org/people/Mish7913/sounds/741366/ (CC0)
+- "Crow Caw" by qubodup – https://freesound.org/people/qubodup/sounds/813115/ (CC0)
+
+## train
+- "Train Passing By 132 with Track Noises (Distant).mp3" by FunWithSound – https://freesound.org/people/FunWithSound/sounds/592739/ (CC0)
+
 ## ash
 - "Fine volcanic ash and tiny pumice grains raining softly onto calm water and a wooden boat, gentle continuous patter and hiss, steady ambience, no thunder, no music" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)
 

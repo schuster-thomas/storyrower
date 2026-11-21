@@ -16,6 +16,10 @@ const RAW = 'assets/raw/audio';
 
 /** What to generate. `n` variants per slot, `duration` in seconds, `loop` for seamless ambience. */
 export const GENERATE = {
+  'shishi-odoshi': {
+    n: 3, duration: 2.5,
+    prompt: 'A Japanese bamboo water fountain (shishi-odoshi) in a quiet garden: a single hollow, resonant wooden clack as the bamboo tube tips over and strikes a stone, a little trickle of water before and after, calm, no music, no voices',
+  },
   rowlock: {
     n: 4, duration: 1.5,
     prompt: 'Single clunk of a wooden oar turning in a metal oarlock on a small rowing boat, dry close-up knock with a slight wooden creak, no water, no music',

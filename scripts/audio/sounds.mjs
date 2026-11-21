@@ -129,6 +129,40 @@ export const SOUNDS = {
     queries: ['rock splash water', 'stone thrown into water', 'object falling into water'],
   },
 
+  // ---- Tokyo Super Row: a Japanese garden on one bank, the city on the other ----
+  city: {
+    kind: 'loop', len: 20, files: 1, duration: [22, 900], stereo: true,
+    pin: [580646], // urban ambience outside an apartment, sunny day – distant traffic, no voices
+    must: ['city', 'traffic', 'urban', 'street', 'tokyo', 'downtown'],
+    queries: ['distant city traffic ambience', 'tokyo city ambience', 'urban ambience distant traffic hum'],
+  },
+  'garden-birds': {
+    kind: 'loop', len: 20, files: 1, duration: [22, 900], stereo: true,
+    pin: [524526], // Japanese bush warbler (uguisu) in a city ambiance
+    must: ['bird', 'warbler', 'uguisu', 'songbird', 'garden', 'park'],
+    queries: ['japanese bush warbler', 'uguisu', 'japan park birds', 'garden birds spring morning'],
+  },
+  // no CC0 recording of a bamboo deer scarer on Freesound: generated (scripts/audio/generate.mjs)
+  'shishi-odoshi': { kind: 'oneshot', variants: 2, maxLen: 3, whole: true, generated: true },
+  'wind-chime': {
+    kind: 'oneshot', variants: 2, maxLen: 4, minLen: 2.5, slice: true, files: 2, duration: [1, 60],
+    pin: [501168, 867567], // a Japanese furin; glass chimes in a soft breeze
+    exclude: [67112],
+    must: ['chime', 'furin', 'bell'],
+    queries: ['furin wind chime', 'japanese wind chime', 'glass wind chime'],
+  },
+  crow: {
+    kind: 'oneshot', variants: 3, maxLen: 2, slice: true, files: 3, duration: [0.3, 40],
+    pin: [361470, 813115, 741366], // single caws – the crows of Tokyo's parks
+    must: ['crow', 'raven'],
+    queries: ['crow caw', 'jungle crow', 'crow call'],
+  },
+  train: {
+    kind: 'oneshot', variants: 1, maxLen: 9, files: 1, duration: [5, 90],
+    must: ['train', 'railway', 'subway', 'metro'],
+    queries: ['train passing distant', 'commuter train passing', 'train passing over bridge'],
+  },
+
   // ---- generated with ElevenLabs (scripts/audio/generate.mjs) – no CC0 recording fits ----
   // puffin: generated calls came out as wind or as a lion – left out, the gulls stay
   puffin: { kind: 'oneshot', variants: 4, maxLen: 2, slice: true, generated: true, disabled: true },

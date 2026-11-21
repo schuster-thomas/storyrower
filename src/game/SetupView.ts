@@ -46,7 +46,7 @@ export function mountPlay(root: HTMLElement, level: Level): () => void {
     const beat = beatId ? scheduleBeats(played, workout).find((b) => b.id === beatId) : null;
     const startAt = beat ? Math.max(0, beat.t - 5) : Number(dev.get('at')) || 0;
     // Runs inside the Start / Row again click, so the browser allows sound
-    try { audio ??= new AudioEngine(); audio.setSettings(loadAudioSettings()); audio.resume().catch(() => {}); } catch { audio = null; }
+    try { audio ??= new AudioEngine(); audio.setSettings(loadAudioSettings()); audio.setSoundscape(level.world); audio.resume().catch(() => {}); } catch { audio = null; }
     cleanupGame = mountGame(root, { level: played, workout, autopilot, onExit: showSetup, onRestart: startGame, timeScale: speed, startAt, audio });
   };
   showSetup();

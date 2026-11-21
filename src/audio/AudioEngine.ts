@@ -20,7 +20,15 @@ const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math
 const midi = (n: number) => 440 * 2 ** ((n - 69) / 12);
 
 /** Recorded ambience loops, levels set every frame in update() */
-const LOOPS = ['water-calm', 'water-fast', 'river', 'wind', 'seabirds', 'rumble', 'ash'] as const;
+const LOOPS = ['water-calm', 'water-fast', 'river', 'wind', 'seabirds', 'rumble', 'ash', 'city', 'garden-birds'] as const;
+
+/**
+ * The level's soundscape: Iceland – a river, seabirds and gulls; Tokyo – a Japanese garden
+ * (bush warblers, a bamboo fountain, wind chimes) on one bank, the city (distant traffic, crows,
+ * a train now and then) on the other. Boat, water, wind and the story effects are shared.
+ * Named after the level's world; worlds without their own soundscape get Iceland's.
+ */
+export type Soundscape = string;
 type LoopSlot = typeof LOOPS[number];
 
 interface PlayOpts { at?: number; vol?: number; rate?: number; spread?: number; lowpass?: number; out?: AudioNode; offset?: number }
@@ -42,6 +50,9 @@ export class AudioEngine {
   private loops: Partial<Record<LoopSlot, GainNode>> = {};
   private birdTimer = 1;
   private settings: AudioSettings;
+  private soundscape: Soundscape = 'iceland';
+  /** Tokyo: seconds until the next garden / city sound */
+  private timers = { fountain: 6, chime: 3, crow: 9, train: 40 };
 
   constructor(settings: AudioSettings = loadAudioSettings()) {
     this.ctx = new AudioContext();
@@ -93,6 +104,12 @@ export class AudioEngine {
 
   // ---------- control ----------
 
+  /** Switch the level's ambience (the setup screen calls this before every game). */
+  setSoundscape(s: Soundscape) {
+    this.soundscape = s;
+    this.timers = { fountain: 6, chime: 3, crow: 9, train: 40 };
+  }
+
   setSettings(s: AudioSettings) { this.settings = s; saveAudioSettings(s); this.applySettings(); }
   get currentSettings() { return { ...this.settings }; }
   toggleMute() { this.setSettings({ ...this.settings, muted: !this.settings.muted }); return this.settings.muted; }
@@ -112,7 +129,8 @@ export class AudioEngine {
    * @param intensity story/workout intensity 0–1 (more wind when it heats up)
    * @param danger 0–1 how close the wave is (only matters while it is shown)
    */
-  update(p: { dt: number; intensity: number; danger: number; speed: number; smoke: number; birds: number; ash: number }) {
+  update(p: { dt: number; intensity: number; danger: number; speed: number; smoke: number; birds: number; ash: number; calm?: number }) {
+    const tokyo = this.soundscape === 'tokyo';
     const now = this.ctx.currentTime;
     const L = this.loops;
     const fast = smooth(1.2, 4.5, p.speed);
@@ -124,23 +142,73 @@ export class AudioEngine {
       this.water.gain.gain.setTargetAtTime(0.03 + Math.min(0.08, p.speed * 0.008), now, 0.5);
       this.water.filter.frequency.setTargetAtTime(500 + p.speed * 60, now, 0.5);
     }
-    L.river?.gain.setTargetAtTime(0.06, now, 2);
+    L.river?.gain.setTargetAtTime(tokyo ? 0 : 0.06, now, 2);
     L.wind?.gain.setTargetAtTime(0.07 + 0.2 * smooth(0.5, 1, p.intensity) + 0.2 * p.danger, now, 2);
-    L.seabirds?.gain.setTargetAtTime(p.birds * 0.3, now, 2);
+    L.seabirds?.gain.setTargetAtTime(tokyo ? 0 : p.birds * 0.3, now, 2);
+    // Tokyo: the city hums on one bank, warblers sing in the garden while all is calm
+    const calm = Math.max(p.birds, p.calm ?? 0);
+    L.city?.gain.setTargetAtTime(tokyo ? 0.09 + 0.05 * p.intensity : 0, now, 2);
+    L['garden-birds']?.gain.setTargetAtTime(tokyo ? calm * 0.32 : 0, now, 2);
     L.ash?.gain.setTargetAtTime(p.ash * 0.8, now, 2);
     if (L.rumble) {
       this.rumble.gain.setTargetAtTime(p.smoke * 0.15, now, 1); // keeps the sub-bass the recording may lack
       L.rumble.gain.setTargetAtTime(p.smoke * 0.6, now, 1);
     } else this.rumble.gain.setTargetAtTime(p.smoke * 0.35, now, 1);
 
+    if (tokyo) this.tokyoSounds(p.dt, calm);
     // puffin chirps
-    if (p.birds > 0) {
+    else if (p.birds > 0) {
       this.birdTimer -= p.dt;
       if (this.birdTimer <= 0) {
         if (this.birdCall(0.25)) this.birdTimer = 3 + Math.random() * 6;
         else { this.birdTimer = 0.6 + Math.random() * 2.5; this.chirp(); }
       }
     }
+  }
+
+  /**
+   * Tokyo's sounds now and then: the bamboo fountain and wind chimes in the calm garden, crows and
+   * a passing train from the city (quieter while the story is loud). Synthesised if not loaded.
+   */
+  private tokyoSounds(dt: number, calm: number) {
+    const t = this.ctx.currentTime, T = this.timers;
+    const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+    T.fountain -= dt; T.chime -= dt; T.crow -= dt; T.train -= dt;
+    if (T.fountain <= 0) {
+      T.fountain = rnd(14, 26);
+      if (calm > 0.3 && !this.play('shishi-odoshi', { vol: 0.32 * calm, spread: 0.04, lowpass: 5000 })) this.bambooKnock(t, 0.25 * calm);
+    }
+    if (T.chime <= 0) {
+      T.chime = rnd(9, 22);
+      if (calm > 0.3 && !this.play('wind-chime', { vol: 0.22 * calm, spread: 0.05 })) this.windChime(t, 0.1 * calm);
+    }
+    if (T.crow <= 0) {
+      T.crow = rnd(12, 30);
+      const n = 1 + Math.floor(Math.random() * 3);
+      for (let k = 0; k < n; k++) this.play('crow', { at: t + k * rnd(0.5, 0.8), vol: 0.16, spread: 0.06, lowpass: 3500 });
+    }
+    if (T.train <= 0) {
+      T.train = rnd(55, 95);
+      this.play('train', { vol: 0.18, lowpass: 2500 });
+    }
+  }
+
+  /** A hollow bamboo clack (shishi-odoshi) when the recording is missing. */
+  private bambooKnock(t: number, vol: number) {
+    const c = this.ctx;
+    const o = c.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(520, t); o.frequency.exponentialRampToValueAtTime(380, t + 0.25);
+    o.connect(this.envelope(t, vol, 0.35, 0.002)).connect(this.sfxBus);
+    o.start(t); o.stop(t + 0.5);
+    const src = this.noiseSource(t, 0.1);
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 4;
+    src.connect(f).connect(this.envelope(t, vol * 0.8, 0.06, 0.001)).connect(this.sfxBus);
+  }
+
+  /** A few glassy chime notes from a pentatonic scale when the recording is missing. */
+  private windChime(t: number, vol: number) {
+    const scale = [84, 86, 88, 91, 93, 96];
+    for (let k = 0; k < 3 + Math.floor(Math.random() * 3); k++) this.bell(t + k * (0.12 + Math.random() * 0.25), midi(scale[Math.floor(Math.random() * scale.length)]), this.sfxBus, vol);
   }
 
   private bell(t: number, freq: number, out: AudioNode, vol: number) {

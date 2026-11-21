@@ -52,6 +52,28 @@
     "rock-splash-2.ogg",
     "rock-splash-3.ogg"
   ],
+  "city": [
+    "city-1.ogg"
+  ],
+  "garden-birds": [
+    "garden-birds-1.ogg"
+  ],
+  "shishi-odoshi": [
+    "shishi-odoshi-1.ogg",
+    "shishi-odoshi-2.ogg"
+  ],
+  "wind-chime": [
+    "wind-chime-1.ogg",
+    "wind-chime-2.ogg"
+  ],
+  "crow": [
+    "crow-1.ogg",
+    "crow-2.ogg",
+    "crow-3.ogg"
+  ],
+  "train": [
+    "train-1.ogg"
+  ],
   "ash": [
     "ash-1.ogg"
   ],
