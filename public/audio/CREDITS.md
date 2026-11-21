@@ -1,0 +1,66 @@
+# Sound credits
+
+All recordings are CC0 (public domain) unless noted – no attribution required, listed for reference.
+
+## oar-catch
+- "Water_Paddle_soft_022.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316578/ (CC0)
+- "Water_Paddle_med_017.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316579/ (CC0)
+- "Water_Paddle_med_018.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316580/ (CC0)
+- "Water_Paddle_med_004.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316589/ (CC0)
+- "Water_Paddle_med_003.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316590/ (CC0)
+- "Water_Paddle_med_010.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316593/ (CC0)
+
+## oar-drive
+- "Paddles rowing on a calm water stream" by brunoboselli – https://freesound.org/people/brunoboselli/sounds/249707/ (CC0)
+- "rowing boat from inside.wav" by Fenodyrie – https://freesound.org/people/Fenodyrie/sounds/588307/ (CC0)
+
+## oar-release
+- "Small_Splashes.wav" by N-RAZM – https://freesound.org/people/N-RAZM/sounds/390391/ (CC0)
+- "water dripping.mp3" by sonscharcruterie – https://freesound.org/people/sonscharcruterie/sounds/536188/ (CC0)
+- "Multi Drip Free" by AardsReal – https://freesound.org/people/AardsReal/sounds/842162/ (CC0)
+
+## water-calm
+- "Water_Lapping_River.wav" by ceich93 – https://freesound.org/people/ceich93/sounds/318064/ (CC0)
+
+## water-fast
+- "Sailing boat, bow wave (close perspective)" by Pfannkuchn – https://freesound.org/people/Pfannkuchn/sounds/360631/ (CC0)
+
+## river
+- "Mountain River 002.wav" by Auxide_Audio – https://freesound.org/people/Auxide_Audio/sounds/588178/ (CC0)
+
+## wind
+- "winter wind 01a.aiff" by klangfabrik – https://freesound.org/people/klangfabrik/sounds/117504/ (CC0)
+
+## seabirds
+- "Seagulls_ambience_Lofoten_Svolvær.wav" by Lydmakeren – https://freesound.org/people/Lydmakeren/sounds/510912/ (CC0)
+
+## rumble
+- "Earth-01.wav" by Halion – https://freesound.org/people/Halion/sounds/17785/ (CC0)
+
+## gull
+- "Seagull single call" by steaq – https://freesound.org/people/steaq/sounds/263786/ (CC0)
+- "Herring Gull 1.wav" by Canardo55 – https://freesound.org/people/Canardo55/sounds/538016/ (CC0)
+- "Gull.wav" by nigelcoop – https://freesound.org/people/nigelcoop/sounds/73497/ (CC0)
+- "Seabirds - Ring-billed Gull; Single Call" by TheKingOfGeeks360 – https://freesound.org/people/TheKingOfGeeks360/sounds/836859/ (CC0)
+
+## quake
+- "Cracking Earthquake (cracking soil, cracking stone)" by uagadugu – https://freesound.org/people/uagadugu/sounds/222521/ (CC0)
+
+## ice-crack
+- "Ice Crack 8.wav" by ecfike – https://freesound.org/people/ecfike/sounds/177214/ (CC0)
+- "Ice Crack 3" by j_p_higgins – https://freesound.org/people/j_p_higgins/sounds/262633/ (CC0)
+- "Ice Crack 1" by j_p_higgins – https://freesound.org/people/j_p_higgins/sounds/262635/ (CC0)
+
+## ice-splash
+- "Big Water Splash" by qubodup – https://freesound.org/people/qubodup/sounds/442773/ (CC0)
+
+## eruption
+- "661147__felixblume__volcano-mount-yasur-tanna-island-short" by pwigger0029 – https://freesound.org/people/pwigger0029/sounds/710561/ (CC0)
+
+## wave
+- "Crashing Waves into Rocks 2" by amholma – https://freesound.org/people/amholma/sounds/376801/ (CC0)
+
+## rock-splash
+- "Rock Splash" by Fission9 – https://freesound.org/people/Fission9/sounds/583348/ (CC0)
+- "Rock Splash 2" by deadrobotmusic – https://freesound.org/people/deadrobotmusic/sounds/609941/ (CC0)
+- "Rock Splash 1" by deadrobotmusic – https://freesound.org/people/deadrobotmusic/sounds/609942/ (CC0)

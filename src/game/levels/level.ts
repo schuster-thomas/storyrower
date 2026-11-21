@@ -45,7 +45,7 @@ export interface LevelMode {
   /** One line on the setup screen, e.g. what happens in the story in this mode. */
   summary: string;
   /**
-   * Where the story phases (scenery, music, phase names) sit along a shaped workout, as shares of
+   * Where the story phases (scenery, sounds, phase names) sit along a shaped workout, as shares of
    * the total time in story order. Not used in story mode – there the training curve sets them.
    */
   phases?: PhaseShare[];

@@ -36,8 +36,8 @@ export interface GameOptions {
   audio?: AudioEngine | null;
 }
 
-/** How "hot" the music should be in each phase / section. */
-function musicIntensity(seg: Segment): number {
+/** How "hot" each phase / section is – drives the wind in the ambience. */
+function storyIntensity(seg: Segment): number {
   switch (seg.phase) {
     case 'idyll': return 0.05;
     case 'omens': return 0.25 + seg.intensity * 0.3;
@@ -150,7 +150,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       if (started && startDistance == null) { startDistance = e.sample.distance; startEnergy = e.sample.energy; }
       // rowing starts with a stroke, and that one counts
       if (started && startStrokes == null) startStrokes = Math.max(0, e.sample.strokeCount - 1);
-    } else if (e.type === 'stroke') { scene.stroke(e.intervalMs); audio?.stroke(); }
+    } else if (e.type === 'stroke') { scene.stroke(e.intervalMs); audio?.stroke(e.intervalMs, sample?.powerSmoothed ?? 0); }
   });
 
   // ---------- layout ----------
@@ -325,8 +325,8 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     scene.setGate(gateFor(seg), active);
     scene.update(dt, speed, score.threat, seg.intensity, story);
     audio?.update({
-      dt, intensity: musicIntensity(seg), danger: env.wave * (1 - score.threat), speed,
-      smoke: env.smoke, birds: story.birds, active: active || finished,
+      dt, intensity: storyIntensity(seg), danger: env.wave * (1 - score.threat), speed,
+      smoke: env.smoke, birds: story.birds,
     });
 
     hud.update({

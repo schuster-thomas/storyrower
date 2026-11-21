@@ -1,0 +1,67 @@
+{
+  "oar-catch": [
+    "oar-catch-1.ogg",
+    "oar-catch-2.ogg",
+    "oar-catch-3.ogg",
+    "oar-catch-4.ogg",
+    "oar-catch-5.ogg",
+    "oar-catch-6.ogg"
+  ],
+  "oar-drive": [
+    "oar-drive-1.ogg",
+    "oar-drive-2.ogg",
+    "oar-drive-3.ogg",
+    "oar-drive-4.ogg"
+  ],
+  "oar-release": [
+    "oar-release-1.ogg",
+    "oar-release-2.ogg",
+    "oar-release-3.ogg",
+    "oar-release-4.ogg"
+  ],
+  "water-calm": [
+    "water-calm-1.ogg"
+  ],
+  "water-fast": [
+    "water-fast-1.ogg"
+  ],
+  "river": [
+    "river-1.ogg"
+  ],
+  "wind": [
+    "wind-1.ogg"
+  ],
+  "seabirds": [
+    "seabirds-1.ogg"
+  ],
+  "rumble": [
+    "rumble-1.ogg"
+  ],
+  "gull": [
+    "gull-1.ogg",
+    "gull-2.ogg",
+    "gull-3.ogg",
+    "gull-4.ogg"
+  ],
+  "quake": [
+    "quake-1.ogg"
+  ],
+  "ice-crack": [
+    "ice-crack-1.ogg",
+    "ice-crack-2.ogg"
+  ],
+  "ice-splash": [
+    "ice-splash-1.ogg"
+  ],
+  "eruption": [
+    "eruption-1.ogg"
+  ],
+  "wave": [
+    "wave-1.ogg"
+  ],
+  "rock-splash": [
+    "rock-splash-1.ogg",
+    "rock-splash-2.ogg",
+    "rock-splash-3.ogg"
+  ]
+}

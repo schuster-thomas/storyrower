@@ -148,7 +148,6 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
             <label class="check"><input type="checkbox" data-a="muted"> Mute</label>
             <label class="check" title="Show the frame rate during the game"><input type="checkbox" data-a="showFps"> Frame rate</label>
           </div>
-          <div class="opt-row"><span>Music</span><input type="range" min="0" max="100" step="5" data-a="music" aria-label="Music volume"></div>
           <div class="opt-row"><span>Effects</span><input type="range" min="0" max="100" step="5" data-a="effects" aria-label="Effects volume"></div>
           <div class="opt-row"><span>Graphics</span>
             <select data-a="quality" aria-label="Graphics quality">
@@ -175,14 +174,12 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
 
   // ---------- sound ----------
   const snd = loadAudioSettings();
-  const music = $a<HTMLInputElement>('music');
   const effects = $a<HTMLInputElement>('effects');
   const muted = $a<HTMLInputElement>('muted');
-  music.value = String(Math.round(snd.music * 100));
   effects.value = String(Math.round(snd.effects * 100));
   muted.checked = snd.muted;
-  const saveSound = () => { saveAudioSettings({ music: Number(music.value) / 100, effects: Number(effects.value) / 100, muted: muted.checked }); markSettingsChanged(); };
-  music.oninput = effects.oninput = muted.onchange = saveSound;
+  const saveSound = () => { saveAudioSettings({ effects: Number(effects.value) / 100, muted: muted.checked }); markSettingsChanged(); };
+  effects.oninput = muted.onchange = saveSound;
 
   // ---------- graphics ----------
   const gfx = loadGraphics();
