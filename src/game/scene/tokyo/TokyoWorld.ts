@@ -4,7 +4,7 @@ import type { Environment } from '../../levels/level';
 import type { QualityLevel, QualityProfile } from '../quality';
 import type { LevelWorld, WorldFrame, WorldHost } from '../World';
 import { buildTokyoChunk, CHUNK, createTokyoMaterials, disposeTokyoChunk, type FacadeSpot, type TokyoChunk, type TokyoMaterials } from './Banks';
-import { CardField, type Card } from './Cards';
+import { CardField, type Card } from '../Cards';
 import { Debris } from './Debris';
 import { Dragon } from './Dragon';
 import { loadKit, type Kit } from './kit';

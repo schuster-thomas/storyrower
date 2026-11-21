@@ -57,6 +57,8 @@ export class RiverScene {
   /** the level's own world (banks, backdrop, set piece, threat) – null until its module is loaded */
   private world: LevelWorld | null = null;
   private disposed = false;
+  /** 0–0.8 the world darkens the light (Mauritius: under the storm clouds) */
+  private dim = 0;
   /** extra rocking of the boat (the calving swell), decays */
   private rock = 0;
   private bufferSize = new THREE.Vector2();
@@ -85,7 +87,7 @@ export class RiverScene {
   private flashColor = new THREE.Color();
   private viewDir = 1;
   private effects: Effects;
-  private story: StoryState = { lavaBombs: 0, ashfall: 0, birds: 0, unrest: 0, eruptionAge: -1, cooling: 0, calvingIn: -1, quake: 0, quakeAge: -1, dragon: 0, dragonAge: -1, attack: 0 };
+  private story: StoryState = { lavaBombs: 0, ashfall: 0, birds: 0, unrest: 0, eruptionAge: -1, cooling: 0, calvingIn: -1, quake: 0, quakeAge: -1, dragon: 0, dragonAge: -1, attack: 0, visitors: 0, storm: 0, shark: 0, sharkAge: -1, sharkNear: 0 };
   /** Forwarded from the effects (for sound): a lava bomb hit the water at this distance. */
   set onBombLanded(fn: ((distance: number) => void) | null) { this.effects.onBombLanded = fn; }
   /** A sound of the level's world (falling debris, lasers …) at this distance from the boat. */
@@ -143,6 +145,7 @@ export class RiverScene {
       get quality() { return self.q; },
       shake: (amount) => { this.impulse = Math.max(this.impulse, amount); },
       rock: (amount) => { this.rock = amount; },
+      dim: (amount) => { this.dim = Math.max(0, Math.min(0.8, amount)); },
       flash: (color, strength) => this.flash(color, strength),
       sound: (id, distance) => this.onWorldSound?.(id, distance),
     };
@@ -248,7 +251,7 @@ export class RiverScene {
 
     this.applyEnvironment(1 - Math.exp(-dt * 0.4));
     this.applyFlash(dt);
-    this.light = 0.45 + 0.55 * Math.min(1, this.env.sunIntensity / 2.2) * (1 - this.env.smoke * 0.25) + this.flashLevel * 0.4;
+    this.light = (0.45 + 0.55 * Math.min(1, this.env.sunIntensity / 2.2) * (1 - this.env.smoke * 0.25)) * (1 - this.dim * 0.6) + this.flashLevel * 0.4;
     this.updateBoat(dt);
     this.updateCamera(dt, threat, intensity);
     this.effects.update({ dt, time: this.time, boatZ: this.z, speed: this.speed, viewDir: this.viewDir, threat, smoke: this.env.smoke, lava: this.env.lava, story: this.story });
@@ -318,9 +321,9 @@ export class RiverScene {
     this.topColor.lerp(this.flashColor, this.flashLevel * 0.7);
     this.horizonColor.lerp(this.flashColor, this.flashLevel * 0.85);
     (this.scene.fog as THREE.Fog).color.lerp(this.flashColor, this.flashLevel * 0.6);
-    this.hemi.intensity = 1.7 + this.flashLevel * 2.5;
+    this.hemi.intensity = 1.7 * (1 - this.dim) + this.flashLevel * 2.5;
     this.flashLevel *= Math.exp(-dt * 2.2);
-    if (this.flashLevel < 0.005) this.hemi.intensity = 1.7;
+    if (this.flashLevel < 0.005) this.hemi.intensity = 1.7 * (1 - this.dim);
   }
 
   private applyEnvironment(t: number) {
@@ -334,7 +337,8 @@ export class RiverScene {
     // the fog must swallow the shores before the last built chunk ends
     const reach = this.q.chunksAhead * CHUNK * 0.92;
     fog.color.set(e.fog); fog.far = Math.min(e.fogFar, reach); fog.near = Math.min(e.fogNear, fog.far * 0.3);
-    this.sun.color.set(e.sun); this.sun.intensity = e.sunIntensity;
+    this.sun.color.set(e.sun); this.sun.intensity = e.sunIntensity * (1 - this.dim);
+    if (this.flashLevel < 0.005) this.hemi.intensity = 1.7 * (1 - this.dim);
     this.hemi.color.set(e.sky).lerp(new THREE.Color(0xffffff), 0.4);
     // sky: deeper colour overhead, the fog colour at the horizon so land and sky blend
     this.topColor.set(e.sky).offsetHSL(0, 0.08, -0.12);

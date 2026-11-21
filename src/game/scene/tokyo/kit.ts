@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { normalise, type Model } from '../models';
 import facadeGlass from '../../../assets/levels/tokyo/tex/facade-glass.webp';
 import facadeOffice from '../../../assets/levels/tokyo/tex/facade-office.webp';
 import facadeFlats from '../../../assets/levels/tokyo/tex/facade-flats.webp';
@@ -37,8 +38,7 @@ export const TILE: Record<TexKey, [number, number]> = {
   podium: [14, 5.5], roof: [8, 8], wallStone: [6.5, 4.3], wallCity: [6.5, 4.3], paving: [4, 4], lawn: [7, 7], gravel: [3, 3], forest: [28, 28],
 };
 
-/** A model normalised to height 1, standing on y = 0, centred – its meshes share geometry and material. */
-export interface Model { parts: { geometry: THREE.BufferGeometry; material: THREE.Material }[]; width: number; depth: number }
+export { placeModel, type Model } from '../models';
 
 export interface Kit { tex: Record<TexKey, THREE.Texture>; models: Partial<Record<ModelKey, Model>> }
 
@@ -61,40 +61,6 @@ export function loadKit(): Promise<Kit> {
     loading.catch(() => { loading = null; });
   }
   return loading;
-}
-
-function normalise(root: THREE.Object3D): Model {
-  root.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(root);
-  const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-  const s = 1 / size.y;
-  const parts: Model['parts'] = [];
-  root.traverse((o) => {
-    const m = o as THREE.Mesh;
-    if (!m.isMesh) return;
-    const g = m.geometry.clone().applyMatrix4(m.matrixWorld).translate(-c.x, -box.min.y, -c.z).scale(s, s, s);
-    const mat = (m.material as THREE.MeshStandardMaterial).clone();
-    mat.roughness = Math.max(0.5, mat.roughness);
-    mat.metalness = Math.min(0.2, mat.metalness);
-    parts.push({ geometry: g, material: mat });
-  });
-  return { parts, width: size.x * s, depth: size.z * s };
-}
-
-/** A copy of a model `height` metres tall (shares geometry and materials). */
-export function placeModel(m: Model, height: number, x: number, y: number, z: number, rotY: number, shadows: boolean) {
-  const g = new THREE.Group();
-  for (const p of m.parts) {
-    const mesh = new THREE.Mesh(p.geometry, p.material);
-    mesh.castShadow = shadows;
-    mesh.receiveShadow = true;
-    mesh.userData.shared = true;
-    g.add(mesh);
-  }
-  g.scale.setScalar(height);
-  g.position.set(x, y, z);
-  g.rotation.y = rotY;
-  return g;
 }
 
 /**

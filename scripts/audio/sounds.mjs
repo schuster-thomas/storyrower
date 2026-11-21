@@ -163,6 +163,44 @@ export const SOUNDS = {
     queries: ['train passing distant', 'commuter train passing', 'train passing over bridge'],
   },
 
+  // ---- Mauritius Shark Madness: a tropical lagoon, then a thunderstorm ----
+  surf: {
+    kind: 'loop', len: 20, files: 1, duration: [22, 900], stereo: true,
+    pin: [848039], // gentle waves on a sand beach
+    must: ['wave', 'surf', 'ocean', 'beach', 'sea', 'shore'],
+    queries: ['tropical beach waves', 'gentle ocean waves beach', 'sea waves on sand beach'],
+  },
+  'tropical-birds': {
+    kind: 'loop', len: 20, files: 1, duration: [22, 900], stereo: true,
+    pin: [615746], // village weavers and other tropical birds on Réunion, Mauritius' neighbour
+    must: ['bird', 'tropical', 'jungle', 'rainforest', 'island'],
+    queries: ['tropical island birds', 'tropical birds morning', 'rainforest birds ambience'],
+  },
+  'palm-wind': {
+    kind: 'loop', len: 16, files: 1, duration: [18, 900], stereo: true,
+    pin: [423800], // wind through palm trees
+    must: ['wind', 'palm', 'leaves', 'trees', 'storm'],
+    queries: ['wind in palm trees', 'strong wind palm leaves', 'storm wind trees'],
+  },
+  rain: {
+    kind: 'loop', len: 14, files: 1, duration: [16, 900], stereo: true,
+    pin: [435221], // heavy rain, clean (no thunder in it – the game times its own)
+    must: ['rain'],
+    queries: ['heavy rain on water', 'tropical rain heavy', 'heavy rain storm'],
+  },
+  thunder: {
+    kind: 'oneshot', variants: 3, maxLen: 8, minLen: 4, preRoll: 0.4, files: 3, duration: [4, 90],
+    pin: [243614, 17054, 778363], // a lightning strike, a thunder clap, distant rumbling
+    must: ['thunder', 'lightning'],
+    queries: ['thunder crack close', 'thunder clap', 'thunder rumble'],
+  },
+  motorboat: {
+    kind: 'oneshot', variants: 1, maxLen: 9, files: 1, duration: [5, 90],
+    pin: [451402], // a boat engine passing by fast
+    must: ['boat', 'motor', 'speedboat', 'engine'],
+    queries: ['speedboat passing by', 'motorboat pass by', 'boat engine passing'],
+  },
+
   // ---- generated with ElevenLabs (scripts/audio/generate.mjs) – no CC0 recording fits ----
   // puffin: generated calls came out as wind or as a lion – left out, the gulls stay
   puffin: { kind: 'oneshot', variants: 4, maxLen: 2, slice: true, generated: true, disabled: true },

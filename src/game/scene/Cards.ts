@@ -23,6 +23,8 @@ const vertex = /* glsl */ `
   attribute float aSeed;
   uniform float uTime;
   uniform float uShake;
+  uniform float uWind;   // 1 = a breeze, more in a storm
+  uniform float uLean;   // the storm bends the tops over (metres per metre of height, towards +x; negative = -x)
   varying vec2 vUv;
   varying float vShade;
   void main() {
@@ -32,9 +34,10 @@ const vertex = /* glsl */ `
     vec3 fwd = normalize(toCam + vec3(0.0001, 0.0, 0.0));
     vec3 right = vec3(fwd.z, 0.0, -fwd.x);
     float h = position.y;   // 0 at the foot, 1 at the top
-    float wind = (sin(uTime * 1.1 + aSeed * 6.283) * 0.6 + sin(uTime * 2.3 + aSeed * 3.1) * 0.4) * aSize.z * h * h * 0.06 * aSize.y;
+    float gust = uWind > 1.0 ? sin(uTime * 4.7 + aSeed * 9.0) * 0.5 + sin(uTime * 7.9 + aSeed * 2.0) * 0.3 : 0.0;
+    float wind = (sin(uTime * 1.1 + aSeed * 6.283) * 0.6 + sin(uTime * 2.3 + aSeed * 3.1) * 0.4 + gust) * aSize.z * h * h * 0.06 * aSize.y * uWind;
     float quake = uShake * sin(uTime * 19.0 + aSeed * 10.0) * h * 0.05 * aSize.y;
-    vec3 world = aOffset + right * (position.x * aSize.x + wind + quake) + vec3(0.0, h * aSize.y, 0.0);
+    vec3 world = aOffset + right * (position.x * aSize.x + wind + quake) + vec3(uLean * aSize.z * h * h * aSize.y, h * aSize.y * (1.0 - abs(uLean) * aSize.z * h * 0.25), 0.0);
     vUv = vec2(mix(aUv.x, aUv.z, position.x + 0.5), mix(aUv.y, aUv.w, h));
     vShade = 0.82 + 0.18 * h;   // a touch darker at the foot
     vec4 mvPosition = viewMatrix * vec4(world, 1.0);
@@ -47,6 +50,8 @@ const fragment = /* glsl */ `
   #include <fog_pars_fragment>
   uniform sampler2D uMap;
   uniform vec3 uTint;
+  uniform vec3 uHaze;
+  uniform float uHazeMix;
   varying vec2 vUv;
   varying float vShade;
   void main() {
@@ -54,7 +59,12 @@ const fragment = /* glsl */ `
     if (c.a < 0.5) discard;
     gl_FragColor = vec4(c.rgb * uTint * vShade, 1.0);
     #include <colorspace_fragment>
-    #include <fog_fragment>
+    // fog – optionally towards a land haze instead of the sky colour, so far trees fade into the
+    // painted hills behind them rather than turning sky-blue
+    #ifdef USE_FOG
+      float fogFactor = smoothstep(fogNear, fogFar, vFogDepth);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, mix(fogColor, uHaze, uHazeMix), fogFactor);
+    #endif
   }
 `;
 
@@ -92,7 +102,7 @@ export class CardField {
     geo.instanceCount = 0;
     const mat = new THREE.ShaderMaterial({
       vertexShader: vertex, fragmentShader: fragment, fog: true, side: THREE.DoubleSide,
-      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uShake: { value: 0 }, uTint: { value: new THREE.Color(1, 1, 1) } }]),
+      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uShake: { value: 0 }, uWind: { value: 1 }, uLean: { value: 0 }, uTint: { value: new THREE.Color(1, 1, 1) }, uHaze: { value: new THREE.Color() }, uHazeMix: { value: 0 } }]),
     });
     mat.uniforms.uMap = { value: map };
     this.mesh = new THREE.Mesh(geo, mat);
@@ -118,11 +128,21 @@ export class CardField {
     this.mesh.geometry.instanceCount = n;
   }
 
-  update(time: number, shake: number, tint: THREE.Color) {
+  /** @param wind 1 = a breeze; @param lean how far the storm bends the tops over (see uLean) */
+  update(time: number, shake: number, tint: THREE.Color, wind = 1, lean = 0) {
     const u = this.mesh.material.uniforms;
+    u.uWind.value = wind;
+    u.uLean.value = lean;
     u.uTime.value = time;
     u.uShake.value = shake;
     (u.uTint.value as THREE.Color).copy(tint);
+  }
+
+  /** Fade into this colour with distance instead of the fog colour (mix 0 = plain fog, 1 = only the haze). */
+  setHaze(color: THREE.Color, mix: number) {
+    const u = this.mesh.material.uniforms;
+    (u.uHaze.value as THREE.Color).copy(color);
+    u.uHazeMix.value = mix;
   }
 
   dispose() { this.mesh.geometry.dispose(); this.mesh.material.dispose(); }

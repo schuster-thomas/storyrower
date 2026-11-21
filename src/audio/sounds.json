@@ -74,6 +74,26 @@
   "train": [
     "train-1.ogg"
   ],
+  "surf": [
+    "surf-1.ogg"
+  ],
+  "tropical-birds": [
+    "tropical-birds-1.ogg"
+  ],
+  "palm-wind": [
+    "palm-wind-1.ogg"
+  ],
+  "rain": [
+    "rain-1.ogg"
+  ],
+  "thunder": [
+    "thunder-1.ogg",
+    "thunder-2.ogg",
+    "thunder-3.ogg"
+  ],
+  "motorboat": [
+    "motorboat-1.ogg"
+  ],
   "ash": [
     "ash-1.ogg"
   ],

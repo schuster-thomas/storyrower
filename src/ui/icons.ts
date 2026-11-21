@@ -56,4 +56,14 @@ export const BEAT_ICONS: Record<EffectId, string> = {
   quake: `<path d="M5 14.5V4.5L8.5 2v12.5Z" fill="#fff"/><path d="M10.5 6.5 12 8.5l-1.5 1.5 2 2.5M1 14.5h14" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`,
   // a winged head breathing a beam
   dragon: `<path d="M2 6.5 6 4l3 1.5 4-3-1.5 4.5L14 9l-4 .5-2.5 2.5L6 9 2 6.5Z" fill="#fff"/><path d="M7 12l-3 3" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`,
+  // a snorkel over a wave
+  visitors: `<path d="M9.5 9V3.5a1.5 1.5 0 0 1 3 0" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><path d="M1.5 12q1.6-1.6 3.2 0t3.2 0 3.2 0 3.2 0" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>`,
+  // a dark cloud
+  clouds: `<path d="M3.5 12.5a2.8 2.8 0 0 1 .4-5.6A4 4 0 0 1 11.6 6a3.3 3.3 0 0 1 .9 6.5Z" fill="#fff"/>`,
+  // a fin on the water
+  fin: `<path d="M4 11.5C6 9 8 5 8.5 2c2 3 3.5 6.5 4 9.5Z" fill="#fff"/><path d="M1.5 13.5q1.6-1.4 3.2 0t3.2 0 3.2 0 3.2 0" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>`,
+  // a cloud with a lightning bolt
+  thunderstorm: `<path d="M3.5 9a2.6 2.6 0 0 1 .4-5.2A3.8 3.8 0 0 1 11.3 3a3 3 0 0 1 .9 6Z" fill="#fff"/><path d="M8.5 9.5 6.5 12.5h2.5l-1.5 3" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`,
+  // open jaws
+  shark: `<path d="M1.5 8C4 3.5 11 2.5 14.5 6L8.5 8 14.5 10C11 13.5 4 12.5 1.5 8Z" fill="#fff"/><path d="M9.5 7.2 10.5 8.6 11.5 7M9.5 8.8l1 -1.3 1 1.6" fill="none" stroke="#1d3b5c" stroke-width="0.9"/>`,
 };

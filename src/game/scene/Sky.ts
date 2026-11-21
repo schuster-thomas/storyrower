@@ -64,6 +64,9 @@ export class Sky {
   private mountains = new THREE.Group();
   private mountainMat = new THREE.MeshStandardMaterial({ color: 0x7a8088, flatShading: true, fog: false, roughness: 1 });
   private snowMat = new THREE.MeshStandardMaterial({ color: 0xf4f7fb, flatShading: true, fog: false, roughness: 1 });
+  /** 0–1 storm clouds (a level's thunderstorm): the cumulus turn slate grey and the sun disappears */
+  overcast = 0;
+  private stormGrey = new THREE.Color(0x3d4656);
 
   constructor(cloudCount: number) {
     this.dome = new THREE.Mesh(
@@ -144,13 +147,13 @@ export class Sky {
     const u = this.dome.material.uniforms;
     (u.uTop.value as THREE.Color).copy(p.top);
     (u.uHorizon.value as THREE.Color).copy(p.horizon);
-    (u.uSunColor.value as THREE.Color).copy(p.sunColor).multiplyScalar(1 - p.smoke * 0.6);
+    (u.uSunColor.value as THREE.Color).copy(p.sunColor).multiplyScalar((1 - p.smoke * 0.6) * (1 - this.overcast * 0.95));
 
     // Distant mountains fade into the haze; ash darkens the clouds
     this.mountainMat.color.set(0x6f757e).lerp(p.horizon, 0.45);
     this.snowMat.color.set(0xf4f7fb).lerp(p.horizon, 0.3);
     // the painted puffs are shaded grey: lift them to bright white clouds (darker under the ash)
-    for (const m of this.cloudMats) m.color.setRGB(1.3, 1.3, 1.34).lerp(new THREE.Color(0x5a5250), p.smoke * 0.7).lerp(p.horizon, 0.15);
+    for (const m of this.cloudMats) m.color.setRGB(1.3, 1.3, 1.34).lerp(new THREE.Color(0x5a5250), p.smoke * 0.7).lerp(this.stormGrey, this.overcast * 0.8).lerp(p.horizon, 0.15);
     for (const c of this.clouds) {
       c.x += c.speed * p.dt;
       if (c.x > 480) c.x = -480;

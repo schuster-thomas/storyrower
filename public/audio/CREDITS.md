@@ -78,6 +78,26 @@ All recordings are CC0 (public domain) unless noted – no attribution required,
 ## train
 - "Train Passing By 132 with Track Noises (Distant).mp3" by FunWithSound – https://freesound.org/people/FunWithSound/sounds/592739/ (CC0)
 
+## surf
+- "Gentle waves at Priory Bay, Isle of Wight" by richwise – https://freesound.org/people/richwise/sounds/848039/ (CC0)
+
+## tropical-birds
+- "Tropcial birds chirping & singing - Tisserin Bélier - Reunion Island" by nyoz – https://freesound.org/people/nyoz/sounds/615746/ (CC0)
+
+## palm-wind
+- "Wind through Palm Trees.wav" by klangfabrik – https://freesound.org/people/klangfabrik/sounds/423800/ (CC0)
+
+## rain
+- "Heavy rain_clear recording" by dersinnsspace – https://freesound.org/people/dersinnsspace/sounds/435221/ (CC0)
+
+## thunder
+- "cool_thunder_clap.wav" by SpeedY – https://freesound.org/people/SpeedY/sounds/17054/ (CC0)
+- "Thunderstorm lightning strike" by foad – https://freesound.org/people/foad/sounds/243614/ (CC0)
+- "Distant_Rumbling_Thunder_In_Rain_02" by BlondPanda – https://freesound.org/people/BlondPanda/sounds/778363/ (CC0)
+
+## motorboat
+- "fishing boat throaty engine pass by fast farty great or motorcycle India.flac" by kyles – https://freesound.org/people/kyles/sounds/451402/ (CC0)
+
 ## ash
 - "Fine volcanic ash and tiny pumice grains raining softly onto calm water and a wooden boat, gentle continuous patter and hiss, steady ambience, no thunder, no music" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)
 

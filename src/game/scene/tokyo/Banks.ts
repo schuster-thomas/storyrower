@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { glacierFront, leftShore } from '../Fjord';
-import type { Card } from './Cards';
+import type { Card } from '../Cards';
 import { buildCity, cityMaterials, WALL_TOP, type CityMaterials, type FacadeSpot } from './City';
 import { buildGarden, gardenMaterials, gardenY, PATH_D, type GardenMaterials } from './Garden';
 import type { Kit } from './kit';

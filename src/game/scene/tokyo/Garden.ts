@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { leftShore } from '../Fjord';
-import type { Card } from './Cards';
+import type { Card } from '../Cards';
 import { placeModel, TILE, type Kit } from './kit';
 import { rng } from './textures';
 

@@ -4,7 +4,9 @@ import { phaseSpans, type PhaseId, type Segment, type Workout } from '../workout
 /** One-shot effects the scene and the audio engine know how to play. */
 export type EffectId = 'calm' | 'birds' | 'tremor' | 'calving' | 'ash' | 'eruption' | 'wave' | 'escape' | 'sunset'
   // Tokyo Super Row
-  | 'blossom' | 'quake' | 'dragon';
+  | 'blossom' | 'quake' | 'dragon'
+  // Mauritius Shark Madness
+  | 'visitors' | 'clouds' | 'fin' | 'thunderstorm' | 'shark';
 
 /**
  * Where a beat sits on the training curve. Anchors are resolved against the generated
@@ -74,8 +76,18 @@ export interface StoryState {
   dragon: number;
   /** seconds since the dragon appeared (-1 before it) */
   dragonAge: number;
-  /** 0–1 how hard the dragon attacks (lasers): heavier in hard sections and in the finale, 0 after the escape */
+  /** 0–1 how hard the threat attacks (dragon lasers, shark lunges): heavier in hard sections and in the finale, 0 after the escape */
   attack: number;
+  /** 0–1 people out on the water (snorkelers, surfers, a speedboat): until the clouds gather, back after the storm */
+  visitors: number;
+  /** 0–1 the storm: dark clouds and wind from the omens (0.4), rain and lightning in the thunderstorm (1), clearing after the escape */
+  storm: number;
+  /** 0–1 the shark is there (from its first fin far out); it dives away with the happy end */
+  shark: number;
+  /** seconds since the fin was first seen (-1 before it) */
+  sharkAge: number;
+  /** 0–1 how close the shark circles: far out at first, round the boat in the thunderstorm, right beside it in the attack */
+  sharkNear: number;
 }
 
 /**
@@ -98,13 +110,17 @@ export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number
   const erupted = t >= when('eruption') && t < winddown;
   const shaking = t >= when('quake') && t < winddown;
   const dragonHere = t >= when('dragon');
+  const clouds = when('clouds'), fin = when('fin'), storm = when('storm'), bite = when('shark');
+  const sharkHere = t >= fin;
+  const attacking = (dragonHere || t >= bite) && t < winddown;
   const effort = seg.kind === 'easy' ? 0.35 : seg.kind === 'peak' ? 1 : seg.kind === 'hard' ? 0.85 : 0.6;
   return {
     // bombs follow the effort: heavier in hard sections and in the finale
     lavaBombs: erupted ? (seg.kind === 'easy' ? 0.35 : seg.kind === 'peak' ? 1 : 0.75) : 0,
     // the ash settles while the volcano calms down
     ashfall: Math.min(ramp(when('ash'), 30), 1 - cooling) * (t >= when('ash') ? 1 : 0),
-    birds: t < when('tremor') ? 1 : 0,
+    // (Mauritius: the seabirds leave when the clouds gather and come back once the storm has passed)
+    birds: t < when('tremor') ? (Number.isFinite(clouds) ? Math.max(1 - ramp(clouds, 20), t >= winddown ? cooling : 0) : 1) : 0,
     // builds from the tremor up to the eruption, and dies away again with the cooling
     unrest: Number.isFinite(when('tremor')) ? ramp(when('tremor'), Math.max(1, Math.min(when('eruption'), winddown) - when('tremor'))) * (1 - cooling) : 0,
     eruptionAge: t >= when('eruption') ? t - when('eruption') : -1,
@@ -115,7 +131,15 @@ export function storyStateAt(beats: ScheduledBeat[], workout: Workout, t: number
     quakeAge: t >= when('quake') ? t - when('quake') : -1,
     dragon: dragonHere ? (t < winddown ? 1 : 1 - cooling) : 0,
     dragonAge: dragonHere ? t - when('dragon') : -1,
-    attack: dragonHere && t < winddown ? effort : 0,
+    attack: attacking ? effort : 0,
+    visitors: Number.isFinite(clouds) ? Math.max(1 - ramp(clouds, 20), t >= winddown ? cooling : 0) : 1,
+    storm: Math.max(0.4 * ramp(clouds, 60), ramp(storm, 12)) * (t < winddown ? 1 : 1 - cooling),
+    shark: sharkHere ? (t < winddown ? 1 : 1 - cooling) : 0,
+    sharkAge: sharkHere ? t - fin : -1,
+    // circles closer and closer: far out after the first fin, round the boat in the storm, beside it in the attack
+    sharkNear: !sharkHere ? 0 : t >= bite ? 1
+      : t >= storm ? 0.35 + 0.4 * ramp(storm, Math.max(1, Math.min(bite, winddown) - storm))
+      : 0.04 + 0.26 * ramp(fin, Math.max(1, Math.min(storm, winddown) - fin)),
   };
 }
 

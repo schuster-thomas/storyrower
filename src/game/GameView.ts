@@ -328,7 +328,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     audio?.update({
       dt, intensity: storyIntensity(seg), danger: env.wave * (1 - score.threat), speed,
       // the earthquake rumbles like the volcano (Tokyo); 0 in levels without one
-      smoke: Math.max(env.smoke, story.quake * 0.7), birds: story.birds, ash: story.ashfall, calm: story.cooling,
+      smoke: Math.max(env.smoke, story.quake * 0.7), birds: story.birds, ash: story.ashfall, calm: story.cooling, storm: story.storm,
     });
 
     hud.update({

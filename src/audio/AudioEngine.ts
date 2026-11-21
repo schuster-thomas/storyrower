@@ -20,12 +20,14 @@ const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math
 const midi = (n: number) => 440 * 2 ** ((n - 69) / 12);
 
 /** Recorded ambience loops, levels set every frame in update() */
-const LOOPS = ['water-calm', 'water-fast', 'river', 'wind', 'seabirds', 'rumble', 'ash', 'city', 'garden-birds'] as const;
+const LOOPS = ['water-calm', 'water-fast', 'river', 'wind', 'seabirds', 'rumble', 'ash', 'city', 'garden-birds', 'surf', 'tropical-birds', 'palm-wind', 'rain'] as const;
 
 /**
  * The level's soundscape: Iceland – a river, seabirds and gulls; Tokyo – a Japanese garden
  * (bush warblers, a bamboo fountain, wind chimes) on one bank, the city (distant traffic, crows,
- * a train now and then) on the other. Boat, water, wind and the story effects are shared.
+ * a train now and then) on the other; Mauritius – surf on the beach, tropical birds and the wind in
+ * the palms, then rain, gusts and thunder in the storm (no river, no gulls). Boat, water, wind and
+ * the story effects are shared.
  * Named after the level's world; worlds without their own soundscape get Iceland's.
  */
 export type Soundscape = string;
@@ -129,8 +131,10 @@ export class AudioEngine {
    * @param intensity story/workout intensity 0–1 (more wind when it heats up)
    * @param danger 0–1 how close the wave is (only matters while it is shown)
    */
-  update(p: { dt: number; intensity: number; danger: number; speed: number; smoke: number; birds: number; ash: number; calm?: number }) {
+  update(p: { dt: number; intensity: number; danger: number; speed: number; smoke: number; birds: number; ash: number; calm?: number; storm?: number }) {
     const tokyo = this.soundscape === 'tokyo';
+    const tropical = this.soundscape === 'mauritius';
+    const storm = p.storm ?? 0;
     const now = this.ctx.currentTime;
     const L = this.loops;
     const fast = smooth(1.2, 4.5, p.speed);
@@ -142,9 +146,17 @@ export class AudioEngine {
       this.water.gain.gain.setTargetAtTime(0.03 + Math.min(0.08, p.speed * 0.008), now, 0.5);
       this.water.filter.frequency.setTargetAtTime(500 + p.speed * 60, now, 0.5);
     }
-    L.river?.gain.setTargetAtTime(tokyo ? 0 : 0.06, now, 2);
-    L.wind?.gain.setTargetAtTime(0.07 + 0.2 * smooth(0.5, 1, p.intensity) + 0.2 * p.danger, now, 2);
-    L.seabirds?.gain.setTargetAtTime(tokyo ? 0 : p.birds * 0.3, now, 2);
+    L.river?.gain.setTargetAtTime(tokyo || tropical ? 0 : 0.06, now, 2);
+    // (the recorded wind is a cold, whistling one: in the tropics only a little of it, in the storm gusts)
+    L.wind?.gain.setTargetAtTime(tropical ? 0.12 * storm : 0.07 + 0.2 * smooth(0.5, 1, p.intensity) + 0.2 * p.danger, now, 2);
+    L.seabirds?.gain.setTargetAtTime(tokyo || tropical ? 0 : p.birds * 0.3, now, 2);
+    // Mauritius: waves rolling onto the beach, tropical birds while the weather is fine, the wind in
+    // the palms; in the thunderstorm heavier surf, rain and gusts
+    const calmTropics = Math.max(p.birds, p.calm ?? 0);
+    L.surf?.gain.setTargetAtTime(tropical ? 0.16 + 0.14 * storm : 0, now, 2);
+    L['tropical-birds']?.gain.setTargetAtTime(tropical ? calmTropics * (1 - storm) * 0.3 : 0, now, 2);
+    L['palm-wind']?.gain.setTargetAtTime(tropical ? 0.04 + 0.4 * storm : 0, now, 2);
+    L.rain?.gain.setTargetAtTime(tropical ? Math.max(0, (storm - 0.55) / 0.45) * 0.55 : 0, now, 1.5);
     // Tokyo: the city hums on one bank, warblers sing in the garden while all is calm
     const calm = Math.max(p.birds, p.calm ?? 0);
     L.city?.gain.setTargetAtTime(tokyo ? 0.09 + 0.05 * p.intensity : 0, now, 2);
@@ -156,8 +168,8 @@ export class AudioEngine {
     } else this.rumble.gain.setTargetAtTime(p.smoke * 0.35, now, 1);
 
     if (tokyo) this.tokyoSounds(p.dt, calm);
-    // puffin chirps
-    else if (p.birds > 0) {
+    // puffin chirps (not in the tropics: their birds are in the loop)
+    else if (p.birds > 0 && !tropical) {
       this.birdTimer -= p.dt;
       if (this.birdTimer <= 0) {
         if (this.birdCall(0.25)) this.birdTimer = 3 + Math.random() * 6;
@@ -335,7 +347,42 @@ export class AudioEngine {
         this.roar(t, 1);
         this.roar(t + 2.6, 0.6);
         break;
+      // Mauritius: the thunder comes with the lightning (worldSound); the people and clouds need none
+      case 'visitors':
+      case 'clouds':
+      case 'thunderstorm':
+        break;
+      case 'fin':
+        this.dread(t, 0.8);
+        break;
+      case 'shark':
+        // it bursts out of the water: a huge splash and a deep hit
+        if (!this.play('ice-splash', { vol: 1 })) this.play('rock-splash', { vol: 1 });
+        this.thump(t, 90, 0.9, 1.6, 30);
+        this.dread(t + 0.3, 1);
+        break;
     }
+  }
+
+  /**
+   * Something is down there: a deep swell of two low tones that slowly beat against each other,
+   * with a dark breath of noise (no melody – nothing a famous film score owns).
+   */
+  private dread(t: number, vol: number) {
+    const c = this.ctx;
+    for (const [freq, det] of [[41.2, 0], [41.2, 1.3], [61.7, -0.8]] as const) {
+      const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq + det;
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(120, t); f.frequency.linearRampToValueAtTime(380, t + 2.5); f.frequency.linearRampToValueAtTime(140, t + 5);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.13 * vol, t + 2.2); g.gain.linearRampToValueAtTime(0, t + 5.5);
+      o.connect(f).connect(g).connect(this.sfxBus);
+      o.start(t); o.stop(t + 5.6);
+    }
+    const n = this.noiseSource(t, 5);
+    const nf = c.createBiquadFilter(); nf.type = 'lowpass'; nf.frequency.value = 260;
+    const ng = c.createGain();
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(0.35 * vol, t + 2.5); ng.gain.linearRampToValueAtTime(0, t + 5);
+    n.connect(nf).connect(ng).connect(this.sfxBus);
   }
 
   /** A sound of the level world (Tokyo: debris falling into the river, laser beams and their hits). */
@@ -361,7 +408,50 @@ export class AudioEngine {
         this.play('rock-splash', { vol: 0.5 * vol, spread: 0.15, lowpass: 3000 + 5000 * vol });
         break;
       }
+      case 'thunder': {
+        // it rolls in after the lightning (sound needs ~3 s per km), duller and quieter from far away
+        const at = t + Math.min(4, distance / 340);
+        const v = Math.max(0.25, Math.min(1, 1.25 - distance / 1100));
+        const lp = Math.max(700, 9000 - distance * 9);
+        if (!this.play('thunder', { at, vol: v, spread: 0.08, lowpass: lp })) {
+          const src = this.noiseSource(at, 5);
+          const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(lp * 0.3, at); f.frequency.exponentialRampToValueAtTime(90, at + 4.5);
+          src.connect(f).connect(this.envelope(at, 0.9 * v, 4.5, 0.03)).connect(this.sfxBus);
+        }
+        this.thump(at, 70, 0.5 * v, 3, 28);
+        break;
+      }
+      case 'bite': {
+        // the jaws slam shut: two hard clacks and a low thud
+        for (const dt of [0, 0.07]) {
+          const src = this.noiseSource(t + dt, 0.12);
+          const f = this.ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1600; f.Q.value = 1.2;
+          src.connect(f).connect(this.envelope(t + dt, 0.7, 0.09, 0.002)).connect(this.sfxBus);
+        }
+        this.thump(t, 160, 0.6, 0.35, 50);
+        this.play('rock-splash', { vol: 0.6, spread: 0.1 });
+        break;
+      }
+      case 'splash':
+        if (!this.play('ice-splash', { vol: 0.85, spread: 0.08 })) this.play('rock-splash', { vol: 1, spread: 0.1 });
+        this.thump(t, 80, 0.5, 0.8, 30);
+        break;
+      case 'speedboat':
+        if (!this.play('motorboat', { vol: 0.35, lowpass: 5000 })) this.engine(t, 0.12);
+        break;
     }
+  }
+
+  /** A speedboat roaring past when the recording is missing: a buzzing engine, pitch falling as it goes. */
+  private engine(t: number, vol: number) {
+    const c = this.ctx, len = 7;
+    const o = c.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(95, t); o.frequency.linearRampToValueAtTime(110, t + 3); o.frequency.linearRampToValueAtTime(78, t + len);
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 3); g.gain.linearRampToValueAtTime(0, t + len);
+    o.connect(f).connect(g).connect(this.sfxBus);
+    o.start(t); o.stop(t + len + 0.1);
   }
 
   /** Low temple bell: a few inharmonic partials that ring out slowly. */

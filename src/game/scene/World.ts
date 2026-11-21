@@ -37,13 +37,17 @@ export interface WorldHost {
   shake(amount: number): void;
   /** rock the boat hard for a few seconds (e.g. a swell from a calving glacier) */
   rock(amount: number): void;
+  /** 0–0.8: darken sun and sky light (e.g. under storm clouds); 0 = the phase's own light */
+  dim(amount: number): void;
   flash(color: number, strength: number): void;
   /** a world sound at this distance from the boat (the game forwards it to the audio engine) */
   sound(id: WorldSound, distance: number): void;
 }
 
 /** Sounds a world asks for (see AudioEngine.worldSound). */
-export type WorldSound = 'debris' | 'laser' | 'laser-hit';
+export type WorldSound = 'debris' | 'laser' | 'laser-hit'
+  // Mauritius: thunder after a lightning bolt, the shark's jaws and splashes, a speedboat passing
+  | 'thunder' | 'bite' | 'splash' | 'speedboat';
 
 export interface WorldFrame {
   dt: number;
@@ -74,8 +78,9 @@ export interface WorldClass {
 }
 
 /** The level worlds, loaded only when a level is chosen (each is its own chunk). */
-export type WorldId = 'iceland' | 'tokyo';
+export type WorldId = 'iceland' | 'tokyo' | 'mauritius';
 export const WORLDS: Record<WorldId, () => Promise<WorldClass>> = {
   iceland: () => import('./IcelandWorld').then((m) => m.IcelandWorld),
   tokyo: () => import('./tokyo/TokyoWorld').then((m) => m.TokyoWorld),
+  mauritius: () => import('./mauritius/MauritiusWorld').then((m) => m.MauritiusWorld),
 };
