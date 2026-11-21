@@ -1,0 +1,11 @@
+# StoryRower token service – keeps the Google client secret, so the app can stay signed in.
+# Deploy from this folder:  npx wrangler deploy
+# Secret (once):            npx wrangler secret put GOOGLE_CLIENT_SECRET
+name = "storyrower-auth"
+main = "index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[vars]
+GOOGLE_CLIENT_ID = "179877376000-2o0njr8gkv5aklv1945pd5kcne3r359f.apps.googleusercontent.com"
+ALLOWED_ORIGINS = "https://schuster-thomas.github.io,http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176"

@@ -11,6 +11,13 @@
 export const GOOGLE_CLIENT_ID: string = '179877376000-2o0njr8gkv5aklv1945pd5kcne3r359f.apps.googleusercontent.com';
 
 /**
+ * The StoryRower token service (worker/ – a Cloudflare Worker that keeps the client secret). With
+ * it, a sign-in lasts: the app renews the hourly access token by itself. Empty = without it, the
+ * sign-in runs out after an hour and has to be renewed with a tap.
+ */
+export const TOKEN_SERVICE: string = 'https://storyrower-auth.storyrower.workers.dev';
+
+/**
  * Only files this app created itself (non-sensitive, no Google review needed), plus the e-mail
  * address to show which account is signed in.
  */
