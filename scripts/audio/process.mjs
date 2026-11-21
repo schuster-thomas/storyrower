@@ -3,7 +3,7 @@
 // Writes public/audio/<slot>-<n>.ogg (Opus), the manifest src/audio/sounds.json that the game
 // loads, and public/audio/CREDITS.md. Runs Blender headless for decoding/cutting/encoding.
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { SOUNDS } from './sounds.mjs';
 
@@ -39,8 +39,13 @@ const result = JSON.parse(readFileSync(res, 'utf8'));
 // manifest: merge with the slots that were not processed this time
 const manifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : {};
 for (const [slot, files] of Object.entries(result)) manifest[slot] = files.map((f) => f.file);
-const ordered = Object.fromEntries(Object.keys(SOUNDS).filter((s) => manifest[s]?.length).map((s) => [s, manifest[s]]));
+const ordered = Object.fromEntries(Object.keys(SOUNDS).filter((s) => !SOUNDS[s].disabled && manifest[s]?.length).map((s) => [s, manifest[s]]));
 writeFileSync(MANIFEST, JSON.stringify(ordered, null, 2) + '\n');
+// switched-off slots leave the game: drop their files
+for (const [slot, spec] of Object.entries(SOUNDS)) {
+  if (!spec.disabled) continue;
+  for (const f of readdirSync(OUT).filter((f) => f.startsWith(`${slot}-`) && f.endsWith('.ogg'))) { unlinkSync(join(OUT, f)); console.log(`- removed ${f}`); }
+}
 
 // credits for everything that is in the manifest
 const lines = ['# Sound credits', '', 'All recordings are CC0 (public domain) unless noted – no attribution required, listed for reference.', ''];

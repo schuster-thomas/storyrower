@@ -52,12 +52,17 @@ def fades(x, fade_in, fade_out):
     return x
 
 
-def events(d, max_len, slice_all, min_len=0.0, pre_roll=2.5):
+def events(d, max_len, slice_all, min_len=0.0, pre_roll=2.5, whole=False):
     """Onset → decay windows, as (start, end, peak_db) in samples.
-    Short files (< 4 s) are one event each – splitting them only produces clicks."""
+    Short files (< 4 s) are one event each – splitting them only produces clicks.
+    `whole`: a finished, designed sound – only the silence before and after is trimmed."""
     db = envelope_db(d)
     peak = db.max()
     floor = np.percentile(db, 20)
+    if whole:
+        on = np.nonzero(db > peak - 50)[0]
+        start, end = max(0, on[0] - 2), min(len(db), on[-1] + 5)
+        return [(start * HOP, min(end * HOP, start * HOP + int(max_len * SR)), peak)]
     if not slice_all or len(d) < 4 * SR:
         # the main event: start where it rises (≤ pre_roll s before the loudest moment), keep its tail
         top = int(np.argmax(db))
@@ -160,7 +165,7 @@ def main():
             per_file = []
             for path in inputs:
                 d = load(path, False)
-                evs = sorted(events(d, spec['maxLen'], spec.get('slice', False), spec.get('minLen', 0), spec.get('preRoll', 2.5)), key=lambda e: -e[2])
+                evs = sorted(events(d, spec['maxLen'], spec.get('slice', False), spec.get('minLen', 0), spec.get('preRoll', 2.5), spec.get('whole', False)), key=lambda e: -e[2])
                 per_file.append([(d, e, os.path.basename(path)) for e in evs])
             # round-robin over the files, loudest first, so variants come from different takes
             picked = []
@@ -173,7 +178,8 @@ def main():
             for n, (d, (s, e, _), src) in enumerate(picked, 1):
                 cut = d[s:e]
                 long = len(cut) / SR > 1.5
-                cut = fades(cut, 0.004, max(0.03, len(cut) / SR * (0.3 if long else 0.2)))
+                fade_out = 0.08 if spec.get('whole') else max(0.03, len(cut) / SR * (0.3 if long else 0.2))
+                cut = fades(cut, 0.004, fade_out)
                 cut = normalise_peak(cut)
                 name = f'{slot}-{n}.ogg'
                 write(cut, os.path.join(out_dir, name), 64000)

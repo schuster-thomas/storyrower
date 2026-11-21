@@ -63,7 +63,7 @@ const isCc0 = (s) => /publicdomain\/zero|Creative Commons 0/i.test(s.license);
 const report = ['# Freesound candidates (CC0)', '', 'Listen on Freesound, then put better ids into `pin` (or bad ones into `exclude`) in scripts/audio/sounds.mjs.', ''];
 
 for (const [slot, spec] of slots) {
-  if (spec.disabled) { console.log(`- ${slot}: disabled`); continue; }
+  if (spec.disabled || spec.generated) { console.log(`- ${slot}: ${spec.generated ? 'generated (generate.mjs)' : 'disabled'}`); continue; }
   const dir = join(OUT, slot);
   const have = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.ogg') && /^\d+\.ogg$/.test(f)) : [];
   if (have.length && !refresh && !listOnly) { console.log(`= ${slot}: ${have.length} file(s) already there`); continue; }

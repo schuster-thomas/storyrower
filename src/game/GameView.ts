@@ -150,7 +150,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
       if (started && startDistance == null) { startDistance = e.sample.distance; startEnergy = e.sample.energy; }
       // rowing starts with a stroke, and that one counts
       if (started && startStrokes == null) startStrokes = Math.max(0, e.sample.strokeCount - 1);
-    } else if (e.type === 'stroke') { scene.stroke(e.intervalMs); audio?.stroke(e.intervalMs, sample?.powerSmoothed ?? 0); }
+    } else if (e.type === 'stroke') { scene.stroke(e.intervalMs); audio?.stroke(sample?.powerSmoothed ?? 0); }
   });
 
   // ---------- layout ----------
@@ -326,7 +326,7 @@ export function mountGame(root: HTMLElement, opts: GameOptions): () => void {
     scene.update(dt, speed, score.threat, seg.intensity, story);
     audio?.update({
       dt, intensity: storyIntensity(seg), danger: env.wave * (1 - score.threat), speed,
-      smoke: env.smoke, birds: story.birds,
+      smoke: env.smoke, birds: story.birds, ash: story.ashfall,
     });
 
     hud.update({

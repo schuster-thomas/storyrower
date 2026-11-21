@@ -6,18 +6,9 @@ All recordings are CC0 (public domain) unless noted – no attribution required,
 - "Water_Paddle_soft_022.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316578/ (CC0)
 - "Water_Paddle_med_017.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316579/ (CC0)
 - "Water_Paddle_med_018.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316580/ (CC0)
-- "Water_Paddle_med_004.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316589/ (CC0)
+- "Water_Paddle_med_005.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316588/ (CC0)
 - "Water_Paddle_med_003.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316590/ (CC0)
 - "Water_Paddle_med_010.wav" by EpicWizard – https://freesound.org/people/EpicWizard/sounds/316593/ (CC0)
-
-## oar-drive
-- "Paddles rowing on a calm water stream" by brunoboselli – https://freesound.org/people/brunoboselli/sounds/249707/ (CC0)
-- "rowing boat from inside.wav" by Fenodyrie – https://freesound.org/people/Fenodyrie/sounds/588307/ (CC0)
-
-## oar-release
-- "Small_Splashes.wav" by N-RAZM – https://freesound.org/people/N-RAZM/sounds/390391/ (CC0)
-- "water dripping.mp3" by sonscharcruterie – https://freesound.org/people/sonscharcruterie/sounds/536188/ (CC0)
-- "Multi Drip Free" by AardsReal – https://freesound.org/people/AardsReal/sounds/842162/ (CC0)
 
 ## water-calm
 - "Water_Lapping_River.wav" by ceich93 – https://freesound.org/people/ceich93/sounds/318064/ (CC0)
@@ -64,3 +55,18 @@ All recordings are CC0 (public domain) unless noted – no attribution required,
 - "Rock Splash" by Fission9 – https://freesound.org/people/Fission9/sounds/583348/ (CC0)
 - "Rock Splash 2" by deadrobotmusic – https://freesound.org/people/deadrobotmusic/sounds/609941/ (CC0)
 - "Rock Splash 1" by deadrobotmusic – https://freesound.org/people/deadrobotmusic/sounds/609942/ (CC0)
+
+## ash
+- "Fine volcanic ash and tiny pumice grains raining softly onto calm water and a wooden boat, gentle continuous patter and hiss, steady ambience, no thunder, no music" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)
+
+## calving
+- "Glacier calving: deep cracking groan of ice, then a huge block of ice crashes into a river with a massive splash and rumbling echo, no music" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)
+
+## tidal-wave
+- "A huge tidal wave approaching from behind, deep roaring rush of water building up louder and louder, ominous, no music" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)
+
+## escape
+- "Short uplifting success sting for a video game, bright bells rising, triumphant relief, ends cleanly" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)
+
+## sunset
+- "Short calm ending chime for a video game, warm soft bells, peaceful sunset mood, fades out gently" by ElevenLabs Sound Effects (generated) – https://elevenlabs.io/sound-effects (generated with a paid ElevenLabs plan – commercial use, royalty free)

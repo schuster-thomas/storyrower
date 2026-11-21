@@ -19,10 +19,10 @@ const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math
 const midi = (n: number) => 440 * 2 ** ((n - 69) / 12);
 
 /** Recorded ambience loops, levels set every frame in update() */
-const LOOPS = ['water-calm', 'water-fast', 'river', 'wind', 'seabirds', 'rumble'] as const;
+const LOOPS = ['water-calm', 'water-fast', 'river', 'wind', 'seabirds', 'rumble', 'ash'] as const;
 type LoopSlot = typeof LOOPS[number];
 
-interface PlayOpts { at?: number; vol?: number; rate?: number; spread?: number; lowpass?: number; out?: AudioNode }
+interface PlayOpts { at?: number; vol?: number; rate?: number; spread?: number; lowpass?: number; out?: AudioNode; offset?: number }
 
 /**
  * Ambience and effects – no background music. Recorded CC0 sounds (public/audio/, see
@@ -39,7 +39,6 @@ export class AudioEngine {
   private rumble: GainNode;
   private bank: SampleBank;
   private loops: Partial<Record<LoopSlot, GainNode>> = {};
-  private strokeCycle = 2.5;
   private birdTimer = 1;
   private settings: AudioSettings;
 
@@ -112,21 +111,22 @@ export class AudioEngine {
    * @param intensity story/workout intensity 0–1 (more wind when it heats up)
    * @param danger 0–1 how close the wave is (only matters while it is shown)
    */
-  update(p: { dt: number; intensity: number; danger: number; speed: number; smoke: number; birds: number }) {
+  update(p: { dt: number; intensity: number; danger: number; speed: number; smoke: number; birds: number; ash: number }) {
     const now = this.ctx.currentTime;
     const L = this.loops;
     const fast = smooth(1.2, 4.5, p.speed);
     if (L['water-calm'] || L['water-fast']) {
       this.water.gain.gain.setTargetAtTime(0, now, 0.5);
-      L['water-calm']?.gain.setTargetAtTime(0.18 - 0.07 * fast, now, 0.6);
-      L['water-fast']?.gain.setTargetAtTime(0.03 + 0.25 * fast, now, 0.6);
+      L['water-calm']?.gain.setTargetAtTime(0.12 - 0.05 * fast, now, 0.6);
+      L['water-fast']?.gain.setTargetAtTime(0.02 + 0.17 * fast, now, 0.6);
     } else {
       this.water.gain.gain.setTargetAtTime(0.03 + Math.min(0.08, p.speed * 0.008), now, 0.5);
       this.water.filter.frequency.setTargetAtTime(500 + p.speed * 60, now, 0.5);
     }
-    L.river?.gain.setTargetAtTime(0.09, now, 2);
+    L.river?.gain.setTargetAtTime(0.06, now, 2);
     L.wind?.gain.setTargetAtTime(0.07 + 0.2 * smooth(0.5, 1, p.intensity) + 0.2 * p.danger, now, 2);
     L.seabirds?.gain.setTargetAtTime(p.birds * 0.3, now, 2);
+    L.ash?.gain.setTargetAtTime(p.ash * 0.8, now, 2);
     if (L.rumble) {
       this.rumble.gain.setTargetAtTime(p.smoke * 0.15, now, 1); // keeps the sub-bass the recording may lack
       L.rumble.gain.setTargetAtTime(p.smoke * 0.6, now, 1);
@@ -136,7 +136,7 @@ export class AudioEngine {
     if (p.birds > 0) {
       this.birdTimer -= p.dt;
       if (this.birdTimer <= 0) {
-        if (this.bank.has('gull')) { this.birdTimer = 3 + Math.random() * 6; this.play('gull', { vol: 0.25, spread: 0.1 }); }
+        if (this.birdCall(0.25)) this.birdTimer = 3 + Math.random() * 6;
         else { this.birdTimer = 0.6 + Math.random() * 2.5; this.chirp(); }
       }
     }
@@ -156,23 +156,14 @@ export class AudioEngine {
   // ---------- effects ----------
 
   /**
-   * Every real stroke. Timed like the rower animation: catch now, finish (blade out) after
-   * 35 % of the stroke cycle. Louder and brighter with more power.
-   * @param intervalMs time since the previous stroke (null/0 if unknown)
+   * Every real stroke: only the blade going in and pushing water away – no knocks, no drips.
+   * Louder and brighter with more power.
    * @param power current power in watts (0 if unknown)
    */
-  stroke(intervalMs: number | null = null, power = 0) {
+  stroke(power = 0) {
     const t = this.ctx.currentTime;
-    if (intervalMs && intervalMs > 800 && intervalMs < 6000) this.strokeCycle += (intervalMs / 1000 - this.strokeCycle) * 0.5;
     const s = power > 0 ? Math.max(0.45, Math.min(1.15, power / 170)) : 0.75;
-    const finish = t + this.strokeCycle * 0.35;
-    if (this.play('oar-catch', { vol: 0.6 * s, spread: 0.06, lowpass: 2500 + 6000 * s })) {
-      this.play('rowlock', { at: t + 0.03, vol: 0.18, spread: 0.08 });
-      this.play('oar-drive', { at: t + 0.05, vol: 0.3 * s, spread: 0.05 });
-      this.play('oar-release', { at: finish, vol: 0.3, spread: 0.06 });
-      this.play('rowlock', { at: finish - 0.05, vol: 0.14, spread: 0.08 });
-      return;
-    }
+    if (this.play('oar-catch', { vol: 0.65 * s, spread: 0.06, lowpass: 2500 + 6000 * s })) return;
     const src = this.noiseSource(t, 0.4);
     const f = this.ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 900 + Math.random() * 500; f.Q.value = 0.8;
     const g = this.envelope(t, 0.35, 0.3, 0.04);
@@ -257,6 +248,14 @@ export class AudioEngine {
     }
   }
 
+  /** A puffin or gull call (whichever are loaded, mixed at random); false if neither is. */
+  private birdCall(vol: number, at?: number): boolean {
+    const kinds = (['puffin', 'gull'] as const).filter((k) => this.bank.has(k));
+    if (!kinds.length) return false;
+    const kind = kinds[Math.floor(Math.random() * kinds.length)];
+    return !!this.play(kind, { at, vol: kind === 'puffin' ? vol * 1.2 : vol, spread: 0.1 });
+  }
+
   /** Recorded version of a story effect; false if those sounds are not there (yet). */
   private recordedEffect(id: EffectId, t: number): boolean {
     switch (id) {
@@ -265,6 +264,8 @@ export class AudioEngine {
         this.thump(t + 0.2, 38, 0.4, 3);
         return true;
       case 'calving':
+        // the generated crash is at ~3.95 s, the ice hits the water after 2.4 s (Calving.ts FALL)
+        if (this.play('calving', { vol: 1, offset: 1.55 })) return true;
         if (!this.bank.has('ice-crack') || !this.bank.has('ice-splash')) return false;
         this.play('ice-crack', { vol: 0.8 });
         this.play('ice-splash', { at: t + 2.4, vol: 1 });
@@ -275,13 +276,17 @@ export class AudioEngine {
         this.thump(t, 140, 0.8, 2.2, 28);
         return true;
       case 'wave':
+        if (this.play('tidal-wave', { vol: 1 })) return true;
         // the synthesised roar still builds up (return false); the recorded crash lands on its peak
         this.play('wave', { at: t + 2.3, vol: 0.9 });
         return false;
       case 'birds':
-        if (!this.bank.has('gull')) return false;
-        for (let k = 0; k < 3; k++) this.play('gull', { at: t + k * 0.5 + Math.random() * 0.3, vol: 0.3, spread: 0.12 });
+        if (!this.birdCall(0.3)) return false;
+        for (let k = 1; k < 3; k++) this.birdCall(0.3, t + k * 0.6 + Math.random() * 0.3);
         return true;
+      case 'escape':
+      case 'sunset':
+        return !!this.play(id, { vol: 0.7 });
       default:
         return false;
     }
@@ -306,7 +311,7 @@ export class AudioEngine {
       node = node.connect(f);
     }
     node.connect(g).connect(o.out ?? this.sfxBus);
-    src.start(Math.max(c.currentTime, o.at ?? c.currentTime));
+    src.start(Math.max(c.currentTime, o.at ?? c.currentTime), o.offset ?? 0);
     return src;
   }
 

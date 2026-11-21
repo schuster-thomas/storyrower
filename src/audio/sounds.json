@@ -7,18 +7,6 @@
     "oar-catch-5.ogg",
     "oar-catch-6.ogg"
   ],
-  "oar-drive": [
-    "oar-drive-1.ogg",
-    "oar-drive-2.ogg",
-    "oar-drive-3.ogg",
-    "oar-drive-4.ogg"
-  ],
-  "oar-release": [
-    "oar-release-1.ogg",
-    "oar-release-2.ogg",
-    "oar-release-3.ogg",
-    "oar-release-4.ogg"
-  ],
   "water-calm": [
     "water-calm-1.ogg"
   ],
@@ -63,5 +51,20 @@
     "rock-splash-1.ogg",
     "rock-splash-2.ogg",
     "rock-splash-3.ogg"
+  ],
+  "ash": [
+    "ash-1.ogg"
+  ],
+  "calving": [
+    "calving-1.ogg"
+  ],
+  "tidal-wave": [
+    "tidal-wave-1.ogg"
+  ],
+  "escape": [
+    "escape-1.ogg"
+  ],
+  "sunset": [
+    "sunset-1.ogg"
   ]
 }

@@ -10,41 +10,42 @@
 //   files    how many recordings to download (the best `variants` cuts are kept)
 //   pin      Freesound ids to use instead of the search (listen on freesound.org/s/<id>/)
 //   exclude  Freesound ids that turned out wrong
-//   disabled no usable CC0 recording – the slot stays empty (the game skips it)
+//   disabled no usable recording – the slot stays empty (the game skips it)
+//   generated not on Freesound: made with scripts/audio/generate.mjs, picked by ear
 //   must     the title or tags must contain one of these (sub)words
 //   maxLen   longest one-shot cut in seconds
 //   minLen   shortest cut (keeps the tail of sounds in a busy recording)
 //   preRoll  single effects: at most this many seconds before the loudest moment (default 2.5)
+//   whole    keep a finished, designed sound as it is (only silence trimmed)
 //   stereo   keep stereo (ambience loops); everything else is folded to mono
 //
 // Files you add yourself to assets/raw/audio/<slot>/ (any format Blender reads: wav, ogg,
 // mp3, flac) are processed too – e.g. from the Sonniss GDC bundles (royalty free, no attribution).
 export const SOUNDS = {
-  // ---- the stroke, in three parts (timed to the rower animation) ----
+  // ---- the stroke: only the blade going in and pushing water (no knocks, no drips) ----
   'oar-catch': {
-    kind: 'oneshot', variants: 6, maxLen: 1.0, slice: true, files: 3, duration: [0.3, 40],
-    pin: [316580, 316578, 316589, 316579, 316590, 316593], // EpicWizard "Water_Paddle" lake field recordings
+    kind: 'oneshot', variants: 6, maxLen: 1.6, slice: true, files: 3, duration: [0.3, 40],
+    // EpicWizard "Water_Paddle" lake field recordings; 316589 has a hollow knock in it
+    pin: [316580, 316578, 316588, 316579, 316590, 316593],
+    exclude: [316589],
     must: ['oar', 'paddl', 'rowing', 'splash'],
     queries: ['oar splash', 'paddle splash', 'rowing oar water'],
   },
+  // drive and release cut from whole-boat recordings: mostly oar knocks – left out
   'oar-drive': {
-    kind: 'oneshot', variants: 4, maxLen: 1.4, minLen: 0.8, slice: true, files: 2, duration: [1, 60],
+    disabled: true, kind: 'oneshot', variants: 4, maxLen: 1.4, minLen: 0.8, slice: true, files: 2, duration: [1, 60],
     pin: [249707, 588307], // paddles rowing on a calm stream; rowing boat from inside
     must: ['oar', 'paddl', 'rowing', 'kayak', 'canoe'],
     queries: ['paddle stroke water', 'rowing boat oars', 'kayak paddling'],
   },
   'oar-release': {
-    kind: 'oneshot', variants: 4, maxLen: 1.2, minLen: 0.4, slice: true, files: 2, duration: [0.3, 30],
+    disabled: true, kind: 'oneshot', variants: 4, maxLen: 1.2, minLen: 0.4, slice: true, files: 2, duration: [0.3, 30],
     pin: [390391, 536188, 842162], // small splashes, drips
     must: ['drip', 'droplet', 'splash', 'oar', 'paddl'],
     queries: ['water drips', 'dripping water splash small'],
   },
-  rowlock: {
-    kind: 'oneshot', variants: 4, maxLen: 0.6, slice: true, files: 2, duration: [0.2, 30],
-    pin: [], disabled: true, // nothing fitting in CC0 (only piano pedals and chairs) – needs a generated sound
-    must: ['oarlock', 'rowlock', 'creak', 'oar'],
-    queries: ['oarlock', 'rowlock', 'wooden boat creak'],
-  },
+  // nothing fitting in CC0 (only piano pedals and chairs); the generated ones were left out by ear
+  rowlock: { kind: 'oneshot', variants: 4, maxLen: 0.8, slice: true, generated: true, disabled: true },
 
   // ---- ambience loops ----
   'water-calm': {
@@ -127,4 +128,13 @@ export const SOUNDS = {
     must: ['splash', 'plop', 'stone', 'rock'],
     queries: ['rock splash water', 'stone thrown into water', 'object falling into water'],
   },
+
+  // ---- generated with ElevenLabs (scripts/audio/generate.mjs) – no CC0 recording fits ----
+  // puffin: generated calls came out as wind or as a lion – left out, the gulls stay
+  puffin: { kind: 'oneshot', variants: 4, maxLen: 2, slice: true, generated: true, disabled: true },
+  ash: { kind: 'loop', len: 10, stereo: true, generated: true },
+  calving: { kind: 'oneshot', variants: 1, maxLen: 8, whole: true, generated: true },
+  'tidal-wave': { kind: 'oneshot', variants: 1, maxLen: 9, whole: true, generated: true },
+  escape: { kind: 'oneshot', variants: 1, maxLen: 4, whole: true, generated: true },
+  sunset: { kind: 'oneshot', variants: 1, maxLen: 5, whole: true, generated: true },
 };
