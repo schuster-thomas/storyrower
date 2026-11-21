@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { normalise, type Model } from '../models';
 import sand from '../../../assets/levels/mauritius/tex/sand.webp';
@@ -18,18 +18,22 @@ import sharkUrl from '../../../assets/levels/mauritius/models/shark.glb?url';
 /**
  * The building kit of the Mauritius coast: tileable painted ground textures (scripts/mauritius/assets.mjs),
  * repeated in metres, and the Tripo3D models (scripts/mauritius/models.mjs) – beach furniture and
- * boats, the people out on the lagoon and the shark.
+ * boats, the people out on the lagoon and the shark. The stand-up paddlers come rigged and animated
+ * (scripts/mauritius/paddlers.mjs): one looping stroke each, played by the game as loaded.
  */
 
 const TEX = { sand, scrub, jungle };
 export type TexKey = keyof typeof TEX;
-const MODELS = { loungers: loungersUrl, hut: hutUrl, pirogue: pirogueUrl, speedboat: speedboatUrl, skier: skierUrl, surfer: surferUrl, paddler: paddlerUrl, paddler2: paddler2Url };
+const MODELS = { loungers: loungersUrl, hut: hutUrl, pirogue: pirogueUrl, speedboat: speedboatUrl, skier: skierUrl, surfer: surferUrl };
+const PADDLERS = [paddlerUrl, paddler2Url];
 export type ModelKey = keyof typeof MODELS;
 
 export interface MauritiusKit {
   tex: Record<TexKey, THREE.Texture>;
   /** normalised to height 1 (a model that failed to load is left out) */
   models: Partial<Record<ModelKey, Model>>;
+  /** the animated stand-up paddlers as loaded (a model that failed to load is left out) */
+  paddlers: GLTF[];
   /** the shark as loaded (Shark.ts builds its own swimming material) */
   shark: THREE.Object3D | null;
 }
@@ -48,8 +52,9 @@ export function loadKit(): Promise<MauritiusKit> {
     }))).then((p) => Object.fromEntries(p) as Record<TexKey, THREE.Texture>);
     const models = Promise.all((Object.keys(MODELS) as ModelKey[]).map((k) => gl.loadAsync(MODELS[k]).then((g) => [k, normalise(g.scene)] as const, () => [k, null] as const)))
       .then((p) => Object.fromEntries(p.filter(([, m]) => m)) as Partial<Record<ModelKey, Model>>);
+    const paddlers = Promise.all(PADDLERS.map((u) => gl.loadAsync(u).catch(() => null))).then((p) => p.filter((g): g is GLTF => !!g));
     const shark = gl.loadAsync(sharkUrl).then((g) => g.scene as THREE.Object3D, () => null);
-    loading = Promise.all([tex, models, shark]).then(([t, m, s]) => ({ tex: t, models: m, shark: s }));
+    loading = Promise.all([tex, models, paddlers, shark]).then(([t, m, p, s]) => ({ tex: t, models: m, paddlers: p, shark: s }));
     loading.catch(() => { loading = null; });
   }
   return loading;

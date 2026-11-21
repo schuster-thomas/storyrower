@@ -19,8 +19,9 @@ const MODELS = [
   // the concept's tow rope was erased by hand (the game draws its own rope)
   { id: 'skier', ref: 'skier-ref.png', faces: 5000, tex: 512 },
   { id: 'surfer', ref: 'surfer-concept.png', faces: 5000, tex: 512 },
-  { id: 'paddler', ref: 'paddler-concept.png', faces: 5000, tex: 512 },
-  { id: 'paddler2', ref: 'paddler2-concept.png', faces: 5000, tex: 512 },
+  // the paddlers are rigged and animated for the game by scripts/mauritius/paddlers.mjs
+  { id: 'paddler', ref: 'paddler-concept.png', faces: 5000, tex: 512, rigged: true },
+  { id: 'paddler2', ref: 'paddler2-concept.png', faces: 5000, tex: 512, rigged: true },
   { id: 'loungers', ref: 'loungers-concept.png', faces: 4000, tex: 512 },
   { id: 'hut', ref: 'hut-concept.png', faces: 4000, tex: 512 },
   { id: 'pirogue', ref: 'pirogue-concept.png', faces: 3000, tex: 512 },
@@ -46,7 +47,7 @@ await Promise.all(todo.map(async (m) => {
 
 const run = (a) => execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['gltf-transform', ...a], { stdio: 'pipe', shell: process.platform === 'win32' });
 for (const m of MODELS) {
-  if (!existsSync(rawPath(m.id))) continue;
+  if (!existsSync(rawPath(m.id)) || m.rigged) continue;
   const out = `${OUT}/${m.id}.glb`;
   run(['optimize', rawPath(m.id), out, '--compress', 'meshopt', '--texture-compress', 'webp', '--texture-size', String(m.tex), '--simplify', 'false']);
   console.log(`✓ ${out}: ${(statSync(out).size / 1024).toFixed(0)} KB`);
