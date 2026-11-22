@@ -7,10 +7,23 @@ import { paceFromPower, powerFromPace } from '../rower/ftms';
  * - buildup: targets get harder step by step up to the peak, then an easy cool-down
  * - pyramid: easy → hardest in the middle → easy
  * - waves:   up and down, several times
+ * - custom:  the user's own sections (see CustomPlan), in any level
  */
-export type WorkoutMode = 'story' | 'steady' | 'buildup' | 'pyramid' | 'waves';
+export type WorkoutMode = 'story' | 'steady' | 'buildup' | 'pyramid' | 'waves' | 'custom';
+/** The modes a level can offer (custom trainings are offered by every level on top). */
 export const MODES: WorkoutMode[] = ['story', 'steady', 'buildup', 'pyramid', 'waves'];
-export type ShapedMode = Exclude<WorkoutMode, 'story'>;
+export type ShapedMode = Exclude<WorkoutMode, 'story' | 'custom'>;
+
+/**
+ * One section of a custom training, set against the maximum the user picks before rowing:
+ * `slower` seconds per 500 m over the max split (+15 at a 2:35 max = 2:50), `fewer` strokes per
+ * minute under the max stroke rate (0 = the max itself).
+ */
+export interface CustomSection { sec: number; slower: number; fewer: number }
+/** A custom training as the workout needs it (the editor keeps a change time on top). */
+export interface CustomPlan { id: string; name: string; sections: CustomSection[] }
+
+export const CUSTOM_LIMITS = { sec: [10, 3600], slower: [0, 120], fewer: [0, 20], sections: 60 } as const;
 
 /** User settings before a workout. */
 export interface WorkoutSettings {
@@ -25,6 +38,14 @@ export interface WorkoutSettings {
   /** Steady mode: one power and one stroke-rate target instead of a range. */
   steadyPower: number;
   steadySpm: number;
+  /**
+   * Custom mode: the training being rowed (a copy, so the history can row it again). Its targets
+   * come from customMaxPower (the fastest split) and customMaxSpm.
+   */
+  custom?: CustomPlan;
+  /** Custom mode: the max split (as watts) and stroke rate the sections are set against – apart from the other modes' peak. */
+  customMaxPower: number;
+  customMaxSpm: number;
 }
 
 export const DEFAULT_SETTINGS: WorkoutSettings = {
@@ -39,6 +60,8 @@ export const DEFAULT_SETTINGS: WorkoutSettings = {
   minSegmentSec: 120,
   steadyPower: 80,
   steadySpm: 26,
+  customMaxPower: 110,
+  customMaxSpm: 30,
 };
 
 /** The five story phases every level maps its beats onto. */
@@ -101,14 +124,39 @@ const COOL_DOWN = 0.1;
 export function bandsFor(s: WorkoutSettings, intensity: number): { power: Target; spm: Target; pace: Target } {
   // the settings may hold fractional watts (they are entered as splits): the split target comes
   // from the exact value, so a 2:50 start shows as 2:50 and not 2:49
-  const exact = Math.max(1, lerp(s.minPower, s.maxPower, intensity));
+  return bandsAt(lerp(s.minPower, s.maxPower, intensity), Math.round(lerp(s.minSpm, s.maxSpm, intensity)));
+}
+
+/** Target bands around an exact power (W) and a stroke rate. */
+function bandsAt(watts: number, spmT: number): { power: Target; spm: Target; pace: Target } {
+  const exact = Math.max(1, watts);
   // the band: ±5 s on the 500 m split, ±2 strokes; the watts follow from the split
   const split = paceFromPower(exact);
   const pace = { lo: split - SPLIT_TOLERANCE, hi: split + SPLIT_TOLERANCE, target: split };
   const power = { lo: Math.round(powerFromPace(pace.hi)), hi: Math.round(powerFromPace(pace.lo)), target: Math.round(exact) };
-  const spmT = Math.round(lerp(s.minSpm, s.maxSpm, intensity));
   const spm = { lo: spmT - SPM_TOLERANCE, hi: spmT + SPM_TOLERANCE, target: spmT };
   return { power, spm, pace };
+}
+
+/** Targets of one custom section for a max split (given as watts) and a max stroke rate. */
+export function customBands(maxPower: number, maxSpm: number, sec: CustomSection) {
+  const split = paceFromPower(Math.max(1, maxPower)) + Math.max(0, sec.slower);
+  return bandsAt(powerFromPace(split), Math.max(1, Math.round(maxSpm - Math.max(0, sec.fewer))));
+}
+
+/** How hard a custom section is (0–1) for colours and the game: the max split is the hardest (red), +15 s amber, +30 s and more easy (green). */
+export function customIntensity(sec: CustomSection): number {
+  return Math.round(Math.max(0, Math.min(1, 1 - sec.slower / 30)) * 100) / 100;
+}
+
+export const customDuration = (sections: CustomSection[]) => sections.reduce((a, s) => a + s.sec, 0);
+
+/** Sections within the limits (whole seconds, whole strokes). */
+export function cleanSections(list: CustomSection[]): CustomSection[] {
+  const clamp = (v: number, [lo, hi]: readonly [number, number], d: number) => (Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : d);
+  return list.slice(0, CUSTOM_LIMITS.sections).map((s) => ({
+    sec: clamp(s.sec, CUSTOM_LIMITS.sec, 60), slower: clamp(s.slower, CUSTOM_LIMITS.slower, 20), fewer: clamp(s.fewer, CUSTOM_LIMITS.fewer, 2),
+  }));
 }
 
 /**
@@ -118,6 +166,12 @@ export function bandsFor(s: WorkoutSettings, intensity: number): { power: Target
  */
 export function generateWorkout(settings: WorkoutSettings, plan?: PhaseShare[]): Workout {
   const s = { ...DEFAULT_SETTINGS, ...settings };
+  // a custom training without sections (or none at all) rows as a build-up
+  if (s.mode === 'custom' && !s.custom?.sections.length) s.mode = 'buildup';
+  if (s.mode === 'custom') {
+    const segs = customCurve(s, cleanSections(s.custom!.sections), plan);
+    return { settings: s, duration: segs[segs.length - 1].end, segments: segs };
+  }
   if (!MODES.includes(s.mode)) s.mode = 'story';
   if (s.maxPower < s.minPower) [s.minPower, s.maxPower] = [s.maxPower, s.minPower];
   if (s.maxSpm < s.minSpm) [s.minSpm, s.maxSpm] = [s.maxSpm, s.minSpm];
@@ -251,6 +305,66 @@ function shapedCurve(settings: WorkoutSettings, mode: ShapedMode, total: number,
     if (last && last.phase === phase && last.intensity === intensity) last.end += len;
     else segs.push({ phase, start: t, end: t + len, intensity, kind, ...bandsFor(s, intensity) });
     t += len;
+    prev = intensity;
+  }
+  return segs;
+}
+
+/**
+ * Where the story phases sit on a custom training: the hardest stretch (the last run of sections
+ * at the fastest split) is the finale, the time before it is idyll → omens → escalation and the time
+ * after it the wind-down. Null when the peak comes too early for a story to build up to it – then
+ * the level's own build-up plan is used.
+ */
+export function customPhasePlan(sections: CustomSection[]): PhaseShare[] | null {
+  const total = customDuration(sections);
+  if (!sections.length || total <= 0) return null;
+  const top = Math.min(...sections.map((s) => s.slower));
+  let last = -1;
+  sections.forEach((s, i) => { if (s.slower === top) last = i; });
+  let first = last;
+  while (first > 0 && sections[first - 1].slower === top) first--;
+  const peakStart = customDuration(sections.slice(0, first));
+  const peakEnd = customDuration(sections.slice(0, last + 1));
+  if (peakStart < total * 0.25) return null;
+  return [
+    { phase: 'idyll', share: (peakStart * 0.35) / total },
+    { phase: 'omens', share: (peakStart * 0.3) / total },
+    { phase: 'escalation', share: (peakStart * 0.35) / total },
+    { phase: 'finale', share: (peakEnd - peakStart) / total },
+    { phase: 'winddown', share: (total - peakEnd) / total },
+  ];
+}
+
+/**
+ * Custom mode: one segment per section, with the targets from the max split and stroke rate.
+ * Where a story phase begins inside a section, the section is cut there (same targets on both
+ * sides, so no gate and no "new target" – only the scenery moves on).
+ */
+function customCurve(s: WorkoutSettings, sections: CustomSection[], fallback?: PhaseShare[]): Segment[] {
+  const total = customDuration(sections);
+  const plan = (customPhasePlan(sections) ?? fallback ?? DEFAULT_PHASE_PLANS.buildup).filter((p) => p.share > 0);
+  const sum = plan.reduce((a, p) => a + p.share, 0) || 1;
+  let acc = 0;
+  const bounds = plan.map((p) => ({ phase: p.phase, end: Math.round(((acc += p.share) / sum) * total) }));
+  const phaseAt = (x: number): PhaseId => (bounds.find((b) => x < b.end) ?? bounds[bounds.length - 1])?.phase ?? 'idyll';
+  // a cut closer than this to a section's edge moves to the edge
+  const SNAP = 15;
+  const segs: Segment[] = [];
+  let t = 0;
+  let prev: number | null = null;
+  for (const sec of sections) {
+    const end = t + sec.sec;
+    const intensity = customIntensity(sec);
+    const kind: Segment['kind'] = sec.slower <= 0 ? 'peak'
+      : prev == null || intensity === prev ? 'steady'
+      : intensity > prev ? (intensity - prev >= 0.3 ? 'hard' : 'ramp') : 'easy';
+    const cuts = [t, ...bounds.map((b) => b.end).filter((x) => x > t + SNAP && x < end - SNAP), end];
+    const bands = customBands(s.customMaxPower, s.customMaxSpm, sec);
+    for (let i = 0; i + 1 < cuts.length; i++) {
+      segs.push({ phase: phaseAt((cuts[i] + cuts[i + 1]) / 2), start: cuts[i], end: cuts[i + 1], intensity, kind, ...bands });
+    }
+    t = end;
     prev = intensity;
   }
   return segs;

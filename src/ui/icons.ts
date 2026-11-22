@@ -1,5 +1,6 @@
 import type { EffectId } from '../story/story';
-import type { WorkoutMode } from '../workout/workout';
+import { difficultyColor } from '../game/phaseColors';
+import { customDuration, customIntensity, type CustomSection, type WorkoutMode } from '../workout/workout';
 
 /** Small inline SVGs for the menu screens (no icon font, no extra requests). */
 
@@ -26,9 +27,25 @@ export const MODE_ICONS: Record<WorkoutMode, string> = {
   buildup: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M6 32 58 8" fill="none" stroke="var(--teal)" stroke-width="3.4" stroke-linecap="round"/></svg>`,
   pyramid: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M6 32 32 8l26 24" fill="none" stroke="var(--teal)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   waves: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M4 24C9 8 17 8 22 20s13 12 18 0 13-12 20 4" fill="none" stroke="var(--teal)" stroke-width="3.4" stroke-linecap="round"/></svg>`,
+  custom: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M8 34V22M20 34V14M32 34V6M44 34V18M56 34V26" fill="none" stroke="var(--teal)" stroke-width="6" stroke-linecap="round"/></svg>`,
 };
 
-export const MODE_LABELS: Record<WorkoutMode, string> = { story: 'Story', steady: 'Steady', buildup: 'Build up', pyramid: 'Pyramid', waves: 'Waves' };
+/** A custom training's own pictogram: its sections as little bars in their colours. */
+export function customIcon(sections: CustomSection[]): string {
+  const total = customDuration(sections) || 1;
+  const gap = sections.length > 24 ? 0 : 1;
+  let x = 2;
+  const bars = sections.map((s) => {
+    const w = Math.max(0.6, (s.sec / total) * 60 - gap);
+    const h = 6 + 30 * Math.max(0, Math.min(1, 1 - s.slower / 45));
+    const r = `<rect x="${x.toFixed(2)}" y="${(38 - h).toFixed(1)}" width="${w.toFixed(2)}" height="${h.toFixed(1)}" rx="${Math.min(1.5, w / 2).toFixed(2)}" fill="${difficultyColor(customIntensity(s))}"/>`;
+    x += w + gap;
+    return r;
+  }).join('');
+  return `<svg viewBox="0 0 64 40" aria-hidden="true">${bars}</svg>`;
+}
+
+export const MODE_LABELS: Record<WorkoutMode, string> = { story: 'Story', steady: 'Steady', buildup: 'Build up', pyramid: 'Pyramid', waves: 'Waves', custom: 'Custom' };
 
 /** What the targets do in each mode (the level adds what happens in the story). */
 export const MODE_HINTS: Record<WorkoutMode, string> = {
@@ -37,6 +54,7 @@ export const MODE_HINTS: Record<WorkoutMode, string> = {
   buildup: 'Targets get harder step by step, up to the peak at the end.',
   pyramid: 'Hardest targets in the middle, easy at both ends.',
   waves: 'Up and down: hard and easy stretches in turn.',
+  custom: 'Your own sections – each one set as seconds over your max split and strokes under your max stroke rate.',
 };
 
 /** White glyphs for story moments on the workout preview (16×16). */

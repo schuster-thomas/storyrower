@@ -89,7 +89,8 @@ export function levelModes(level: Level): WorkoutMode[] {
  * what a saved "story" setting from before becomes), else the level's first.
  */
 export function pickMode(level: Level, mode: WorkoutMode): WorkoutMode {
-  if (level.modes[mode]) return mode;
+  // custom trainings row in every level
+  if (mode === 'custom' || level.modes[mode]) return mode;
   return level.modes.buildup ? 'buildup' : levelModes(level)[0] ?? 'story';
 }
 
@@ -98,7 +99,8 @@ export function pickMode(level: Level, mode: WorkoutMode): WorkoutMode {
  * the mode's look changes. The game and the story engine just see a normal level.
  */
 export function levelForMode(level: Level, mode: WorkoutMode): Level {
-  const m = level.modes[pickMode(level, mode)];
+  // a custom training gets the level's full adventure (its build-up story and look)
+  const m = level.modes[pickMode(level, mode === 'custom' ? 'buildup' : mode)];
   if (!m) return level;
   const beats = m.beats === 'all' ? level.beats : level.beats.flatMap((b) => {
     const use = (m.beats as Record<string, ModeBeat>)[b.id];
@@ -115,5 +117,7 @@ export function levelForMode(level: Level, mode: WorkoutMode): Level {
 /** The workout for these settings in this level (the mode's phase plan included). */
 export function levelWorkout(level: Level, settings: WorkoutSettings): Workout {
   const mode = pickMode(level, settings.mode);
-  return generateWorkout({ ...settings, mode }, level.modes[mode]?.phases);
+  // custom: the phases follow the training's own peak, else the level's build-up plan
+  const story = mode === 'custom' ? pickMode(level, 'buildup') : mode;
+  return generateWorkout({ ...settings, mode }, level.modes[story]?.phases);
 }

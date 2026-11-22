@@ -12,6 +12,7 @@ import { mountPlay } from './game/SetupView';
 import { LEVELS, levelById } from './game/levels';
 import { mountHome } from './ui/HomeView';
 import { mountHistory } from './history/HistoryView';
+import { mountCustom } from './custom/CustomView';
 import { drive } from './cloud/drive';
 
 const app = document.getElementById('app')!;
@@ -25,6 +26,8 @@ function route() {
   if (path.startsWith('/diagnose')) cleanup = mountDiagnostics(app);
   // '#/history' lists every training, '#/history/<id>' shows one
   else if (path.startsWith('/history')) cleanup = mountHistory(app, decodeURIComponent(path.split('/')[2] ?? '') || null);
+  // '#/custom' lists the custom trainings, '#/custom/<id>' opens one in the editor
+  else if (path.startsWith('/custom')) cleanup = mountCustom(app, decodeURIComponent(path.split('/')[2] ?? '') || null, new URLSearchParams(hash.split('?')[1] ?? ''));
   // "#/play/<level id>" – plain "#/play" (old links) opens the first level
   else if (path.startsWith('/play')) cleanup = mountPlay(app, levelById(path.split('/')[2]) ?? LEVELS[0]);
   else cleanup = mountHome(app);

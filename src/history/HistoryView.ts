@@ -6,8 +6,9 @@ import { mountResultsChart } from '../game/hud/ResultsChart';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { ICON_BACK, LOGO, MODE_LABELS } from '../ui/icons';
-import type { PhaseId, WorkoutSettings } from '../workout/workout';
+import { customDuration, type PhaseId, type WorkoutSettings } from '../workout/workout';
 import historyCard from '../assets/ui/history-card.svg';
+import { getCustom, saveCustom } from '../workout/customStore';
 import { getTraining, listTrainings, onHistoryChanged, type StoredTraining } from './store';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -15,6 +16,9 @@ const dateLine = (iso: string) => new Date(iso).toLocaleDateString([], { weekday
 const timeLine = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 const starsHtml = (n: number) => `<span class="h-stars" aria-label="${n} of 3 stars">${'★'.repeat(n)}<i>${'★'.repeat(3 - n)}</i></span>`;
 const split = (w: number) => formatPace(paceFromPower(Math.max(1, w)));
+/** "Build up", or a custom training's name. */
+const modeLine = (r: { mode: WorkoutSettings['mode']; settings: WorkoutSettings }) =>
+  r.mode === 'custom' && r.settings.custom ? esc(r.settings.custom.name) : MODE_LABELS[r.mode] ?? r.mode;
 
 /** "#/history" (all trainings) and "#/history/<id>" (one training with its chart and settings). */
 export function mountHistory(root: HTMLElement, id: string | null): () => void {
@@ -71,7 +75,7 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
     const s = r.summary;
     return `<a class="hist-item" href="#/history/${encodeURIComponent(r.id)}">
       <div class="hi-date"><b>${dateLine(r.startedAt)}</b><span>${timeLine(r.startedAt)}</span></div>
-      <div class="hi-main"><b>${esc(r.level.title)}</b><span>${MODE_LABELS[r.mode] ?? r.mode}${r.early ? ' · ended early' : ''}</span></div>
+      <div class="hi-main"><b>${esc(r.level.title)}</b><span>${modeLine(r)}${r.early ? ' · ended early' : ''}</span></div>
       <div class="hi-stats">
         <span><b>${formatDuration(s.time)}</b><small>time</small></span>
         <span><b>${Math.round(s.distance)}</b><small>m</small></span>
@@ -96,7 +100,7 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
     body.innerHTML = `
       <section class="set-card hist-detail">
         <div class="hd-head">
-          <div><h2>${esc(r.level.title)}</h2><p>${MODE_LABELS[r.mode] ?? r.mode}${r.early ? ' · ended early' : ''}${r.device ? ` · ${esc(r.device)}` : ''}</p></div>
+          <div><h2>${esc(r.level.title)}</h2><p>${modeLine(r)}${r.early ? ' · ended early' : ''}${r.device ? ` · ${esc(r.device)}` : ''}</p></div>
           ${starsHtml(r.stars)}
         </div>
         <div class="hd-results">
@@ -123,6 +127,9 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
       unmountChart = mountResultsChart(body.querySelector<HTMLElement>('.hd-chart')!, r.points, (p: PhaseId) => level?.phases[p]?.name ?? p);
     }
     body.querySelector<HTMLButtonElement>('[data-act="again"]')?.addEventListener('click', () => {
+      // a custom training that was deleted since comes back, so it can be rowed (and changed) again
+      const c = r.settings.mode === 'custom' ? r.settings.custom : undefined;
+      if (c && !getCustom(c.id)) saveCustom(c);
       saveSettings({ ...r.settings });
       location.hash = `#/play/${r.level.id}`;
     });
@@ -130,6 +137,15 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
 
   function settingsRows(w: WorkoutSettings) {
     const row = (k: string, v: string) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+    if (w.mode === 'custom' && w.custom) {
+      const c = w.custom;
+      return [
+        row('Mode', `Custom · ${esc(c.name)}`),
+        row('Duration', `${formatDuration(customDuration(c.sections))} · ${c.sections.length} sections`),
+        row('Max split', `${split(w.customMaxPower)} /500 m <small>${Math.round(w.customMaxPower)} W</small>`),
+        row('Max stroke rate', `${w.customMaxSpm} spm`),
+      ].join('');
+    }
     const rows = [row('Mode', MODE_LABELS[w.mode] ?? w.mode), row('Duration', `${w.durationMin} min`)];
     if (w.mode === 'steady') {
       rows.push(row('Split', `${split(w.steadyPower)} /500 m <small>${Math.round(w.steadyPower)} W</small>`), row('Stroke rate', `${w.steadySpm} spm`));

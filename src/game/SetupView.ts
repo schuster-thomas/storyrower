@@ -6,14 +6,29 @@ import { formatDuration, formatPace, paceFromPower, powerFromPace } from '../row
 import { scheduleBeats } from '../story/story';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { SimulatorSource } from '../rower/sources/simulator';
-import { segmentAt, type WorkoutMode, type WorkoutSettings } from '../workout/workout';
+import { customDuration, segmentAt, type WorkoutMode, type WorkoutSettings } from '../workout/workout';
+import { getCustom, listCustom, onCustomChanged } from '../workout/customStore';
+import { difficultyColor } from './phaseColors';
 import { mountGame } from './GameView';
 import { RiverScene } from './scene/RiverScene';
 import { levelForMode, levelModes, levelWorkout, pickMode, type Level } from './levels/level';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { bindDisconnectPill } from '../ui/disconnect';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
-import { BEAT_ICONS, ICON_ARROW, ICON_BACK, ICON_BT, ICON_CHECK, ICON_HEART, ICON_ROWER, LOGO, MODE_HINTS, MODE_ICONS, MODE_LABELS } from '../ui/icons';
+import { BEAT_ICONS, customIcon, ICON_ARROW, ICON_BACK, ICON_BT, ICON_CHECK, ICON_HEART, ICON_ROWER, LOGO, MODE_HINTS, MODE_ICONS, MODE_LABELS } from '../ui/icons';
+
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+
+/**
+ * The custom training in the settings, brought up to date with the editor's copy (it may have been
+ * changed since); a training that was deleted falls back to the level's own modes.
+ */
+function freshCustom(level: Level, s: WorkoutSettings): WorkoutSettings {
+  if (s.mode !== 'custom') return s;
+  const t = s.custom ? getCustom(s.custom.id) : null;
+  if (!t) return { ...s, mode: pickMode(level, 'buildup'), custom: undefined };
+  return { ...s, custom: { id: t.id, name: t.name, sections: t.sections } };
+}
 
 
 /** "#/play/<level>": workout settings, rower and heart-rate connection, then the game. */
@@ -53,17 +68,7 @@ export function mountPlay(root: HTMLElement, level: Level): () => void {
   return () => { cleanupGame?.(); cleanupSetup?.(); audio?.dispose(); audio = null; };
 }
 
-/** Preview colour by difficulty only: easy green → amber → hard red. */
-function difficultyColor(intensity: number): string {
-  const stops: [number, [number, number, number]][] = [[0, [102, 187, 106]], [0.5, [236, 178, 58]], [1, [229, 83, 61]]];
-  const x = Math.max(0, Math.min(1, intensity));
-  const i = x <= 0.5 ? 0 : 1;
-  const [a, ca] = stops[i], [b, cb] = stops[i + 1];
-  const k = (x - a) / (b - a);
-  return `rgb(${ca.map((v, j) => Math.round(v + (cb[j] - v) * k)).join(',')})`;
-}
-
-type SplitKey = 'minPower' | 'maxPower' | 'steadyPower';
+type SplitKey = 'minPower' | 'maxPower' | 'steadyPower' | 'customMaxPower';
 
 /**
  * A 500 m split as typed: "2:45", "2.45", "2,45" or just "245" (numeric keypads have no colon);
@@ -86,6 +91,10 @@ export function parseSplit(text: string): number | null {
 function mountSetup(root: HTMLElement, level: Level, initialJump: string | null, onStart: (o: { autopilot: boolean; jump: string | null }) => void): () => void {
   let settings = loadSettings();
   settings.mode = pickMode(level, settings.mode);
+  {
+    const fresh = freshCustom(level, settings);
+    if (JSON.stringify(fresh) !== JSON.stringify(settings)) { settings = fresh; saveSettings(settings); }
+  }
   const num = (k: keyof WorkoutSettings, unit: string, attrs: string, wide = false) =>
     `<label class="num${wide ? ' wide' : ''}"><input type="number" inputmode="numeric" data-k="${k}" ${attrs}><small>${unit}</small></label>`;
   // a 500 m split (m:ss); the workout keeps working in watts, shown small next to it
@@ -111,15 +120,19 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
               ${levelModes(level).map((m) => `<button type="button" class="mode" role="radio" data-mode="${m}" title="${MODE_HINTS[m]}">
                 <span class="tick">${ICON_CHECK}</span>${MODE_ICONS[m]}<span>${MODE_LABELS[m]}</span></button>`).join('')}
             </div>
+            <div class="custom-modes-head"><b>Your trainings</b><a data-id="customEdit" href="#/custom?from=${level.id}">Edit</a></div>
+            <div class="modes custom-modes" role="radiogroup" aria-label="Custom trainings" data-id="customModes"></div>
             <p class="muted-line" data-id="modeText"></p>
           </section>
           <section>
             <h2>Your workout</h2>
             <div class="fields">
-              <div class="field"><span>Duration</span>${num('durationMin', 'min', 'min="10" max="90" step="5"', true)}</div>
-              <div class="field no-steady" title="No target changes faster than this – higher values mean fewer, longer sections"><span>Shortest section</span>${num('minSegmentSec', 's', 'min="10" max="600" step="10"', true)}</div>
-              <div class="field no-steady" title="Target split at the start and at the peak – e.g. 2:50 → 2:20"><span>Split /500 m <em>start → peak</em></span><div class="pair">${split('minPower')}→${split('maxPower')}</div></div>
-              <div class="field no-steady" title="Target stroke rate at the start and at the peak"><span>Stroke rate <em>start → peak</em></span><div class="pair">${num('minSpm', 'spm', 'min="12" max="40"')}→${num('maxSpm', 'spm', 'min="12" max="45"')}</div></div>
+              <div class="field no-custom"><span>Duration</span>${num('durationMin', 'min', 'min="10" max="90" step="5"', true)}</div>
+              <div class="field no-steady no-custom" title="No target changes faster than this – higher values mean fewer, longer sections"><span>Shortest section</span>${num('minSegmentSec', 's', 'min="10" max="600" step="10"', true)}</div>
+              <div class="field no-steady no-custom" title="Target split at the start and at the peak – e.g. 2:50 → 2:20"><span>Split /500 m <em>start → peak</em></span><div class="pair">${split('minPower')}→${split('maxPower')}</div></div>
+              <div class="field no-steady no-custom" title="Target stroke rate at the start and at the peak"><span>Stroke rate <em>start → peak</em></span><div class="pair">${num('minSpm', 'spm', 'min="12" max="40"')}→${num('maxSpm', 'spm', 'min="12" max="45"')}</div></div>
+              <div class="field only-custom" title="Your fastest split – every section is so many seconds slower"><span>Max split /500 m <em>fastest</em></span>${split('customMaxPower', true)}</div>
+              <div class="field only-custom" title="Your highest stroke rate – every section is so many strokes under it"><span>Max stroke rate <em>highest</em></span>${num('customMaxSpm', 'spm', 'min="12" max="45"', true)}</div>
               <div class="field only-steady"><span>Split /500 m</span>${split('steadyPower', true)}</div>
               <div class="field only-steady"><span>Stroke rate</span>${num('steadySpm', 'spm', 'min="12" max="45"', true)}</div>
             </div>
@@ -190,35 +203,66 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
   qualitySel.onchange = showFps.onchange = saveGfx;
 
   // ---------- mode ----------
-  const modeBtns = [...root.querySelectorAll<HTMLButtonElement>('.mode')];
+  // the level's modes and the custom trainings (the "New" link is not one of them)
+  const modeBtns = () => [...root.querySelectorAll<HTMLButtonElement>('button.mode')];
   const renderMode = () => {
-    modeBtns.forEach((b) => {
-      const on = b.dataset.mode === settings.mode;
+    const custom = settings.mode === 'custom';
+    modeBtns().forEach((b) => {
+      const on = b.dataset.mode === settings.mode && (!custom || b.dataset.custom === settings.custom?.id);
       b.setAttribute('aria-checked', String(on));
       b.tabIndex = on ? 0 : -1;
     });
-    $('modeText').textContent = level.modes[settings.mode]?.summary ?? MODE_HINTS[settings.mode];
-    // steady has one target and no sections: hide the range and "shortest section" fields
-    root.querySelectorAll<HTMLElement>('.no-steady').forEach((el) => { el.hidden = settings.mode === 'steady'; });
-    root.querySelectorAll<HTMLElement>('.only-steady').forEach((el) => { el.hidden = settings.mode !== 'steady'; });
+    $('modeText').textContent = custom && settings.custom
+      ? `${settings.custom.name}: ${formatDuration(customDuration(settings.custom.sections))} in ${settings.custom.sections.length} sections – set your max split and stroke rate, every section follows from them. ${level.modes[pickMode(level, 'buildup')]?.summary ?? ''}`
+      : level.modes[settings.mode]?.summary ?? MODE_HINTS[settings.mode];
+    $<HTMLAnchorElement>('customEdit').href = `#/custom${custom && settings.custom ? `/${encodeURIComponent(settings.custom.id)}` : ''}?from=${level.id}`;
+    // steady has one target and no sections: hide the range and "shortest section" fields;
+    // a custom training brings its own length and sections: only the maximum is asked for
+    const steady = settings.mode === 'steady';
+    root.querySelectorAll<HTMLElement>('.no-steady, .only-steady, .no-custom, .only-custom').forEach((el) => {
+      const c = el.classList;
+      el.hidden = (c.contains('no-steady') && steady) || (c.contains('only-steady') && !steady) || (c.contains('no-custom') && custom) || (c.contains('only-custom') && !custom);
+    });
+    fillInputs();
   };
-  const setMode = (m: WorkoutMode) => { settings = { ...settings, mode: m }; saveSettings(settings); renderMode(); renderPreview(); };
-  modeBtns.forEach((b, i) => {
-    b.onclick = () => setMode(b.dataset.mode as WorkoutMode);
-    b.onkeydown = (e) => {
-      const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
-      if (!d) return;
-      e.preventDefault();
-      const next = modeBtns[(i + d + modeBtns.length) % modeBtns.length];
-      next.focus();
-      setMode(next.dataset.mode as WorkoutMode);
-    };
+  const setMode = (b: HTMLButtonElement) => {
+    const m = b.dataset.mode as WorkoutMode;
+    const t = m === 'custom' ? getCustom(b.dataset.custom ?? '') : null;
+    settings = { ...settings, mode: m, custom: t ? { id: t.id, name: t.name, sections: t.sections } : settings.custom };
+    saveSettings(settings);
+    renderMode();
+    renderPreview();
+  };
+  const renderCustomModes = () => {
+    const list = listCustom();
+    $('customModes').innerHTML = list.map((t) => `<button type="button" class="mode custom" role="radio" data-mode="custom" data-custom="${esc(t.id)}" title="${esc(t.name)}">
+        <span class="tick">${ICON_CHECK}</span>${customIcon(t.sections)}<span>${esc(t.name)}</span><small>${formatDuration(customDuration(t.sections))}</small></button>`).join('') +
+      `<a class="mode custom new" href="#/custom?new&from=${level.id}" title="Build your own training">${MODE_ICONS.custom}<span>${list.length ? 'New' : 'Make your own'}</span></a>`;
+    modeBtns().forEach((b, i, all) => {
+      b.onclick = () => setMode(b);
+      b.onkeydown = (e) => {
+        const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        const next = all[(i + d + all.length) % all.length];
+        next.focus();
+        setMode(next);
+      };
+    });
+  };
+  renderCustomModes();
+  // trainings changed (Drive brought some from another device): new buttons, fresh copy of the chosen one
+  const offCustom = onCustomChanged(() => {
+    renderCustomModes();
+    const fresh = freshCustom(level, settings);
+    if (JSON.stringify(fresh) !== JSON.stringify(settings)) { settings = fresh; saveSettings(settings); }
+    renderMode();
+    renderPreview();
   });
 
   // ---------- workout numbers ----------
   root.querySelectorAll<HTMLInputElement>('input[data-k]').forEach((input) => {
     const k = input.dataset.k as keyof WorkoutSettings;
-    input.value = String(settings[k]);
     input.oninput = () => {
       const v = Number(input.value);
       if (!Number.isFinite(v) || v <= 0) return;
@@ -231,10 +275,9 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
   // splits: typed as m:ss, stored as the watts the workout is built from
   root.querySelectorAll<HTMLInputElement>('input[data-split]').forEach((input) => {
     const k = input.dataset.split as SplitKey;
-    const watts = root.querySelector<HTMLElement>(`[data-watts="${k}"]`)!;
+    const watts = input.parentElement!.querySelector<HTMLElement>('[data-watts]')!;
     const show = () => { watts.textContent = `${Math.round(settings[k])} W`; };
     const format = () => { input.value = formatPace(paceFromPower(settings[k])); };
-    format(); show();
     input.oninput = () => {
       const sec = parseSplit(input.value);
       input.classList.toggle('bad', sec == null && input.value.trim() !== '');
@@ -247,6 +290,18 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     input.onblur = () => { input.classList.remove('bad'); format(); };
     input.onfocus = () => input.select();
   });
+
+  /** Every field from the settings, except the one being typed in (max split and stroke rate are there twice). */
+  function fillInputs() {
+    root.querySelectorAll<HTMLInputElement>('input[data-k]').forEach((input) => {
+      if (input !== document.activeElement) input.value = String(settings[input.dataset.k as 'durationMin']);
+    });
+    root.querySelectorAll<HTMLInputElement>('input[data-split]').forEach((input) => {
+      const k = input.dataset.split as SplitKey;
+      if (input !== document.activeElement) input.value = formatPace(paceFromPower(settings[k]));
+      input.parentElement!.querySelector<HTMLElement>('[data-watts]')!.textContent = `${Math.round(settings[k])} W`;
+    });
+  }
 
   let jump = initialJump;
   const jumpSel = $<HTMLSelectElement>('jump');
@@ -262,8 +317,9 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     jumpSel.value = jump ?? '';
 
     const mins = Math.round(w.duration / 60);
-    $('pvTotal').textContent = `${mins} min`;
-    $('pvEnd').textContent = `${mins} min`;
+    const len = w.duration % 60 ? formatDuration(w.duration) : `${mins} min`;
+    $('pvTotal').textContent = len;
+    $('pvEnd').textContent = len;
     const maxP = Math.max(...w.segments.map((s) => s.power.hi));
     const minP = Math.min(...w.segments.map((s) => s.power.lo));
     // bars from 25 % (easiest) to 100 % (hardest) of the chart height, so the shape reads clearly
@@ -338,5 +394,5 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     ? connection.connectHeartRate() : connection.disconnectHeartRate());
   $('startBtn').onclick = () => onStart({ autopilot: connection.session?.source instanceof SimulatorSource, jump });
 
-  return () => { offConn(); offSession?.(); ro.disconnect(); offFs(); offDisc(); offDrive(); };
+  return () => { offConn(); offSession?.(); ro.disconnect(); offFs(); offDisc(); offDrive(); offCustom(); };
 }

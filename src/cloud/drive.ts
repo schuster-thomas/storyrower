@@ -1,10 +1,12 @@
 import { applySettingsSnapshot, onSettingsChanged, settingsSnapshot, type SettingsSnapshot } from '../app/settings';
 import { parseTraining, type TrainingRecord } from '../history/history';
 import { listTrainings, notifyHistoryChanged, putTraining, putTrainings, type StoredTraining } from '../history/store';
+import { applyCustomFile, customFile, mergeCustomFiles, onCustomEdited, parseCustomFile, sameCustomFiles } from '../workout/customStore';
 import { DRIVE_FOLDER, DRIVE_SCOPES, GOOGLE_CLIENT_ID, TOKEN_SERVICE } from './config';
 
 /**
- * Google Drive sync: every training as one JSON file and the latest settings as settings.json in a
+ * Google Drive sync: every training as one JSON file, the custom trainings together in
+ * custom-trainings.json and the latest settings as settings.json in a
  * "StoryRower" folder of the user's Drive. An access token lasts about an hour.
  *
  * With the token service (TOKEN_SERVICE): the page goes to Google once (same tab), comes back with
@@ -126,6 +128,8 @@ class DriveSync {
     this._status = { state: 'signed-out', email: this.linked?.email ?? null, lastSync: this.linked?.lastSync ?? null, pending: 0, error: null };
     this._status.state = this.baseState();
     onSettingsChanged(() => this.settingsChanged());
+    // custom trainings go up the same way (one file, a moment after the last edit)
+    onCustomEdited(() => this.settingsChanged());
     // Renew a run-out sign-in on the next tap anywhere in the menus – browsers only allow the
     // Google window from a tap. Capture phase, so it runs before the tapped button's own handler.
     if (typeof document !== 'undefined') document.addEventListener('click', this.onTap, true);
@@ -385,9 +389,11 @@ class DriveSync {
       const files = await this.listFolder(folder);
       const remote = new Map<string, string>();   // training id → file id
       let settingsFile: { id: string } | null = null;
+      let customFileRef: { id: string } | null = null;
       for (const f of files) {
         if (f.appProperties?.kind === 'training' && f.appProperties.trainingId) remote.set(f.appProperties.trainingId, f.id);
         if (f.appProperties?.kind === 'settings') settingsFile = f;
+        if (f.appProperties?.kind === 'custom-trainings') customFileRef = f;
       }
       const local = await listTrainings();
       const localIds = new Set(local.map((r) => r.id));
@@ -407,6 +413,7 @@ class DriveSync {
       }
       await putTrainings(fetched);
       await this.syncSettings(folder, settingsFile);
+      await this.syncCustom(folder, customFileRef);
       const now = new Date().toISOString();
       this.linked = { ...this.linked!, lastSync: now };
       write(LINK_KEY, this.linked);
@@ -435,6 +442,19 @@ class DriveSync {
     const remote = (await (await this.api(`/drive/v3/files/${file.id}?alt=media`)).json()) as SettingsSnapshot;
     if (remote?.updatedAt && remote.updatedAt > local.updatedAt) applySettingsSnapshot(remote);
     else if (!remote?.updatedAt || remote.updatedAt < local.updatedAt) await this.overwrite(file.id, local);
+  }
+
+  /** All custom trainings in one file: merged training by training with the copy here (newer wins). */
+  private async syncCustom(folder: string, file: { id: string } | null) {
+    const local = customFile();
+    if (!file) {
+      if (local.trainings.length) await this.upload({ name: 'custom-trainings.json', parents: [folder], appProperties: { kind: 'custom-trainings' } }, local);
+      return;
+    }
+    const remote = parseCustomFile(await (await this.api(`/drive/v3/files/${file.id}?alt=media`)).json()) ?? { v: 1, trainings: [] };
+    const merged = mergeCustomFiles(local, remote);
+    if (!sameCustomFiles(merged, local)) applyCustomFile(merged);
+    if (!sameCustomFiles(merged, remote)) await this.overwrite(file.id, merged);
   }
 
   /** Settings changed on this device: upload them a moment later (typing in a field fires a lot). */

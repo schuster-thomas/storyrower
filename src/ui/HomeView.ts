@@ -5,6 +5,7 @@ import { LOGO } from './icons';
 import { bindFullscreenButton, FS_BUTTON } from './fullscreen';
 import rowerCard from '../assets/ui/rower-card.webp';
 import historyCard from '../assets/ui/history-card.svg';
+import customCard from '../assets/ui/custom-card.webp';
 import { bindDriveButton, DRIVE_BUTTON } from './driveButton';
 
 /** "#/": pick a level (only levels that exist), or go to devices & diagnostics. */
@@ -28,6 +29,7 @@ export function mountHome(root: HTMLElement): () => void {
         <h1 class="menu-title">Choose your adventure</h1>
         <div class="tile-grid">
           ${LEVELS.map((l) => tile(`#/play/${l.id}`, l.art, l.title, l.tagline)).join('')}
+          ${tile('#/custom', customCard, 'Customize trainings', 'Build your own workouts section by section – then row them in any adventure.')}
           ${tile('#/history', historyCard, 'Training history', 'Every workout you rowed – results, charts and settings to row it again.')}
           ${tile('#/diagnose', rowerCard, 'Devices &amp; Diagnostics', 'Connect your rower, check live data or try the simulator.')}
         </div>
