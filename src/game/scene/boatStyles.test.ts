@@ -33,7 +33,7 @@ describe('alternate boat hulls', () => {
     remove();
   });
 
-  it.each(['duck', 'banana', 'bathtub', 'inflatable', 'pizza', 'snail', 'stadium'] as const)('switches away from %s without leaving attachments on animated oars', style => {
+  it.each(['duck', 'banana', 'bathtub', 'inflatable', 'pizza', 'snail', 'stadium', 'log'] as const)('switches away from %s without leaving attachments on animated oars', style => {
     const root = new T.Group(); root.name = 'Boat';
     const feathers = ['R', 'L'].map(side => {
       const feather = new T.Group(); feather.name = 'Feather' + side; root.add(feather);
@@ -42,7 +42,7 @@ describe('alternate boat hulls', () => {
       return { feather, blade };
     });
     const remove = fitBoat(root, style);
-    expect(root.getObjectByName(style === 'stadium' ? 'StadiumHull' : style === 'inflatable' ? 'InflatableChambers' : 'NoveltyHull')).toBeDefined();
+    expect(root.getObjectByName(style === 'log' ? 'LogHull' : style === 'stadium' ? 'StadiumHull' : style === 'inflatable' ? 'InflatableChambers' : 'NoveltyHull')).toBeDefined();
     if (style === 'stadium') {
       expect(root.getObjectByName('RedGrandstand')).toBeInstanceOf(T.Mesh);
       expect(root.getObjectByName('BlueGrandstand')).toBeInstanceOf(T.Mesh);

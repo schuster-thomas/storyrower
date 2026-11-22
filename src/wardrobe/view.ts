@@ -166,7 +166,7 @@ export function mountWardrobe(root: HTMLElement) {
         previousTime=time;
         zoom=reduce.matches?Number(showBoat):T.MathUtils.lerp(zoom,Number(showBoat),1-Math.exp(-dt*6));
         const closeDistance=Math.max(2.85,2.7/camera.aspect);
-        const wideDistance=Math.max(outfitFile().boat==='default'?10.8:7.6,6.2/camera.aspect);
+        const wideDistance=Math.max(outfitFile().boat==='default'?10.8:outfitFile().boat==='log'?9.2:7.6,6.2/camera.aspect);
         const distance=T.MathUtils.lerp(closeDistance,wideDistance,zoom);
         rower.group.getObjectByName('mixamorigHead')!.localToWorld(focus.set(-.008,0,0));
         const pivotZ=T.MathUtils.lerp(T.MathUtils.lerp(.24,focus.z,Math.abs(Math.sin(yaw))),0,zoom);

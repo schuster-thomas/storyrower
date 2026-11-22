@@ -3,6 +3,7 @@ import type { BoatStyle } from '../../wardrobe/store';
 import { buildNoveltyBoat } from './noveltyBoats';
 import { fitThemedPaddles } from './themedPaddles';
 import { buildStadiumBoat } from './stadiumBoat';
+import { buildLogBoat } from './logBoat';
 
 /** Alternate hulls share the original rig, oar pivots and stroke animation. Y is up. */
 export function fitBoat(root: T.Object3D, style: BoatStyle): () => void {
@@ -48,7 +49,9 @@ export function fitBoat(root: T.Object3D, style: BoatStyle): () => void {
   });
 
   let removeNovelty: (() => void) | undefined;
-  if (style === 'stadium') {
+  if (style === 'log') {
+    removeNovelty = buildLogBoat(group, parent);
+  } else if (style === 'stadium') {
     removeNovelty = buildStadiumBoat(group, parent);
   } else if (style === 'duck' || style === 'banana' || style === 'bathtub' || style === 'pizza' || style === 'snail') {
     removeNovelty = buildNoveltyBoat(group, parent, style);
