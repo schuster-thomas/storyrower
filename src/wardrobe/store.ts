@@ -1,7 +1,7 @@
 export const headwear = { default: 'Default', cowboy: 'Cowboy Hat', viking: 'Viking Helmet', puffer: 'Pufferfish', visor: 'Sun Visor', egg: 'Fried Egg', football: 'Football', crown: 'Crown', bucket: 'Pith Helmet', traffic: 'Traffic Cone', santa: 'Santa' };
 export const shirts = { default: 'Default', chelsea: 'Chelsea Retro', norway: 'Norway', blossom: 'Cherry Blossom', danube: 'Sleeveless', disco: 'Disco Ball', traffic: 'Traffic Cone', goldChain: 'Leopard', zebra: 'Zebra' };
 export const accessories = { sunglasses: 'Sunglasses', chain: 'Gold Chain', lei: 'Hawaiian Lei' };
-export const boats = { default: 'Default', wooden: 'Wooden Boat', inflatable: 'Red Inflatable', duck: 'Racing Duck', banana: 'Banana Split', bathtub: 'Bathtub', pizza: 'Pizza Cruiser', snail: 'Snail Express' };
+export const boats = { default: 'Default', wooden: 'Wooden Boat', inflatable: 'Red Inflatable', duck: 'Racing Duck', banana: 'Banana Split', bathtub: 'Bathtub', pizza: 'Pizza Cruiser', snail: 'Snail Express', stadium: 'Stadium Splash' };
 export type BoatStyle = keyof typeof boats;
 export type Accessory = keyof typeof accessories;
 export type Outfit = { headwear: keyof typeof headwear; shirt: keyof typeof shirts; boat: BoatStyle } & Record<Accessory, boolean>;

@@ -2,6 +2,7 @@ import * as T from 'three';
 import type { BoatStyle } from '../../wardrobe/store';
 import { buildNoveltyBoat } from './noveltyBoats';
 import { fitThemedPaddles } from './themedPaddles';
+import { buildStadiumBoat } from './stadiumBoat';
 
 /** Alternate hulls share the original rig, oar pivots and stroke animation. Y is up. */
 export function fitBoat(root: T.Object3D, style: BoatStyle): () => void {
@@ -32,7 +33,7 @@ export function fitBoat(root: T.Object3D, style: BoatStyle): () => void {
   const v = (x: number, y: number, z: number) => new T.Vector3(x, y, z);
   parent.traverse(obj => {
     if (/^(Hull|Strut|Backstay)/.test(obj.name) && obj.visible) { hidden.push(obj); obj.visible = false; }
-    if (style === 'wooden' && /^(Shaft|Neck|Blade)([._]?\d+)*$/.test(obj.name) && (obj as T.Mesh).isMesh) {
+    if (style === 'wooden' && /^(Shaft|Neck|Handle|Blade)([._]?\d+)*$/.test(obj.name) && (obj as T.Mesh).isMesh) {
       const part = obj as T.Mesh; replaced.push({ mesh: part, material: part.material }); part.material = trim;
       if (obj.name.startsWith('Blade')) {
         reshaped.push({ mesh: part, geometry: part.geometry });
@@ -47,7 +48,9 @@ export function fitBoat(root: T.Object3D, style: BoatStyle): () => void {
   });
 
   let removeNovelty: (() => void) | undefined;
-  if (style === 'duck' || style === 'banana' || style === 'bathtub' || style === 'pizza' || style === 'snail') {
+  if (style === 'stadium') {
+    removeNovelty = buildStadiumBoat(group, parent);
+  } else if (style === 'duck' || style === 'banana' || style === 'bathtub' || style === 'pizza' || style === 'snail') {
     removeNovelty = buildNoveltyBoat(group, parent, style);
   } else if (style === 'wooden') {
     // Open, pointed clinker hull: each strake overlaps the previous one.

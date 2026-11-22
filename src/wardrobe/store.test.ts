@@ -9,7 +9,7 @@ describe('saved boat selection', () => {
     expect(parseOutfit(legacy)).toEqual(saved);
   });
 
-  it.each(['default', 'wooden', 'inflatable', 'duck', 'banana', 'bathtub', 'pizza', 'snail'])('loads the %s boat without changing the outfit', boat => {
+  it.each(['default', 'wooden', 'inflatable', 'duck', 'banana', 'bathtub', 'pizza', 'snail', 'stadium'])('loads the %s boat without changing the outfit', boat => {
     expect(parseOutfit({ ...saved, boat, headwear: 'viking', chain: true }))
       .toEqual({ ...saved, boat, headwear: 'viking', chain: true });
   });

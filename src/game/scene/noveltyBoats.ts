@@ -174,11 +174,24 @@ export function buildNoveltyBoat(group: T.Group, rig: T.Object3D, style: Novelty
   }
 
   // The standard oar pivots stay fixed; short mounts bridge each novelty hull to them.
-  for (const side of [-1, 1]) tube([v(side * .67, .36, .49), v(side * .92, .48, .49)], .032, style === 'bathtub' ? gold : wood, 'NoveltyOarlock');
+  for (const side of [-1, 1]) {
+    if (style === 'pizza') {
+      // Mount both struts on the actual sloping slice edges, rather than a generic hull width.
+      for (const z of [.27, .71]) {
+        const edgeX = 1.08 * (1 - (z + 1.97) / 4.1);
+        tube([v(side * (edgeX - .025), .28, z), v(side * .92, .48, .49)], .032, wood, 'NoveltyOarlock');
+        const mount = box(side * (edgeX - .025), .27, z, .10, .085, .18, wood, 'PizzaOarlockMount');
+        mount.rotation.y = -side * Math.atan(1.08 / 4.1);
+        for (const offset of [-.045, .045]) ellipsoid(side * (edgeX - .025), .318, z + offset, .012, .007, .012, gold, 'MountBolt');
+      }
+    } else {
+      tube([v(side * .67, .36, .49), v(side * .92, .48, .49)], .032, style === 'bathtub' ? gold : wood, 'NoveltyOarlock');
+    }
+  }
 
   if (style !== 'duck') {
     rig.traverse(obj => {
-      if (/^(Shaft|Neck)([._]?\d+)*$/.test(obj.name) && (obj as T.Mesh).isMesh) {
+      if (/^(Shaft|Neck|Handle)([._]?\d+)*$/.test(obj.name) && (obj as T.Mesh).isMesh) {
         const part = obj as T.Mesh; repainted.push({ mesh: part, material: part.material }); part.material = wood;
       }
     });
