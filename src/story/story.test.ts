@@ -1,16 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { ICELAND } from '../game/levels/iceland';
-import { DEFAULT_SETTINGS, generateWorkout, phaseSpans, segmentAt } from '../workout/workout';
+import { levelForMode, levelWorkout } from '../game/levels/level';
+import { DEFAULT_SETTINGS, phaseSpans, segmentAt, type WorkoutSettings } from '../workout/workout';
 import { environmentAt, scheduleBeats, storyStateAt } from './story';
 
+// the full adventure: Iceland as it plays in build-up mode
+const LV = levelForMode(ICELAND, 'buildup');
+const wk = (o: Partial<WorkoutSettings>) => levelWorkout(ICELAND, { ...DEFAULT_SETTINGS, mode: 'buildup', ...o });
 const ORDER = ['calm', 'birds', 'tremor', 'calving', 'ash', 'eruption', 'wave', 'escape', 'sunset'];
 
 describe('story engine', () => {
   for (const durationMin of [10, 20, 30, 45, 60, 90]) {
-    for (const minSegmentSec of [30, 60, 120]) {
-      it(`places every Iceland beat in order (${durationMin} min, sections ≥ ${minSegmentSec} s)`, () => {
-        const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin, minSegmentSec });
-        const beats = scheduleBeats(ICELAND, w);
+    {
+      it(`places every Iceland beat in order (${durationMin} min)`, () => {
+        const w = wk({ durationMin });
+        const beats = scheduleBeats(LV, w);
         const ids = beats.map((b) => b.id);
         // every beat that has an anchor in this workout is placed, in story order
         expect(ids).toEqual(ORDER.filter((id) => ids.includes(id)));
@@ -20,15 +24,15 @@ describe('story engine', () => {
         }
         if (phaseSpans(w).some((p) => p.phase === 'escalation')) {
           const eruption = beats.find((b) => b.id === 'eruption')!;
-          expect(segmentAt(w, eruption.t).kind).toBe('hard');
+          expect(segmentAt(w, eruption.t).phase).toBe('escalation');
         }
       });
     }
   }
 
   it('places the key beats at the right phase starts for the default workout', () => {
-    const w = generateWorkout(DEFAULT_SETTINGS);
-    const beats = scheduleBeats(ICELAND, w);
+    const w = wk({});
+    const beats = scheduleBeats(LV, w);
     const at = (id: string) => beats.find((b) => b.id === id)!.t;
     const spans = phaseSpans(w);
     const start = (p: string) => spans.find((s) => s.phase === p)!.start;
@@ -40,8 +44,8 @@ describe('story engine', () => {
   });
 
   it('derives ongoing effects from the time only (robust to jumping around)', () => {
-    const w = generateWorkout(DEFAULT_SETTINGS);
-    const beats = scheduleBeats(ICELAND, w);
+    const w = wk({});
+    const beats = scheduleBeats(LV, w);
     const at = (id: string) => beats.find((b) => b.id === id)!.t;
     expect(storyStateAt(beats, w, 10)).toMatchObject({ birds: 1, lavaBombs: 0, ashfall: 0 });
     expect(storyStateAt(beats, w, at('eruption') + 5).lavaBombs).toBeGreaterThan(0.5);
@@ -52,8 +56,8 @@ describe('story engine', () => {
   });
 
   it('wakes the volcano, lets it erupt and cools it down again', () => {
-    const w = generateWorkout(DEFAULT_SETTINGS);
-    const beats = scheduleBeats(ICELAND, w);
+    const w = wk({});
+    const beats = scheduleBeats(LV, w);
     const at = (id: string) => beats.find((b) => b.id === id)!.t;
     const calm = storyStateAt(beats, w, 10);
     expect(calm).toMatchObject({ unrest: 0, eruptionAge: -1, cooling: 0 });
@@ -71,15 +75,15 @@ describe('story engine', () => {
 
   for (const durationMin of [10, 30, 60]) {
     it(`ends happily: volcano asleep, air clear, wave gone (${durationMin} min)`, () => {
-      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin, minSegmentSec: 30 });
-      const beats = scheduleBeats(ICELAND, w);
+      const w = wk({ durationMin });
+      const beats = scheduleBeats(LV, w);
       const winddown = phaseSpans(w).find((p) => p.phase === 'winddown')!;
       // right after the escape it is still smoky…
-      const escaped = environmentAt(ICELAND, w, winddown.start + 1);
+      const escaped = environmentAt(LV, w, winddown.start + 1);
       expect(escaped.smoke).toBeGreaterThan(0.1);
       // …from the middle of the wind-down on everything has settled
       for (const t of [(winddown.start + winddown.end) / 2, w.duration - 1]) {
-        const env = environmentAt(ICELAND, w, t);
+        const env = environmentAt(LV, w, t);
         expect(env).toMatchObject({ lava: 0, smoke: 0, wave: 0 });
         expect(storyStateAt(beats, w, t)).toMatchObject({ unrest: 0, ashfall: 0, lavaBombs: 0, cooling: 1 });
       }
@@ -87,11 +91,11 @@ describe('story engine', () => {
   }
 
   it('blends the environment smoothly instead of jumping at phase borders', () => {
-    const w = generateWorkout(DEFAULT_SETTINGS);
+    const w = wk({});
     const omens = phaseSpans(w).find((p) => p.phase === 'omens')!;
-    const before = environmentAt(ICELAND, w, omens.start - 1);
-    const after = environmentAt(ICELAND, w, omens.start + 1);
-    const idyll = environmentAt(ICELAND, w, 10);
+    const before = environmentAt(LV, w, omens.start - 1);
+    const after = environmentAt(LV, w, omens.start + 1);
+    const idyll = environmentAt(LV, w, 10);
     // already partly on the way before the border, and the jump at the border is smaller than the full step
     expect(before.smoke).toBeGreaterThan(idyll.smoke);
     expect(Math.abs(after.smoke - before.smoke)).toBeLessThan(ICELAND.phases.omens.env.smoke - ICELAND.phases.idyll.env.smoke);

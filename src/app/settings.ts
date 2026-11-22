@@ -1,6 +1,6 @@
 import { loadAudioSettings, saveAudioSettings, type AudioSettings } from '../audio/AudioEngine';
 import { loadGraphics, saveGraphics, type GraphicsSettings } from '../game/scene/quality';
-import { DEFAULT_SETTINGS, type WorkoutSettings } from '../workout/workout';
+import { cleanSettings, DEFAULT_SETTINGS, type WorkoutSettings } from '../workout/workout';
 
 /**
  * The user's settings in one place: the workout settings (setup screen), sound and graphics.
@@ -11,17 +11,20 @@ import { DEFAULT_SETTINGS, type WorkoutSettings } from '../workout/workout';
 const WORKOUT_KEY = 'storyrower.settings';
 const UPDATED_KEY = 'storyrower.settingsUpdatedAt';
 
-const MIN_SECTION_KEY = 'storyrower.minSection120';
+/** Set once the default trainings became sections against the peak (2026-11-22). */
+const PEAK_MODES_KEY = 'storyrower.peakModes';
 
 export function loadSettings(): WorkoutSettings {
   try {
-    const stored = JSON.parse(localStorage.getItem(WORKOUT_KEY) ?? '{}') as Partial<WorkoutSettings>;
-    // once: the shortest section used to default to 30 s – whoever still has that gets the new 120 s
-    if (!localStorage.getItem(MIN_SECTION_KEY)) {
-      localStorage.setItem(MIN_SECTION_KEY, '1');
-      if (stored.minSegmentSec === 30) { stored.minSegmentSec = DEFAULT_SETTINGS.minSegmentSec; localStorage.setItem(WORKOUT_KEY, JSON.stringify(stored)); }
+    const stored = JSON.parse(localStorage.getItem(WORKOUT_KEY) ?? '{}') as Partial<WorkoutSettings> & Record<string, unknown>;
+    // once: the modes now run 25 min by default (the old start/peak, steady and shortest-section
+    // fields are dropped by cleanSettings)
+    if (!localStorage.getItem(PEAK_MODES_KEY)) {
+      localStorage.setItem(PEAK_MODES_KEY, '1');
+      stored.durationMin = DEFAULT_SETTINGS.durationMin;
+      localStorage.setItem(WORKOUT_KEY, JSON.stringify(cleanSettings(stored)));
     }
-    return { ...DEFAULT_SETTINGS, ...stored };
+    return cleanSettings(stored);
   } catch { return { ...DEFAULT_SETTINGS }; }
 }
 

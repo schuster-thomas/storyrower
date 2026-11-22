@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS } from '../workout/workout';
 import { mergeTrainings, newTrainingId, parseTraining, sortTrainings, type TrainingRecord } from './history';
 
 const rec = (id: string, startedAt: string, distance = 1000): TrainingRecord => ({
-  v: 1, id, startedAt, finishedAt: startedAt, level: { id: 'iceland-volcano-run', title: 'Iceland Volcano Run' }, mode: 'story',
+  v: 1, id, startedAt, finishedAt: startedAt, level: { id: 'iceland-volcano-run', title: 'Iceland Volcano Run' }, mode: 'buildup',
   settings: DEFAULT_SETTINGS, plannedDuration: 1200, early: false, device: 'Woodrower',
   summary: { time: 1200, distance, strokes: 500, avgPower: 80, maxPower: 120, avgSpm: 25, avgPace: 150, avgHr: null, maxHr: null, energy: null },
   accuracy: 0.8, stars: 2, points: [],

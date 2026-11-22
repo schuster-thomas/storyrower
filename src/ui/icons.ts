@@ -1,6 +1,7 @@
 import type { EffectId } from '../story/story';
-import { difficultyColor } from '../game/phaseColors';
-import { customDuration, customIntensity, type CustomSection, type WorkoutMode } from '../workout/workout';
+import { difficultyColor, sectionBarHeight } from '../game/phaseColors';
+import { DEFAULT_TRAININGS, type DefaultMode } from '../workout/defaultTrainings';
+import { intensityScale, MODES, type WorkoutMode } from '../workout/workout';
 
 /** Small inline SVGs for the menu screens (no icon font, no extra requests). */
 
@@ -20,40 +21,33 @@ export const ICON_ROWER = `<svg viewBox="0 0 32 24" aria-hidden="true"><circle c
 export const ICON_CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 export const ICON_ARROW = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-/** Mode pictograms: the shape of the training curve. */
-export const MODE_ICONS: Record<WorkoutMode, string> = {
-  story: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M8 8c9-2.5 18-1.5 24 3 6-4.5 15-5.5 24-3v23c-9-2.5-18-1.5-24 3-6-4.5-15-5.5-24-3Z M32 11v23" fill="none" stroke="var(--ink)" stroke-width="3.2" stroke-linejoin="round"/><path d="M6 36c9-3 19-2 26 1.5 7-3.5 17-4.5 26-1.5" fill="none" stroke="var(--teal)" stroke-width="3" stroke-linecap="round"/></svg>`,
-  steady: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M6 20h52" fill="none" stroke="var(--teal)" stroke-width="3.4" stroke-linecap="round"/></svg>`,
-  buildup: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M6 32 58 8" fill="none" stroke="var(--teal)" stroke-width="3.4" stroke-linecap="round"/></svg>`,
-  pyramid: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M6 32 32 8l26 24" fill="none" stroke="var(--teal)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-  waves: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M4 24C9 8 17 8 22 20s13 12 18 0 13-12 20 4" fill="none" stroke="var(--teal)" stroke-width="3.4" stroke-linecap="round"/></svg>`,
-  custom: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M8 34V22M20 34V14M32 34V6M44 34V18M56 34V26" fill="none" stroke="var(--teal)" stroke-width="6" stroke-linecap="round"/></svg>`,
-};
-
-/** A custom training's own pictogram: its sections as little bars in their colours. */
-export function customIcon(sections: CustomSection[]): string {
-  const total = customDuration(sections) || 1;
+/** A training's pictogram: its sections as little bars in their colours (lengths in any unit). */
+export function customIcon(sections: { sec: number; slower: number }[]): string {
+  const total = sections.reduce((a, s) => a + s.sec, 0) || 1;
   const gap = sections.length > 24 ? 0 : 1;
+  const scale = intensityScale(sections);
   let x = 2;
   const bars = sections.map((s) => {
     const w = Math.max(0.6, (s.sec / total) * 60 - gap);
-    const h = 6 + 30 * Math.max(0, Math.min(1, 1 - s.slower / 45));
-    const r = `<rect x="${x.toFixed(2)}" y="${(38 - h).toFixed(1)}" width="${w.toFixed(2)}" height="${h.toFixed(1)}" rx="${Math.min(1.5, w / 2).toFixed(2)}" fill="${difficultyColor(customIntensity(s))}"/>`;
+    const h = 4 + 32 * sectionBarHeight(s.slower);
+    const r = `<rect x="${x.toFixed(2)}" y="${(38 - h).toFixed(1)}" width="${w.toFixed(2)}" height="${h.toFixed(1)}" rx="${Math.min(1.5, w / 2).toFixed(2)}" fill="${difficultyColor(scale(s))}"/>`;
     x += w + gap;
     return r;
   }).join('');
   return `<svg viewBox="0 0 64 40" aria-hidden="true">${bars}</svg>`;
 }
 
-export const MODE_LABELS: Record<WorkoutMode, string> = { story: 'Story', steady: 'Steady', buildup: 'Build up', pyramid: 'Pyramid', waves: 'Waves', custom: 'Custom' };
+/** Mode pictograms: each default training's sections, like the custom trainings. */
+export const MODE_ICONS = Object.fromEntries(MODES.map((m) =>
+  [m, customIcon(DEFAULT_TRAININGS[m].sections.map((s) => ({ sec: s.share, slower: s.slower })))])) as Record<DefaultMode, string>;
+
+export const MODE_LABELS: Record<WorkoutMode, string> = {
+  ...Object.fromEntries(MODES.map((m) => [m, DEFAULT_TRAININGS[m].label])) as Record<DefaultMode, string>, custom: 'Custom',
+};
 
 /** What the targets do in each mode (the level adds what happens in the story). */
 export const MODE_HINTS: Record<WorkoutMode, string> = {
-  story: 'Targets follow the story: warm-up, build-up, intervals, a final sprint and a cool-down.',
-  steady: 'The same targets from start to finish.',
-  buildup: 'Targets get harder step by step, up to the peak at the end.',
-  pyramid: 'Hardest targets in the middle, easy at both ends.',
-  waves: 'Up and down: hard and easy stretches in turn.',
+  ...Object.fromEntries(MODES.map((m) => [m, DEFAULT_TRAININGS[m].hint])) as Record<DefaultMode, string>,
   custom: 'Your own sections – each one set as seconds over your max split and strokes under your max stroke rate.',
 };
 
@@ -85,3 +79,13 @@ export const BEAT_ICONS: Record<EffectId, string> = {
   // open jaws
   shark: `<path d="M1.5 8C4 3.5 11 2.5 14.5 6L8.5 8 14.5 10C11 13.5 4 12.5 1.5 8Z" fill="#fff"/><path d="M9.5 7.2 10.5 8.6 11.5 7M9.5 8.8l1 -1.3 1 1.6" fill="none" stroke="#1d3b5c" stroke-width="0.9"/>`,
 };
+
+/**
+ * A section's targets over its bar: seconds over the peak split, strokes under the peak stroke
+ * rate ("max" at the peak itself); `wide` false drops the units for narrow bars.
+ */
+export function sectionLabel(s: { slower: number; fewer: number }, wide: boolean): string {
+  const split = s.slower ? `+${s.slower}${wide ? ' s' : ''}` : 'max';
+  const spm = s.fewer ? `−${s.fewer}${wide ? ' spm' : ''}` : wide ? 'max spm' : 'max';
+  return `<span class="ct-lab"><b>${split}</b><small>${spm}</small></span>`;
+}

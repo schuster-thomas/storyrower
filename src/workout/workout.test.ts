@@ -1,58 +1,68 @@
 import { describe, expect, it } from 'vitest';
 import { formatPace, paceFromPower, powerFromPace } from '../rower/ftms';
 import { accuracy, newScore, stars, updateScore, zoneOf } from './scoring';
-import { DEFAULT_SETTINGS, PHASES, bandsFor, generateWorkout, phaseSpans, segmentAt } from './workout';
+import { DEFAULT_TRAININGS } from './defaultTrainings';
+import { cleanSettings, customBands, DEFAULT_SETTINGS, generateWorkout, MODES, segmentAt } from './workout';
 
-describe('workout generator', () => {
-  for (const durationMin of [10, 15, 20, 30, 45, 60, 90]) {
-    it(`builds a gap-free ${durationMin} min workout with all five phases`, () => {
-      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin, minSegmentSec: 30 });
-      expect(w.duration).toBe(durationMin * 60);
-      expect(w.segments[0].start).toBe(0);
-      for (let i = 1; i < w.segments.length; i++) expect(w.segments[i].start).toBe(w.segments[i - 1].end);
-      expect(phaseSpans(w).map((p) => p.phase)).toEqual(PHASES);
-      // starts and ends easy, peaks in the finale
-      expect(w.segments[0].intensity).toBeLessThan(0.2);
-      expect(w.segments[w.segments.length - 1].intensity).toBe(0);
-      const peak = w.segments.reduce((a, b) => (b.intensity > a.intensity ? b : a));
-      expect(peak.phase).toBe('finale');
-    });
+describe('workout generator (default trainings)', () => {
+  for (const mode of MODES) {
+    for (const durationMin of [10, 25, 45, 90]) {
+      it(`${mode}: ${durationMin} min – exact, gap-free, sections as configured`, () => {
+        const w = generateWorkout({ ...DEFAULT_SETTINGS, mode, durationMin });
+        expect(w.duration).toBe(durationMin * 60);
+        expect(w.segments[0].start).toBe(0);
+        for (let i = 1; i < w.segments.length; i++) expect(w.segments[i].start).toBe(w.segments[i - 1].end);
+        // one section per configured section, each about its share of the time (10 s steps)
+        const conf = DEFAULT_TRAININGS[mode].sections;
+        const sum = conf.reduce((a, s) => a + s.share, 0);
+        expect(new Set(w.segments.map((s) => s.section)).size).toBe(conf.length);
+        conf.forEach((c, i) => {
+          const segs = w.segments.filter((s) => s.section === i);
+          const len = segs[segs.length - 1].end - segs[0].start;
+          expect(Math.abs(len - (c.share / sum) * w.duration)).toBeLessThanOrEqual(10);
+          expect(segs[0].slower).toBe(c.slower);
+          expect(segs[0].fewer).toBe(c.fewer);
+        });
+      });
+    }
   }
 
-  it('alternates hard and easy intervals in the escalation phase', () => {
-    const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin: 30 });
-    const kinds = w.segments.filter((s) => s.phase === 'escalation').map((s) => s.kind);
-    expect(kinds.length).toBeGreaterThanOrEqual(4);
-    kinds.forEach((k, i) => expect(k).toBe(i % 2 === 0 ? 'hard' : 'easy'));
+  it('sets every section against the peak split and stroke rate', () => {
+    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'buildup', maxPower: powerFromPace(155), maxSpm: 28 });
+    const peak = w.segments.find((s) => s.slower === 0)!;
+    expect(formatPace(peak.pace.target)).toBe('2:35');
+    expect(peak.spm.target).toBe(28);
+    expect(peak.kind).toBe('peak');
+    const first = DEFAULT_TRAININGS.buildup.sections[0];
+    expect(w.segments[0].pace.target).toBeCloseTo(155 + first.slower, 5);
+    expect(w.segments[0].spm.target).toBe(28 - first.fewer);
+    for (const g of w.segments) expect(g.pace.target).toBeCloseTo(paceFromPower(g.power.target), 0);
   });
 
-  for (const mode of ['story', 'buildup', 'pyramid', 'waves'] as const) {
-    it(`${mode}: the minimum is the first target, the maximum the peak target`, () => {
-      const s = { ...DEFAULT_SETTINGS, mode, minPower: 60, maxPower: 120, minSpm: 22, maxSpm: 30 };
-      const w = generateWorkout(s);
-      expect(w.segments[0].power.target).toBe(60);
-      expect(w.segments[0].spm.target).toBe(22);
-      expect(Math.max(...w.segments.map((g) => g.power.target))).toBe(120);
-      expect(Math.max(...w.segments.map((g) => g.spm.target))).toBe(30);
-      // the band is the tolerance around the target – it may reach past the configured range
-      expect(w.segments[0].power.lo).toBeLessThan(60);
-      expect(Math.max(...w.segments.map((g) => g.power.hi))).toBeGreaterThan(120);
-      for (const g of w.segments) {
-        expect(g.pace.target).toBeCloseTo(paceFromPower(g.power.target), 0);
-        expect(g.power.target).toBeGreaterThanOrEqual(60);
-        expect(g.power.target).toBeLessThanOrEqual(120);
-      }
-    });
-  }
+  it('build-up: the peak lands in the finale, then an easy cool-down', () => {
+    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'buildup' });
+    const peak = w.segments.filter((s) => s.slower === 0);
+    expect(new Set(peak.map((s) => s.phase))).toEqual(new Set(['finale']));
+    expect(w.segments[w.segments.length - 1].phase).toBe('winddown');
+    expect(w.segments[w.segments.length - 1].intensity).toBeLessThan(0.2);
+  });
 
-  it('keeps splits entered in the settings exact at the start and the peak', () => {
-    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'pyramid', minPower: powerFromPace(170), maxPower: powerFromPace(140) });
-    expect(formatPace(w.segments[0].pace.target)).toBe('2:50');
-    expect(formatPace(Math.min(...w.segments.map((g) => g.pace.target)))).toBe('2:20');
+  it('a section cut by a story phase keeps its targets on both sides', () => {
+    for (const mode of MODES) {
+      const w = generateWorkout({ ...DEFAULT_SETTINGS, mode });
+      for (let i = 1; i < w.segments.length; i++) {
+        const a = w.segments[i - 1], b = w.segments[i];
+        if (a.section === b.section) {
+          expect(b.pace.target).toBe(a.pace.target);
+          expect(b.spm.target).toBe(a.spm.target);
+          expect(b.phase).not.toBe(a.phase);
+        }
+      }
+    }
   });
 
   it('derives consistent power, stroke rate and pace bands', () => {
-    const b = bandsFor(DEFAULT_SETTINGS, 1);
+    const b = customBands(110, 30, { slower: 0, fewer: 0 });
     expect(b.power.lo).toBeLessThan(110);
     expect(b.power.hi).toBeGreaterThan(110);
     expect(b.spm).toEqual({ lo: 28, hi: 32, target: 30 });
@@ -66,24 +76,15 @@ describe('workout generator', () => {
     expect(b.pace.lo).toBeLessThan(b.pace.hi);
   });
 
-  for (const [durationMin, minSegmentSec] of [[20, 30], [20, 60], [30, 90], [45, 120], [10, 180], [60, 300]]) {
-    it(`keeps every section ≥ ${minSegmentSec} s in a ${durationMin} min workout`, () => {
-      const w = generateWorkout({ ...DEFAULT_SETTINGS, durationMin, minSegmentSec });
-      expect(w.duration).toBe(durationMin * 60);
-      for (const s of w.segments) expect(s.end - s.start).toBeGreaterThanOrEqual(minSegmentSec);
-      for (let i = 1; i < w.segments.length; i++) expect(w.segments[i].start).toBe(w.segments[i - 1].end);
-    });
-  }
-
-  it('uses longer intervals when the minimum section is longer', () => {
-    const short = generateWorkout({ ...DEFAULT_SETTINGS, durationMin: 20, minSegmentSec: 30 });
-    const long = generateWorkout({ ...DEFAULT_SETTINGS, durationMin: 20, minSegmentSec: 90 });
-    expect(long.segments.length).toBeLessThan(short.segments.length);
+  it('runs 25 min by default and keeps the duration within 10–90 min', () => {
+    expect(generateWorkout(DEFAULT_SETTINGS).duration).toBe(25 * 60);
+    expect(generateWorkout({ ...DEFAULT_SETTINGS, durationMin: 200 }).duration).toBe(90 * 60);
+    expect(generateWorkout({ ...DEFAULT_SETTINGS, durationMin: 3 }).duration).toBe(10 * 60);
   });
 
-  it('swaps min/max if entered the wrong way round', () => {
-    const w = generateWorkout({ ...DEFAULT_SETTINGS, minPower: 120, maxPower: 60 });
-    expect(w.settings.minPower).toBe(60);
+  it('cleans settings from an older version', () => {
+    const s = cleanSettings({ mode: 'story', minPower: 55, maxPower: 120, minSpm: 22, maxSpm: 29, durationMin: 20, minSegmentSec: 120, steadyPower: 80 });
+    expect(s).toEqual({ ...DEFAULT_SETTINGS, mode: 'buildup', maxPower: 120, maxSpm: 29, durationMin: 20 });
   });
 });
 

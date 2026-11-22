@@ -6,9 +6,9 @@ import { formatDuration, formatPace, paceFromPower, powerFromPace } from '../row
 import { scheduleBeats } from '../story/story';
 import { BluetoothSource, isWebBluetoothAvailable } from '../rower/sources/bluetooth';
 import { SimulatorSource } from '../rower/sources/simulator';
-import { customDuration, segmentAt, type WorkoutMode, type WorkoutSettings } from '../workout/workout';
+import { customDuration, segmentAt, type Segment, type WorkoutMode, type WorkoutSettings } from '../workout/workout';
 import { getCustom, listCustom, onCustomChanged } from '../workout/customStore';
-import { difficultyColor } from './phaseColors';
+import { difficultyColor, sectionBarHeight } from './phaseColors';
 import { mountGame } from './GameView';
 import { RiverScene } from './scene/RiverScene';
 import { levelForMode, levelModes, levelWorkout, pickMode, type Level } from './levels/level';
@@ -68,7 +68,7 @@ export function mountPlay(root: HTMLElement, level: Level): () => void {
   return () => { cleanupGame?.(); cleanupSetup?.(); audio?.dispose(); audio = null; };
 }
 
-type SplitKey = 'minPower' | 'maxPower' | 'steadyPower' | 'customMaxPower';
+type SplitKey = 'maxPower' | 'customMaxPower';
 
 /**
  * A 500 m split as typed: "2:45", "2.45", "2,45" or just "245" (numeric keypads have no colon);
@@ -120,7 +120,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
               ${levelModes(level).map((m) => `<button type="button" class="mode" role="radio" data-mode="${m}" title="${MODE_HINTS[m]}">
                 <span class="tick">${ICON_CHECK}</span>${MODE_ICONS[m]}<span>${MODE_LABELS[m]}</span></button>`).join('')}
             </div>
-            <div class="custom-modes-head" data-id="customHead"><b>Your trainings</b><a data-id="customEdit" href="#/custom?from=${level.id}">Edit</a></div>
+            <div class="custom-modes-head" data-id="customHead"><b>Your trainings</b> <span>(<a data-id="customEdit" href="#/custom?from=${level.id}">Edit</a>)</span></div>
             <div class="modes custom-modes" role="radiogroup" aria-label="Custom trainings" data-id="customModes"></div>
             <p class="muted-line" data-id="modeText"></p>
           </section>
@@ -128,13 +128,10 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
             <h2>Your workout</h2>
             <div class="fields">
               <div class="field no-custom"><span>Duration</span>${num('durationMin', 'min', 'min="10" max="90" step="5"', true)}</div>
-              <div class="field no-steady no-custom" title="No target changes faster than this – higher values mean fewer, longer sections"><span>Shortest section</span>${num('minSegmentSec', 's', 'min="10" max="600" step="10"', true)}</div>
-              <div class="field no-steady no-custom" title="Target split at the start and at the peak – e.g. 2:50 → 2:20"><span>Split /500 m <em>start → peak</em></span><div class="pair">${split('minPower')}→${split('maxPower')}</div></div>
-              <div class="field no-steady no-custom" title="Target stroke rate at the start and at the peak"><span>Stroke rate <em>start → peak</em></span><div class="pair">${num('minSpm', 'spm', 'min="12" max="40"')}→${num('maxSpm', 'spm', 'min="12" max="45"')}</div></div>
-              <div class="field only-custom" title="Your fastest split – every section is so many seconds slower"><span>Max split /500 m <em>fastest</em></span>${split('customMaxPower', true)}</div>
-              <div class="field only-custom" title="Your highest stroke rate – every section is so many strokes under it"><span>Max stroke rate <em>highest</em></span>${num('customMaxSpm', 'spm', 'min="12" max="45"', true)}</div>
-              <div class="field only-steady"><span>Split /500 m</span>${split('steadyPower', true)}</div>
-              <div class="field only-steady"><span>Stroke rate</span>${num('steadySpm', 'spm', 'min="12" max="45"', true)}</div>
+              <div class="field no-custom" title="Your fastest split – every section is so many seconds slower"><span>Max split /500 m <em>peak</em></span>${split('maxPower', true)}</div>
+              <div class="field no-custom" title="Your highest stroke rate – every section is so many strokes under it"><span>Max stroke rate <em>peak</em></span>${num('maxSpm', 'spm', 'min="12" max="45"', true)}</div>
+              <div class="field only-custom" title="Your fastest split – every section is so many seconds slower"><span>Max split /500 m <em>peak</em></span>${split('customMaxPower', true)}</div>
+              <div class="field only-custom" title="Your highest stroke rate – every section is so many strokes under it"><span>Max stroke rate <em>peak</em></span>${num('customMaxSpm', 'spm', 'min="12" max="45"', true)}</div>
             </div>
           </section>
           <section>
@@ -212,16 +209,10 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
       b.setAttribute('aria-checked', String(on));
       b.tabIndex = on ? 0 : -1;
     });
-    $('modeText').textContent = custom && settings.custom
-      ? `${settings.custom.name}: ${formatDuration(customDuration(settings.custom.sections))} in ${settings.custom.sections.length} sections – set your max split and stroke rate, every section follows from them. ${level.modes[pickMode(level, 'buildup')]?.summary ?? ''}`
-      : level.modes[settings.mode]?.summary ?? MODE_HINTS[settings.mode];
     $<HTMLAnchorElement>('customEdit').href = `#/custom${custom && settings.custom ? `/${encodeURIComponent(settings.custom.id)}` : ''}?from=${level.id}`;
-    // steady has one target and no sections: hide the range and "shortest section" fields;
-    // a custom training brings its own length and sections: only the maximum is asked for
-    const steady = settings.mode === 'steady';
-    root.querySelectorAll<HTMLElement>('.no-steady, .only-steady, .no-custom, .only-custom').forEach((el) => {
-      const c = el.classList;
-      el.hidden = (c.contains('no-steady') && steady) || (c.contains('only-steady') && !steady) || (c.contains('no-custom') && custom) || (c.contains('only-custom') && !custom);
+    // a custom training brings its own length and has its own maximum
+    root.querySelectorAll<HTMLElement>('.no-custom, .only-custom').forEach((el) => {
+      el.hidden = el.classList.contains('no-custom') ? custom : !custom;
     });
     fillInputs();
   };
@@ -321,20 +312,28 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     const len = w.duration % 60 ? formatDuration(w.duration) : `${mins} min`;
     $('pvTotal').textContent = len;
     $('pvEnd').textContent = len;
-    const maxP = Math.max(...w.segments.map((s) => s.power.hi));
-    const minP = Math.min(...w.segments.map((s) => s.power.lo));
-    // bars from 25 % (easiest) to 100 % (hardest) of the chart height, so the shape reads clearly
-    const height = (s: { power: { lo: number; hi: number } }) => {
-      const mid = (s.power.lo + s.power.hi) / 2;
-      return 0.25 + 0.75 * (maxP > minP ? (mid - minP) / (maxP - minP) : 0.5);
-    };
+    // bar heights as in the custom-training editor: the peak split full height
+    const height = (s: { slower: number }) => sectionBarHeight(s.slower);
     const pv = $('preview');
     // geometry matches .pv / .pv-bars / .pv-beat in menu.css; markers that would overlap go to a second row
-    const BARS_TOP = 80, PV_H = 196, MARK = 28, ROWS = [8, 44];
+    const BARS_TOP = 112, PV_H = 236, MARK = 28, ROWS = [8, 44];
     const plotW = Math.max(200, pv.clientWidth - 8);
     const rowEnd = ROWS.map(() => -Infinity);
-    pv.innerHTML = `<div class="pv-bars">${w.segments.map((s) =>
-      `<i style="flex:${s.end - s.start} 1 0;height:${(height(s) * 100).toFixed(1)}%;background:${difficultyColor(s.intensity)}" title="${played.phases[s.phase].name} · ${formatPace(s.pace.target)} /500 m (${s.power.target} W) · ${s.spm.target} spm · ${formatDuration(s.end - s.start)}"></i>`).join('')}</div>` +
+    // one bar per training section (a section cut at a story phase is still one bar), its targets above it
+    const sections: { first: Segment; start: number; end: number }[] = [];
+    for (const s of w.segments) {
+      const last = sections[sections.length - 1];
+      if (last && last.first.section === s.section) last.end = s.end;
+      else sections.push({ first: s, start: s.start, end: s.end });
+    }
+    // a custom training: its name, length and sections; a default mode: what the level does in it
+    $('modeText').textContent = w.settings.mode === 'custom' && w.settings.custom
+      ? `${w.settings.custom.name}: ${formatDuration(w.duration)} in ${sections.length} section${sections.length === 1 ? '' : 's'} – set your max split and stroke rate, every section follows from them.`
+      : level.modes[w.settings.mode]?.summary ?? MODE_HINTS[w.settings.mode];
+    // the real targets over each bar (narrow bars without the unit)
+    const targets = (s: Segment, wide: boolean) => `<span class="ct-lab"><b>${formatPace(s.pace.target)}</b><small>${s.spm.target}${wide ? ' spm' : ''}</small></span>`;
+    pv.innerHTML = `<div class="pv-bars">${sections.map(({ first: s, start, end }) =>
+      `<i style="flex:${end - start} 1 0;height:${(height(s) * 100).toFixed(1)}%;background:${difficultyColor(s.intensity)}" title="${played.phases[s.phase].name} · ${formatPace(s.pace.target)} /500 m (${s.power.target} W) · ${s.spm.target} spm · ${formatDuration(end - start)}">${targets(s, ((end - start) / w.duration) * plotW >= 48)}</i>`).join('')}</div>` +
       beats.map((b) => {
         const seg = segmentAt(w, b.t);
         const x = (b.t / w.duration) * plotW;

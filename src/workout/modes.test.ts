@@ -4,87 +4,47 @@ import { levelForMode, levelModes, levelWorkout, pickMode } from '../game/levels
 import { scheduleBeats } from '../story/story';
 import { DEFAULT_SETTINGS, MODES, generateWorkout, phaseSpans, type WorkoutMode } from './workout';
 
-const SHAPED: WorkoutMode[] = ['steady', 'buildup', 'pyramid', 'waves'];
-const gaps = (w: ReturnType<typeof generateWorkout>) => w.segments.every((s, i) => i === 0 ? s.start === 0 : s.start === w.segments[i - 1].end);
-
 describe('workout modes', () => {
-  for (const mode of SHAPED) {
-    for (const [durationMin, minSegmentSec] of [[10, 30], [20, 30], [20, 120], [45, 60], [90, 30], [10, 300]]) {
-      it(`${mode}: ${durationMin} min, sections ≥ ${minSegmentSec} s – exact, gap-free, inside the range`, () => {
-        const w = generateWorkout({ ...DEFAULT_SETTINGS, mode, durationMin, minSegmentSec });
-        expect(w.duration).toBe(durationMin * 60);
-        expect(gaps(w)).toBe(true);
-        for (const s of w.segments) {
-          expect(s.end - s.start).toBeGreaterThanOrEqual(minSegmentSec);
-          expect(s.intensity).toBeGreaterThanOrEqual(0);
-          expect(s.intensity).toBeLessThanOrEqual(1);
-        }
-      });
-    }
-  }
-
-  it('steady keeps the same targets the whole way', () => {
-    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'steady', durationMin: 30 });
-    expect(new Set(w.segments.map((s) => s.intensity))).toEqual(new Set([0.5]));
-  });
-
-  it('steady uses its own single power and stroke-rate target', () => {
-    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'steady', steadyPower: 100, steadySpm: 24 });
-    for (const s of w.segments) {
-      expect(s.power.target).toBe(100);
-      expect(s.spm).toEqual({ lo: 22, hi: 26, target: 24 });
-    }
-  });
-
-  for (const durationMin of [10, 20, 45]) {
-    it(`build-up climbs to the peak, then cools down easy (${durationMin} min)`, () => {
-      const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'buildup', durationMin });
-      const i = w.segments.map((s) => s.intensity);
-      const top = i.indexOf(1);
-      expect(i[0]).toBe(0);
-      for (let k = 1; k <= top; k++) expect(i[k]).toBeGreaterThan(i[k - 1]);
-      const cool = w.segments.slice(top + 1);
-      expect(cool.length).toBeGreaterThan(0);
-      for (const s of cool) expect(s.intensity).toBeLessThan(0.2);
-      const coolTime = cool.reduce((a, s) => a + s.end - s.start, 0);
-      expect(coolTime / w.duration).toBeGreaterThan(0.08);
-      expect(coolTime / w.duration).toBeLessThan(0.25);
-    });
-  }
-
   it('pyramid peaks in the middle and starts and ends easy', () => {
     const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'pyramid', durationMin: 20 });
-    const peak = w.segments.find((s) => s.intensity === 1)!;
-    const mid = (peak.start + peak.end) / 2;
-    expect(Math.abs(mid / w.duration - 0.5)).toBeLessThan(0.05);
-    expect(w.segments[0].intensity).toBe(0);
-    expect(w.segments[w.segments.length - 1].intensity).toBe(0);
+    const peak = w.segments.filter((s) => s.slower === 0);
+    const mid = (peak[0].start + peak[peak.length - 1].end) / 2;
+    expect(Math.abs(mid / w.duration - 0.5)).toBeLessThan(0.07);
+    expect(w.segments[0].intensity).toBeLessThan(0.2);
+    expect(w.segments[w.segments.length - 1].intensity).toBeLessThan(0.3);
   });
 
   it('waves go up and down several times', () => {
-    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'waves', durationMin: 30, minSegmentSec: 30 });
-    const crests = w.segments.filter((s) => s.intensity === 1).length;
-    expect(crests).toBeGreaterThanOrEqual(3);
-    expect(w.segments[0].intensity).toBe(0);
+    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'waves', durationMin: 30 });
+    const kinds = w.segments.filter((s, i) => i === 0 || s.section !== w.segments[i - 1].section).map((s) => s.kind);
+    expect(kinds.filter((k) => k === 'hard').length).toBeGreaterThanOrEqual(3);
+    expect(w.segments[0].intensity).toBeLessThan(0.2);
   });
 
-  it('falls back to story for an unknown mode', () => {
+  it('steady keeps the same targets the whole way', () => {
+    const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'steady', durationMin: 30 });
+    expect(new Set(w.segments.map((s) => s.pace.target)).size).toBe(1);
+    expect(new Set(w.segments.map((s) => s.spm.target)).size).toBe(1);
+  });
+
+  it('falls back to build-up for an unknown mode', () => {
     const w = generateWorkout({ ...DEFAULT_SETTINGS, mode: 'nonsense' as WorkoutMode });
+    expect(w.settings.mode).toBe('buildup');
     expect(phaseSpans(w)).toHaveLength(5);
   });
 });
 
 describe('level mode config', () => {
-  it('Iceland offers the four shaped modes, a saved story setting becomes build-up', () => {
+  it('Iceland offers the four default modes', () => {
     expect(levelModes(ICELAND)).toEqual(['steady', 'buildup', 'pyramid', 'waves']);
-    expect(pickMode(ICELAND, 'story')).toBe('buildup');
+    expect(pickMode(ICELAND, 'custom')).toBe('custom');
   });
 
   it('only plays the beats a mode lists', () => {
     const steady = levelForMode(ICELAND, 'steady');
     expect(steady.beats.map((b) => b.id)).toEqual(['calm', 'birds', 'calving', 'sunset']);
     expect(steady.phases.winddown.env.smoke).toBe(0);
-    expect(levelForMode(ICELAND, 'story').beats).toHaveLength(ICELAND.beats.length);
+    expect(levelForMode(ICELAND, 'custom').beats).toEqual(levelForMode(ICELAND, 'buildup').beats);
   });
 
   for (const mode of MODES) {

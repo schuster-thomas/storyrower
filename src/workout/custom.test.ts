@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { formatPace, paceFromPower, powerFromPace } from '../rower/ftms';
 import { mergeCustomFiles, sameCustomFiles, type CustomFile } from './customStore';
-import { customDuration, customPhasePlan, DEFAULT_SETTINGS, generateWorkout, phaseSpans, type CustomSection } from './workout';
+import { customDuration, customPhasePlan, DEFAULT_SETTINGS, generateWorkout, intensityScale, phaseSpans, type CustomSection } from './workout';
 
 const intervals: CustomSection[] = [
   { sec: 300, slower: 30, fewer: 4 },
@@ -25,7 +25,8 @@ describe('custom trainings', () => {
     const peak = w.segments.find((s) => s.start === 540)!;
     expect(formatPace(peak.pace.target)).toBe('2:00');
     expect(peak.spm.target).toBe(30);
-    expect(peak.kind).toBe('peak');
+    // straight from an easy section to the max: an interval ("hard"), not a step-by-step peak
+    expect(peak.kind).toBe('hard');
     // +30 s at a 2:00 max: 2:30; 4 strokes under 30: 26
     expect(formatPace(w.segments[0].pace.target)).toBe('2:30');
     expect(w.segments[0].spm.target).toBe(26);
@@ -43,6 +44,17 @@ describe('custom trainings', () => {
     // +30 s and 4 strokes under: 3:05 at 24 spm
     expect(formatPace(a.segments[0].pace.target)).toBe('3:05');
     expect(a.segments[0].spm.target).toBe(24);
+  });
+
+  it('colours within the training: green to red with 3+ levels, all amber with fewer', () => {
+    const scale = intensityScale(intervals);
+    expect(scale({ slower: 40 })).toBe(0);   // the easiest section of this training
+    expect(scale({ slower: 0 })).toBe(1);    // the hardest
+    expect(scale({ slower: 20 })).toBe(0.5);
+    const two = intensityScale([{ slower: 0 }, { slower: 30 }]);
+    expect(two({ slower: 0 })).toBe(0.5);
+    expect(two({ slower: 30 })).toBe(0.5);
+    expect(intensityScale([{ slower: 0 }])({ slower: 0 })).toBe(0.5);
   });
 
   it('puts the finale on the hardest stretch', () => {

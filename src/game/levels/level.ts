@@ -1,6 +1,7 @@
 import type { Anchor, BeatDef } from '../../story/story';
 import type { GateStyle } from '../scene/Gates';
 import type { WorldId } from '../scene/World';
+import type { DefaultMode } from '../../workout/defaultTrainings';
 import { generateWorkout, MODES, type PhaseId, type PhaseShare, type Workout, type WorkoutMode, type WorkoutSettings } from '../../workout/workout';
 
 /** Look of the world for one story phase. */
@@ -49,8 +50,8 @@ export interface LevelMode {
   /** One line on the setup screen, e.g. what happens in the story in this mode. */
   summary: string;
   /**
-   * Where the story phases (scenery, sounds, phase names) sit along a shaped workout, as shares of
-   * the total time in story order. Not used in story mode – there the training curve sets them.
+   * Where the story phases (scenery, sounds, phase names) sit along the workout, as shares of the
+   * total time in story order (default: the plan in src/workout/defaultTrainings.ts).
    */
   phases?: PhaseShare[];
   /** Story beats in this mode: 'all', or by id (beats not listed don't happen). */
@@ -80,18 +81,18 @@ export interface Level {
 }
 
 /** Modes a level offers, in the standard order. */
-export function levelModes(level: Level): WorkoutMode[] {
+export function levelModes(level: Level): DefaultMode[] {
   return MODES.filter((m) => level.modes[m]);
 }
 
 /**
- * The mode to use: the wanted one if the level has it, else build-up (the full adventure – also
- * what a saved "story" setting from before becomes), else the level's first.
+ * The mode to use: the wanted one if the level has it, else build-up (the full adventure), else
+ * the level's first.
  */
 export function pickMode(level: Level, mode: WorkoutMode): WorkoutMode {
   // custom trainings row in every level
   if (mode === 'custom' || level.modes[mode]) return mode;
-  return level.modes.buildup ? 'buildup' : levelModes(level)[0] ?? 'story';
+  return level.modes.buildup ? 'buildup' : levelModes(level)[0] ?? 'buildup';
 }
 
 /**

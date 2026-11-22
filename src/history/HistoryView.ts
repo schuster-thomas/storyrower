@@ -6,7 +6,7 @@ import { mountResultsChart } from '../game/hud/ResultsChart';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { ICON_BACK, LOGO, MODE_LABELS } from '../ui/icons';
-import { customDuration, type PhaseId, type WorkoutSettings } from '../workout/workout';
+import { cleanSettings, customDuration, type PhaseId, type WorkoutSettings } from '../workout/workout';
 import historyCard from '../assets/ui/history-card.svg';
 import { getCustom, saveCustom } from '../workout/customStore';
 import { getTraining, listTrainings, onHistoryChanged, type StoredTraining } from './store';
@@ -130,7 +130,7 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
       // a custom training that was deleted since comes back, so it can be rowed (and changed) again
       const c = r.settings.mode === 'custom' ? r.settings.custom : undefined;
       if (c && !getCustom(c.id)) saveCustom(c);
-      saveSettings({ ...r.settings });
+      saveSettings(cleanSettings(r.settings));
       location.hash = `#/play/${r.level.id}`;
     });
   }
@@ -146,17 +146,12 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
         row('Max stroke rate', `${w.customMaxSpm} spm`),
       ].join('');
     }
-    const rows = [row('Mode', MODE_LABELS[w.mode] ?? w.mode), row('Duration', `${w.durationMin} min`)];
-    if (w.mode === 'steady') {
-      rows.push(row('Split', `${split(w.steadyPower)} /500 m <small>${Math.round(w.steadyPower)} W</small>`), row('Stroke rate', `${w.steadySpm} spm`));
-    } else {
-      rows.push(
-        row('Split start → peak', `${split(w.minPower)} → ${split(w.maxPower)} <small>${Math.round(w.minPower)}–${Math.round(w.maxPower)} W</small>`),
-        row('Stroke rate start → peak', `${w.minSpm} → ${w.maxSpm} spm`),
-        row('Shortest section', `${w.minSegmentSec} s`),
-      );
-    }
-    return rows.join('');
+    return [
+      row('Mode', MODE_LABELS[w.mode] ?? w.mode),
+      row('Duration', `${w.durationMin} min`),
+      row('Peak split', `${split(w.maxPower)} /500 m <small>${Math.round(w.maxPower)} W</small>`),
+      row('Peak stroke rate', `${w.maxSpm} spm`),
+    ].join('');
   }
 
   // the upload buttons (banner and detail): sign in or renew right from this tap, then sync

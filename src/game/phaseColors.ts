@@ -12,3 +12,8 @@ export function difficultyColor(intensity: number): string {
   const k = (x - a) / (b - a);
   return `rgb(${ca.map((v, j) => Math.round(v + (cb[j] - v) * k)).join(',')})`;
 }
+
+/** Bar height (0–1) for a section in the charts: the peak split is full height, +45 s and slower a stub. */
+export function sectionBarHeight(slower: number): number {
+  return 0.12 + 0.88 * Math.max(0, Math.min(1, 1 - slower / 45));
+}

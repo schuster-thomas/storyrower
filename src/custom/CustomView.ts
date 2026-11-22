@@ -1,12 +1,12 @@
 import { loadSettings } from '../app/settings';
 import { drive } from '../cloud/drive';
-import { difficultyColor } from '../game/phaseColors';
+import { difficultyColor, sectionBarHeight } from '../game/phaseColors';
 import { levelById } from '../game/levels';
 import { formatDuration, formatPace } from '../rower/ftms';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
-import { customIcon, ICON_BACK, LOGO } from '../ui/icons';
-import { CUSTOM_LIMITS, customBands, customDuration, customIntensity, type CustomSection } from '../workout/workout';
+import { customIcon, ICON_BACK, LOGO, sectionLabel } from '../ui/icons';
+import { CUSTOM_LIMITS, customBands, customDuration, intensityScale, type CustomSection } from '../workout/workout';
 import {
   deleteCustom, freeName, getCustom, listCustom, newCustomId, onCustomChanged, saveCustom, starterSections, type CustomTraining,
 } from '../workout/customStore';
@@ -15,7 +15,7 @@ import customCard from '../assets/ui/custom-card.webp';
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
 /** Bar height in the chart: the max split is the full height, +45 s and slower a stub. */
-const barHeight = (s: CustomSection) => 0.12 + 0.88 * Math.max(0, Math.min(1, 1 - s.slower / 45));
+const barHeight = (s: CustomSection) => sectionBarHeight(s.slower);
 /** Quick buttons under a section field: take `by` off or add it to the number in the box. */
 const steps = (k: keyof CustomSection, by: number, unit: string) =>
   `<div class="ct-steps"><button type="button" data-step="${k}" data-by="${-by}" aria-label="${by} ${unit} less">−${by} ${unit}</button><button type="button" data-step="${k}" data-by="${by}" aria-label="${by} ${unit} more">+${by} ${unit}</button></div>`;
@@ -233,15 +233,15 @@ export function mountCustom(root: HTMLElement, initialId: string | null, params:
     const total = customDuration(current.sections) || 1;
     const plotW = Math.max(200, chart.clientWidth - 8);
     let t = 0;
+    const scale = intensityScale(current.sections);
     chart.innerHTML = current.sections.map((s, i) => {
       const start = t;
       t += s.sec;
       const wide = (s.sec / total) * plotW >= 52;
-      const label = `<b>${s.slower ? `+${s.slower}${wide ? ' s' : ''}` : 'max'}</b><small>${s.fewer ? `−${s.fewer}${wide ? ' spm' : ''}` : wide ? 'max spm' : 'max'}</small>`;
       return `<button type="button" role="option" class="ct-bar${i === sel ? ' on' : ''}" data-i="${i}" aria-selected="${i === sel}" tabindex="${i === sel ? 0 : -1}"
-        style="flex:${s.sec} 1 0;height:${(barHeight(s) * 100).toFixed(1)}%;--c:${difficultyColor(customIntensity(s))}"
+        style="flex:${s.sec} 1 0;height:${(barHeight(s) * 100).toFixed(1)}%;--c:${difficultyColor(scale(s))}"
         title="Section ${i + 1} · ${formatDuration(start)}–${formatDuration(t)} · split ${plus(s)} · ${minus(s)}"
-        aria-label="Section ${i + 1}: ${formatDuration(s.sec)}, split ${plus(s)}, ${minus(s)}"><span class="ct-lab">${label}</span></button>`;
+        aria-label="Section ${i + 1}: ${formatDuration(s.sec)}, split ${plus(s)}, ${minus(s)}">${sectionLabel(s, wide)}</button>`;
     }).join('');
     chart.querySelectorAll<HTMLButtonElement>('.ct-bar').forEach((b) => {
       b.onclick = () => { sel = Number(b.dataset.i); renderChart(); renderSection(); };
@@ -261,12 +261,12 @@ export function mountCustom(root: HTMLElement, initialId: string | null, params:
     if (!current) return;
     const s = current.sections[sel];
     const start = customDuration(current.sections.slice(0, sel));
-    $('secTitle').innerHTML = `<i style="background:${difficultyColor(customIntensity(s))}"></i>Section ${sel + 1} of ${current.sections.length} <small>${formatDuration(start)} – ${formatDuration(start + s.sec)}</small>`;
+    $('secTitle').innerHTML = `<i style="background:${difficultyColor(intensityScale(current.sections)(s))}"></i>Section ${sel + 1} of ${current.sections.length} <small>${formatDuration(start)} – ${formatDuration(start + s.sec)}</small>`;
     $('lenText').textContent = formatDuration(s.sec);
     if (fill) root.querySelectorAll<HTMLInputElement>('input[data-s]').forEach((input) => { input.value = String(s[input.dataset.s as keyof CustomSection]); });
     const w = loadSettings();
     const b = customBands(w.customMaxPower, w.customMaxSpm, s);
-    const maxSplit = formatPace(customBands(w.customMaxPower, w.customMaxSpm, { sec: 1, slower: 0, fewer: 0 }).pace.target);
+    const maxSplit = formatPace(customBands(w.customMaxPower, w.customMaxSpm, { slower: 0, fewer: 0 }).pace.target);
     $('example').innerHTML = `With a max of <b>${maxSplit}</b> /500 m and <b>${w.customMaxSpm}</b> spm (set in the level): <b>${formatPace(b.pace.target)}</b> /500 m · <b>${b.spm.target}</b> spm`;
     // step buttons that would go past a limit are off
     root.querySelectorAll<HTMLButtonElement>('button[data-step]').forEach((b) => {
