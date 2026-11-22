@@ -366,6 +366,4 @@ body:has(.menu) { background: #e6f0f8; }
 .custom-modes-head a:hover { text-decoration: underline; }
 .modes.custom-modes { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .mode.custom span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px; }
-.menu a.mode.new { text-decoration: none; border-style: dashed; color: var(--teal-ink); }
-.menu a.mode.new:hover { border-color: var(--teal); }
 .mode.custom small { font-size: 13px; font-weight: 700; color: var(--ink-2); margin-top: -4px; }

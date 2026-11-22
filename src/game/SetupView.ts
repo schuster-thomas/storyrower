@@ -120,7 +120,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
               ${levelModes(level).map((m) => `<button type="button" class="mode" role="radio" data-mode="${m}" title="${MODE_HINTS[m]}">
                 <span class="tick">${ICON_CHECK}</span>${MODE_ICONS[m]}<span>${MODE_LABELS[m]}</span></button>`).join('')}
             </div>
-            <div class="custom-modes-head"><b>Your trainings</b><a data-id="customEdit" href="#/custom?from=${level.id}">Edit</a></div>
+            <div class="custom-modes-head" data-id="customHead"><b>Your trainings</b><a data-id="customEdit" href="#/custom?from=${level.id}">Edit</a></div>
             <div class="modes custom-modes" role="radiogroup" aria-label="Custom trainings" data-id="customModes"></div>
             <p class="muted-line" data-id="modeText"></p>
           </section>
@@ -234,10 +234,11 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     renderPreview();
   };
   const renderCustomModes = () => {
+    // trainings are made beforehand ("Customize trainings" on the start page); none made: no row
     const list = listCustom();
+    $('customHead').hidden = $('customModes').hidden = !list.length;
     $('customModes').innerHTML = list.map((t) => `<button type="button" class="mode custom" role="radio" data-mode="custom" data-custom="${esc(t.id)}" title="${esc(t.name)}">
-        <span class="tick">${ICON_CHECK}</span>${customIcon(t.sections)}<span>${esc(t.name)}</span><small>${formatDuration(customDuration(t.sections))}</small></button>`).join('') +
-      `<a class="mode custom new" href="#/custom?new&from=${level.id}" title="Build your own training">${MODE_ICONS.custom}<span>${list.length ? 'New' : 'Make your own'}</span></a>`;
+        <span class="tick">${ICON_CHECK}</span>${customIcon(t.sections)}<span>${esc(t.name)}</span><small>${formatDuration(customDuration(t.sections))}</small></button>`).join('');
     modeBtns().forEach((b, i, all) => {
       b.onclick = () => setMode(b);
       b.onkeydown = (e) => {
