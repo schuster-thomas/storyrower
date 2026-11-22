@@ -9,6 +9,21 @@ export type EffectId = 'calm' | 'birds' | 'tremor' | 'calving' | 'ash' | 'erupti
   | 'visitors' | 'clouds' | 'fin' | 'thunderstorm' | 'shark';
 
 /**
+ * Every effect belongs to one of two kinds – a new effect needs its entry here, or it won't compile:
+ * - scenery: the friendly moments that are just there for fun (puffins, a calving glacier,
+ *   cherry blossoms, water-skiers, the sunset) – always part of the row
+ * - story:   the adventure with its threat (tremors, eruption, tidal wave, quake, dragon, storm,
+ *   shark, the escape) – only with "Include story" on the setup screen
+ */
+export type EffectKind = 'scenery' | 'story';
+export const EFFECT_KIND: Record<EffectId, EffectKind> = {
+  calm: 'scenery', birds: 'scenery', calving: 'scenery', sunset: 'scenery', blossom: 'scenery', visitors: 'scenery',
+  tremor: 'story', ash: 'story', eruption: 'story', wave: 'story', escape: 'story',
+  quake: 'story', dragon: 'story',
+  clouds: 'story', fin: 'story', thunderstorm: 'story', shark: 'story',
+};
+
+/**
  * Where a beat sits on the training curve. Anchors are resolved against the generated
  * workout, so one level works for any duration and any minimum section length.
  */

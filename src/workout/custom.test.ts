@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { formatPace, paceFromPower, powerFromPace } from '../rower/ftms';
 import { mergeCustomFiles, sameCustomFiles, type CustomFile } from './customStore';
-import { customDuration, customPhasePlan, DEFAULT_SETTINGS, generateWorkout, intensityScale, phaseSpans, type CustomSection } from './workout';
+import { cleanSettings, customDuration, customPhasePlan, DEFAULT_SETTINGS, generateWorkout, intensityScale, phaseSpans, type CustomSection } from './workout';
 
 const intervals: CustomSection[] = [
   { sec: 300, slower: 30, fewer: 4 },
@@ -11,7 +11,7 @@ const intervals: CustomSection[] = [
   { sec: 240, slower: 40, fewer: 6 },
 ];
 const custom = (sections: CustomSection[]) =>
-  generateWorkout({ ...DEFAULT_SETTINGS, mode: 'custom', customMaxPower: powerFromPace(120), customMaxSpm: 30, custom: { id: 'x', name: 'Test', sections } });
+  generateWorkout({ ...DEFAULT_SETTINGS, mode: 'custom', maxPower: powerFromPace(120), maxSpm: 30, custom: { id: 'x', name: 'Test', sections } });
 
 describe('custom trainings', () => {
   it('lasts exactly as long as its sections', () => {
@@ -33,17 +33,24 @@ describe('custom trainings', () => {
     expect(paceFromPower(w.segments[0].power.target)).toBeCloseTo(150, 0);
   });
 
-  it('has its own max split and stroke rate, apart from the peak of the other modes', () => {
-    const run = (maxPower: number, maxSpm: number) => generateWorkout({ ...DEFAULT_SETTINGS, mode: 'custom', maxPower, maxSpm,
-      customMaxPower: powerFromPace(155), customMaxSpm: 28, custom: { id: 'x', name: 'Test', sections: intervals } });
-    const a = run(80, 20), b = run(250, 36);
-    expect(a.segments).toEqual(b.segments);
+  it('uses the same max split and stroke rate as every other mode', () => {
+    const settings = { ...DEFAULT_SETTINGS, maxPower: powerFromPace(155), maxSpm: 28 };
+    const a = generateWorkout({ ...settings, mode: 'custom', custom: { id: 'x', name: 'Test', sections: intervals } });
+    const b = generateWorkout({ ...settings, mode: 'buildup' });
+    expect(formatPace(b.segments.find((s) => s.slower === 0)!.pace.target)).toBe('2:35');
     const peak = a.segments.find((s) => s.start === 540)!;
     expect(formatPace(peak.pace.target)).toBe('2:35');
     expect(peak.spm.target).toBe(28);
     // +30 s and 4 strokes under: 3:05 at 24 spm
     expect(formatPace(a.segments[0].pace.target)).toBe('3:05');
     expect(a.segments[0].spm.target).toBe(24);
+  });
+
+  it('settings from when custom trainings had a max of their own keep the values they were rowed with', () => {
+    const old = { ...DEFAULT_SETTINGS, mode: 'custom', maxPower: 110, maxSpm: 30, customMaxPower: 94, customMaxSpm: 28 };
+    expect(cleanSettings(old)).toMatchObject({ maxPower: 94, maxSpm: 28 });
+    expect(cleanSettings(old)).not.toHaveProperty('customMaxPower');
+    expect(cleanSettings({ ...old, mode: 'buildup' })).toMatchObject({ maxPower: 110, maxSpm: 30 });
   });
 
   it('colours within the training: green to red with 3+ levels, all amber with fewer', () => {

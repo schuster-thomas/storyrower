@@ -265,9 +265,9 @@ export function mountCustom(root: HTMLElement, initialId: string | null, params:
     $('lenText').textContent = formatDuration(s.sec);
     if (fill) root.querySelectorAll<HTMLInputElement>('input[data-s]').forEach((input) => { input.value = String(s[input.dataset.s as keyof CustomSection]); });
     const w = loadSettings();
-    const b = customBands(w.customMaxPower, w.customMaxSpm, s);
-    const maxSplit = formatPace(customBands(w.customMaxPower, w.customMaxSpm, { slower: 0, fewer: 0 }).pace.target);
-    $('example').innerHTML = `With a max of <b>${maxSplit}</b> /500 m and <b>${w.customMaxSpm}</b> spm (set in the level): <b>${formatPace(b.pace.target)}</b> /500 m · <b>${b.spm.target}</b> spm`;
+    const b = customBands(w.maxPower, w.maxSpm, s);
+    const maxSplit = formatPace(customBands(w.maxPower, w.maxSpm, { slower: 0, fewer: 0 }).pace.target);
+    $('example').innerHTML = `With a max of <b>${maxSplit}</b> /500 m and <b>${w.maxSpm}</b> spm (set in the level): <b>${formatPace(b.pace.target)}</b> /500 m · <b>${b.spm.target}</b> spm`;
     // step buttons that would go past a limit are off
     root.querySelectorAll<HTMLButtonElement>('button[data-step]').forEach((b) => {
       const k = b.dataset.step as keyof CustomSection;

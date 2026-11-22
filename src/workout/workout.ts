@@ -28,17 +28,19 @@ export interface WorkoutSettings {
   mode: WorkoutMode;
   /** Default modes: the length of the workout. */
   durationMin: number;
-  /** Default modes: the peak – fastest split (as watts) and highest stroke rate; every section is set against it. */
+  /**
+   * The peak for every mode, custom trainings included: fastest split (as watts) and highest stroke
+   * rate; every section is set against it.
+   */
   maxPower: number;
   maxSpm: number;
-  /**
-   * Custom mode: the training being rowed (a copy, so the history can row it again). Its targets
-   * come from customMaxPower (the fastest split) and customMaxSpm.
-   */
+  /** Custom mode: the training being rowed (a copy, so the history can row it again). */
   custom?: CustomPlan;
-  /** Custom mode: the max split (as watts) and stroke rate the sections are set against – apart from the other modes' peak. */
-  customMaxPower: number;
-  customMaxSpm: number;
+  /**
+   * "Include story": the adventure with its threat (eruption, dragon, shark …). Off: only the
+   * friendly scenery moments, in the level's calm look – the training stays the same.
+   */
+  story: boolean;
 }
 
 export const DEFAULT_SETTINGS: WorkoutSettings = {
@@ -47,23 +49,23 @@ export const DEFAULT_SETTINGS: WorkoutSettings = {
   // Based on the first Woodrower recordings: hard ≈ 85–110 W / 27–30 spm
   maxPower: 110,
   maxSpm: 30,
-  customMaxPower: 110,
-  customMaxSpm: 30,
+  story: true,
 };
 
 /** Only the known fields, each with a usable value (stored settings may be from an older version). */
 export function cleanSettings(input: object): WorkoutSettings {
-  const raw = input as Partial<WorkoutSettings>;
+  const raw = input as Partial<WorkoutSettings> & { customMaxPower?: number; customMaxSpm?: number };
   const num = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : d);
   const d = DEFAULT_SETTINGS;
   const mode = raw.mode === 'custom' || MODES.includes(raw.mode as DefaultMode) ? raw.mode as WorkoutMode : d.mode;
+  // custom trainings once had a max of their own: a custom workout from then keeps the values it was rowed with
+  const old = mode === 'custom';
   const s: WorkoutSettings = {
     mode,
     durationMin: num(raw.durationMin, d.durationMin),
-    maxPower: num(raw.maxPower, d.maxPower),
-    maxSpm: num(raw.maxSpm, d.maxSpm),
-    customMaxPower: num(raw.customMaxPower, d.customMaxPower),
-    customMaxSpm: num(raw.customMaxSpm, d.customMaxSpm),
+    maxPower: num(old ? raw.customMaxPower ?? raw.maxPower : raw.maxPower, d.maxPower),
+    maxSpm: num(old ? raw.customMaxSpm ?? raw.maxSpm : raw.maxSpm, d.maxSpm),
+    story: raw.story !== false,
   };
   if (raw.custom) s.custom = raw.custom;
   return s;
@@ -185,10 +187,10 @@ export function generateWorkout(settings: WorkoutSettings, plan?: PhaseShare[]):
   let segs: Segment[];
   if (s.mode === 'custom') {
     const sections = cleanSections(s.custom!.sections);
-    segs = sectionCurve(sections, customPhasePlan(sections) ?? plan ?? DEFAULT_TRAININGS.buildup.phases, s.customMaxPower, s.customMaxSpm);
+    segs = sectionCurve(sections, (s.story ? customPhasePlan(sections) ?? plan ?? DEFAULT_TRAININGS.buildup.phases : plan ?? DEFAULT_TRAININGS.steady.phases), s.maxPower, s.maxSpm);
   } else {
     const total = Math.round(Math.max(10, Math.min(90, s.durationMin))) * 60;
-    segs = sectionCurve(defaultSections(s.mode, total), plan ?? DEFAULT_TRAININGS[s.mode].phases, s.maxPower, s.maxSpm);
+    segs = sectionCurve(defaultSections(s.mode, total), plan ?? DEFAULT_TRAININGS[s.story ? s.mode : 'steady'].phases, s.maxPower, s.maxSpm);
   }
   return { settings: s, duration: segs[segs.length - 1].end, segments: segs };
 }

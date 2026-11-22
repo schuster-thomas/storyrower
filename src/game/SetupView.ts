@@ -53,7 +53,7 @@ export function mountPlay(root: HTMLElement, level: Level): () => void {
     const settings = loadSettings();
     const workout = levelWorkout(level, settings);
     // the level as it plays in this mode: only the mode's story beats, the mode's look
-    const played = levelForMode(level, workout.settings.mode);
+    const played = levelForMode(level, workout.settings.mode, workout.settings.story);
     const dev = new URLSearchParams(location.hash.split('?')[1] ?? '');
     const speed = Number(dev.get('speed')) || 1;
     // a story moment chosen on the setup screen (or ?beat=eruption) starts 5 s before that beat
@@ -68,7 +68,7 @@ export function mountPlay(root: HTMLElement, level: Level): () => void {
   return () => { cleanupGame?.(); cleanupSetup?.(); audio?.dispose(); audio = null; };
 }
 
-type SplitKey = 'maxPower' | 'customMaxPower';
+type SplitKey = 'maxPower';
 
 /**
  * A 500 m split as typed: "2:45", "2.45", "2,45" or just "245" (numeric keypads have no colon);
@@ -122,16 +122,15 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
             </div>
             <div class="custom-modes-head" data-id="customHead"><b>Your trainings</b> <span>(<a data-id="customEdit" href="#/custom?from=${level.id}">Edit</a>)</span></div>
             <div class="modes custom-modes" role="radiogroup" aria-label="Custom trainings" data-id="customModes"></div>
+            <label class="check story-check" title="Off: no eruption, dragon, shark or storm – the puffins, glaciers, blossoms and sunsets stay"><input type="checkbox" data-id="story"> Include story</label>
             <p class="muted-line" data-id="modeText"></p>
           </section>
           <section>
             <h2>Your workout</h2>
             <div class="fields">
               <div class="field no-custom"><span>Duration</span>${num('durationMin', 'min', 'min="10" max="90" step="5"', true)}</div>
-              <div class="field no-custom" title="Your fastest split – every section is so many seconds slower"><span>Max split /500 m <em>peak</em></span>${split('maxPower', true)}</div>
-              <div class="field no-custom" title="Your highest stroke rate – every section is so many strokes under it"><span>Max stroke rate <em>peak</em></span>${num('maxSpm', 'spm', 'min="12" max="45"', true)}</div>
-              <div class="field only-custom" title="Your fastest split – every section is so many seconds slower"><span>Max split /500 m <em>peak</em></span>${split('customMaxPower', true)}</div>
-              <div class="field only-custom" title="Your highest stroke rate – every section is so many strokes under it"><span>Max stroke rate <em>peak</em></span>${num('customMaxSpm', 'spm', 'min="12" max="45"', true)}</div>
+              <div class="field" title="Your fastest split – every section is so many seconds slower (the same for every mode)"><span>Max split /500 m <em>peak</em></span>${split('maxPower', true)}</div>
+              <div class="field" title="Your highest stroke rate – every section is so many strokes under it (the same for every mode)"><span>Max stroke rate <em>peak</em></span>${num('maxSpm', 'spm', 'min="12" max="45"', true)}</div>
             </div>
           </section>
           <section>
@@ -210,12 +209,14 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
       b.tabIndex = on ? 0 : -1;
     });
     $<HTMLAnchorElement>('customEdit').href = `#/custom${custom && settings.custom ? `/${encodeURIComponent(settings.custom.id)}` : ''}?from=${level.id}`;
-    // a custom training brings its own length and has its own maximum
-    root.querySelectorAll<HTMLElement>('.no-custom, .only-custom').forEach((el) => {
-      el.hidden = el.classList.contains('no-custom') ? custom : !custom;
-    });
+    // a custom training brings its own length (the max split and stroke rate are the same for every mode)
+    root.querySelectorAll<HTMLElement>('.no-custom').forEach((el) => { el.hidden = custom; });
     fillInputs();
   };
+  // "Include story": the adventure or just the scenery – saved like every other setting
+  const storyBox = $<HTMLInputElement>('story');
+  storyBox.checked = settings.story;
+  storyBox.onchange = () => { settings = { ...settings, story: storyBox.checked }; saveSettings(settings); renderPreview(); };
   const setMode = (b: HTMLButtonElement) => {
     const m = b.dataset.mode as WorkoutMode;
     const t = m === 'custom' ? getCustom(b.dataset.custom ?? '') : null;
@@ -301,7 +302,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
 
   function renderPreview() {
     const w = levelWorkout(level, settings);
-    const played = levelForMode(level, w.settings.mode);
+    const played = levelForMode(level, w.settings.mode, w.settings.story);
     const beats = scheduleBeats(played, w);
     if (jump && !beats.some((b) => b.id === jump)) jump = null;   // not in this mode or this (shorter) workout
     jumpSel.innerHTML = `<option value="">Beginning</option>` + beats.map((b) =>
@@ -329,6 +330,7 @@ function mountSetup(root: HTMLElement, level: Level, initialJump: string | null,
     // a custom training: its name, length and sections; a default mode: what the level does in it
     $('modeText').textContent = w.settings.mode === 'custom' && w.settings.custom
       ? `${w.settings.custom.name}: ${formatDuration(w.duration)} in ${sections.length} section${sections.length === 1 ? '' : 's'} – set your max split and stroke rate, every section follows from them.`
+      : !w.settings.story ? level.modes.steady?.summary ?? 'A calm row – no story, just the scenery.'
       : level.modes[w.settings.mode]?.summary ?? MODE_HINTS[w.settings.mode];
     // the real targets over each bar (narrow bars without the unit)
     const targets = (s: Segment, wide: boolean) => `<span class="ct-lab"><b>${formatPace(s.pace.target)}</b><small>${s.spm.target}${wide ? ' spm' : ''}</small></span>`;

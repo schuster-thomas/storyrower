@@ -1,7 +1,7 @@
-import type { Anchor, BeatDef } from '../../story/story';
+import { EFFECT_KIND, type Anchor, type BeatDef } from '../../story/story';
 import type { GateStyle } from '../scene/Gates';
 import type { WorldId } from '../scene/World';
-import type { DefaultMode } from '../../workout/defaultTrainings';
+import { DEFAULT_TRAININGS, type DefaultMode } from '../../workout/defaultTrainings';
 import { generateWorkout, MODES, type PhaseId, type PhaseShare, type Workout, type WorkoutMode, type WorkoutSettings } from '../../workout/workout';
 
 /** Look of the world for one story phase. */
@@ -98,19 +98,30 @@ export function pickMode(level: Level, mode: WorkoutMode): WorkoutMode {
 /**
  * The level as it plays in one mode: only that mode's beats (with their overrides) and
  * the mode's look changes. The game and the story engine just see a normal level.
+ *
+ * `story` false ("Include story" off): whatever the training, the level plays its calm version –
+ * the beats and look of its steady mode, and of those only the scenery effects (EFFECT_KIND in
+ * src/story/story.ts); no smoke, lava or wave anywhere.
  */
-export function levelForMode(level: Level, mode: WorkoutMode): Level {
+export function levelForMode(level: Level, mode: WorkoutMode, story = true): Level {
   // a custom training gets the level's full adventure (its build-up story and look)
-  const m = level.modes[pickMode(level, mode === 'custom' ? 'buildup' : mode)];
-  if (!m) return level;
-  const beats = m.beats === 'all' ? level.beats : level.beats.flatMap((b) => {
+  const key = !story ? 'steady' : pickMode(level, mode === 'custom' ? 'buildup' : mode);
+  const m = level.modes[key];
+  let beats = !m || m.beats === 'all' ? level.beats : level.beats.flatMap((b) => {
     const use = (m.beats as Record<string, ModeBeat>)[b.id];
     if (!use) return [];
     return use === true ? [b] : [{ ...b, anchor: use.anchor ?? b.anchor, caption: use.caption ?? b.caption }];
   });
+  if (!story) beats = beats.filter((b) => EFFECT_KIND[b.effect] === 'scenery');
   const phases = { ...level.phases };
-  for (const [id, env] of Object.entries(m.env ?? {}) as [PhaseId, Partial<Environment>][]) {
+  for (const [id, env] of Object.entries(m?.env ?? {}) as [PhaseId, Partial<Environment>][]) {
     phases[id] = { ...phases[id], env: { ...phases[id].env, ...env } };
+  }
+  if (!story) {
+    for (const id of Object.keys(phases) as PhaseId[]) {
+      const calm = { lava: 0, smoke: 0, wave: 0 };
+      phases[id] = { ...phases[id], env: { ...phases[id].env, ...calm }, settled: phases[id].settled && { ...phases[id].settled, ...calm } };
+    }
   }
   return { ...level, phases, beats };
 }
@@ -118,6 +129,8 @@ export function levelForMode(level: Level, mode: WorkoutMode): Level {
 /** The workout for these settings in this level (the mode's phase plan included). */
 export function levelWorkout(level: Level, settings: WorkoutSettings): Workout {
   const mode = pickMode(level, settings.mode);
+  // without the story the scenery follows the level's calm (steady) plan, whatever the training
+  if (settings.story === false) return generateWorkout({ ...settings, mode }, level.modes.steady?.phases ?? DEFAULT_TRAININGS.steady.phases);
   // custom: the phases follow the training's own peak, else the level's build-up plan
   const story = mode === 'custom' ? pickMode(level, 'buildup') : mode;
   return generateWorkout({ ...settings, mode }, level.modes[story]?.phases);

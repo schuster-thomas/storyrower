@@ -18,7 +18,7 @@ const starsHtml = (n: number) => `<span class="h-stars" aria-label="${n} of 3 st
 const split = (w: number) => formatPace(paceFromPower(Math.max(1, w)));
 /** "Build up", or a custom training's name. */
 const modeLine = (r: { mode: WorkoutSettings['mode']; settings: WorkoutSettings }) =>
-  r.mode === 'custom' && r.settings.custom ? esc(r.settings.custom.name) : MODE_LABELS[r.mode] ?? r.mode;
+  (r.mode === 'custom' && r.settings.custom ? esc(r.settings.custom.name) : MODE_LABELS[r.mode] ?? r.mode) + (r.settings.story === false ? ' · no story' : '');
 
 /** "#/history" (all trainings) and "#/history/<id>" (one training with its chart and settings). */
 export function mountHistory(root: HTMLElement, id: string | null): () => void {
@@ -141,13 +141,15 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
       const c = w.custom;
       return [
         row('Mode', `Custom · ${esc(c.name)}`),
+        row('Story', w.story === false ? 'Off – scenery only' : 'On'),
         row('Duration', `${formatDuration(customDuration(c.sections))} · ${c.sections.length} sections`),
-        row('Max split', `${split(w.customMaxPower)} /500 m <small>${Math.round(w.customMaxPower)} W</small>`),
-        row('Max stroke rate', `${w.customMaxSpm} spm`),
+        row('Max split', `${split(w.maxPower)} /500 m <small>${Math.round(w.maxPower)} W</small>`),
+        row('Max stroke rate', `${w.maxSpm} spm`),
       ].join('');
     }
     return [
       row('Mode', MODE_LABELS[w.mode] ?? w.mode),
+      row('Story', w.story === false ? 'Off – scenery only' : 'On'),
       row('Duration', `${w.durationMin} min`),
       row('Peak split', `${split(w.maxPower)} /500 m <small>${Math.round(w.maxPower)} W</small>`),
       row('Peak stroke rate', `${w.maxSpm} spm`),
