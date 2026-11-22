@@ -11,7 +11,7 @@ import type { Level } from './level';
 export const MAURITIUS: Level = {
   id: 'mauritius-shark-madness',
   title: 'Mauritius Shark Madness',
-  tagline: 'A turquoise lagoon, a tropical thunderstorm – and a great white circling closer.',
+  tagline: 'A turquoise lagoon, a tropical thunderstorm – and a great white shark circling closer.',
   art: mauritiusCard,
   world: 'mauritius',
   loadingText: 'Loading the lagoon…',

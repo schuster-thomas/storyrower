@@ -173,6 +173,21 @@ for side in (-1, 1):
     tube(f'Pin{side}', pin + Vector((0, 0, -0.12)), pin + Vector((0, 0, 0.08)), 0.012, M['metal'], boat)
 
 # ------------------------------------------------------------------ oars
+def paint_band(o, centre_x, width, tilt):
+    """Red band painted onto the blade's own faces (cut along two slanted planes), so it ends
+    exactly at the blade's outline instead of a separate box poking out of it."""
+    n = Vector((math.cos(tilt), 0, math.sin(tilt)))   # across the band, in the blade's XZ plane
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    for off in (-width / 2, width / 2):
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        bmesh.ops.bisect_plane(bm, geom=geom, plane_co=Vector((centre_x, 0, 0)) + n * off, plane_no=n)
+    o.data.materials.append(M['red'])
+    for f in bm.faces:
+        if abs((f.calc_center_median() - Vector((centre_x, 0, 0))).dot(n)) < width / 2:
+            f.material_index = 1
+    bm.to_mesh(o.data); bm.free()
+
 def build_oar(side):
     """Oar pivoting at the pin. Built along local +X (outboard); the left oar gets a base yaw of π."""
     pivot = empty(f'Oar{"R" if side > 0 else "L"}', boat, (side * PIN_X, PIN_Y, PIN_Z + (0.012 if side < 0 else 0)))
@@ -187,8 +202,7 @@ def build_oar(side):
     feather = empty(f'Feather{"R" if side > 0 else "L"}', pivot)
     feather.rotation_mode = 'XYZ'
     blade = box('Blade', (0.50, 0.012, 0.23), (OUTBOARD - 0.25, 0, -0.02), M['blade'], feather, bevel=0.004)
-    band = box('BladeBand', (0.14, 0.016, 0.235), (OUTBOARD - 0.30, 0, -0.02), M['red'], feather)
-    band.rotation_euler = (0, math.radians(-30), 0)
+    paint_band(blade, centre_x=-0.05, width=0.14, tilt=math.radians(30))
     tube('Neck', (OUTBOARD - 0.55, 0, 0), (OUTBOARD - 0.45, 0, -0.01), 0.016, M['shaft'], feather)
     empty(f'Blade{"R" if side > 0 else "L"}', feather, (OUTBOARD - 0.25, 0, -0.02))   # splash position for the game
     return pivot, feather
