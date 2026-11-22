@@ -301,6 +301,7 @@ export class RiverScene {
 
   dispose() {
     this.disposed = true;
+    this.model.dispose();
     this.world?.dispose();
     this.post.dispose();
     this.gates.dispose();

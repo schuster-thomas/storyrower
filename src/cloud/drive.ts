@@ -2,6 +2,7 @@ import { applySettingsSnapshot, onSettingsChanged, settingsSnapshot, type Settin
 import { parseTraining, type TrainingRecord } from '../history/history';
 import { listTrainings, notifyHistoryChanged, putTraining, putTrainings, type StoredTraining } from '../history/store';
 import { applyCustomFile, customFile, mergeCustomFiles, onCustomEdited, parseCustomFile, sameCustomFiles } from '../workout/customStore';
+import { applyOutfit, onOutfitEdited, outfitFile, parseOutfit } from '../wardrobe/store';
 import { DRIVE_FOLDER, DRIVE_SCOPES, GOOGLE_CLIENT_ID, TOKEN_SERVICE } from './config';
 
 /**
@@ -129,6 +130,7 @@ class DriveSync {
     this._status.state = this.baseState();
     onSettingsChanged(() => this.settingsChanged());
     // custom trainings go up the same way (one file, a moment after the last edit)
+    onOutfitEdited(() => this.settingsChanged());
     onCustomEdited(() => this.settingsChanged());
     // Renew a run-out sign-in on the next tap anywhere in the menus – browsers only allow the
     // Google window from a tap. Capture phase, so it runs before the tapped button's own handler.
@@ -389,9 +391,11 @@ class DriveSync {
       const files = await this.listFolder(folder);
       const remote = new Map<string, string>();   // training id → file id
       let settingsFile: { id: string } | null = null;
+      let outfitRef: { id: string } | null = null;
       let customFileRef: { id: string } | null = null;
       for (const f of files) {
         if (f.appProperties?.kind === 'training' && f.appProperties.trainingId) remote.set(f.appProperties.trainingId, f.id);
+        if (f.appProperties?.kind === 'rower-outfit') outfitRef = f;
         if (f.appProperties?.kind === 'settings') settingsFile = f;
         if (f.appProperties?.kind === 'custom-trainings') customFileRef = f;
       }
@@ -414,6 +418,7 @@ class DriveSync {
       await putTrainings(fetched);
       await this.syncSettings(folder, settingsFile);
       await this.syncCustom(folder, customFileRef);
+      await this.syncOutfit(folder, outfitRef);
       const now = new Date().toISOString();
       this.linked = { ...this.linked!, lastSync: now };
       write(LINK_KEY, this.linked);
@@ -433,6 +438,20 @@ class DriveSync {
         return;
       }
       this.set({ state: 'error', error: (e as Error).message });
+    }
+  }
+
+  private async syncOutfit(folder: string, file: { id: string } | null) {
+    const remote = file ? parseOutfit(await (await this.api(`/drive/v3/files/${file.id}?alt=media`)).json()) : null;
+    let local = outfitFile();
+    if (remote && remote.updatedAt > local.updatedAt) { applyOutfit(remote); return; }
+    if (remote && remote.updatedAt === local.updatedAt) return;
+    if (!file && !Date.parse(local.updatedAt)) return;
+    const id = file?.id ?? await this.upload({ name: 'rower-outfit.json', parents: [folder], appProperties: { kind: 'rower-outfit' } }, local);
+    if (file) await this.overwrite(id, local);
+    while (outfitFile() !== local) {
+      local = outfitFile();
+      await this.overwrite(id, local);
     }
   }
 

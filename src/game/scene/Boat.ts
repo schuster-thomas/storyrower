@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { fitOutfit } from '../../wardrobe/fit';
+import { outfitFile, type Outfit } from '../../wardrobe/store';
 import boatUrl from '../../assets/models/boat.glb?url';
 
 /**
@@ -26,16 +28,60 @@ export class Boat {
     if (!this.loading) {
       const loader = new GLTFLoader();
       loader.setMeshoptDecoder(MeshoptDecoder);
-      this.loading = loader.loadAsync(boatUrl);
+      this.loading = loader.loadAsync(boatUrl).then(gltf => {
+        const body = gltf.scene.getObjectByName('Rower') as THREE.SkinnedMesh;
+        const positions = body.geometry.getAttribute('position');
+        const joints = body.geometry.getAttribute('skinIndex');
+        const weights = body.geometry.getAttribute('skinWeight');
+        const torsoBones = body.skeleton.bones.map(bone => /Hips$|Spine\d*$/.test(bone.name));
+        // Carry the lower rib cage width through the waist and blend into the pelvis.
+        for (let i = 0; i < positions.count; i++) {
+          const y = positions.getY(i);
+          const waist = THREE.MathUtils.smoothstep(y, -.22, .06)
+            * (1 - THREE.MathUtils.smoothstep(y, .16, .36));
+          const underarm = THREE.MathUtils.smoothstep(y, .22, .39)
+            * (1 - THREE.MathUtils.smoothstep(y, .45, .57));
+          if (!waist && !underarm) continue;
+          let influence = 0;
+          for (let j = 0; j < 4; j++) {
+            if (torsoBones[joints.getComponent(i, j)]) influence += weights.getComponent(i, j);
+          }
+          const x = positions.getX(i);
+          const flank = THREE.MathUtils.smoothstep(Math.abs(x), .09, .19);
+          const widthChange = .42 * waist - .20 * underarm * flank;
+          positions.setX(i, x * (1 + widthChange * influence));
+        }
+        positions.needsUpdate = true;
+        return gltf;
+      });
       this.loading.catch(() => { this.loading = null; }); // allow a retry
     }
     return this.loading;
   }
 
-  constructor(shadows: boolean) {
+  private root?: THREE.Object3D;
+  private removeOutfit?: () => void;
+  private disposed = false;
+
+  setOutfit(outfit: Outfit) {
+    this.outfit = outfit;
+    this.removeOutfit?.();
+    if (this.root) this.removeOutfit = fitOutfit(this.root, outfit);
+  }
+
+  dispose() {
+    this.disposed = true;
+    this.removeOutfit?.();
+    this.mixer?.stopAllAction();
+  }
+
+  constructor(shadows: boolean, private outfit: Outfit = outfitFile()) {
     this.loaded = Boat.preload().then((gltf) => {
       // each game gets its own copy (the skeleton must be cloned with the skinned mesh)
+      if (this.disposed) return;
       const root = cloneSkinned(gltf.scene);
+      this.root = root;
+      this.setOutfit(this.outfit);
       root.traverse((o) => {
         const mesh = o as THREE.Mesh;
         if (!mesh.isMesh) return;
