@@ -28,7 +28,7 @@
 
   <section id="en" lang="en">
     <h1>Privacy</h1>
-    <p class="muted">Last updated: 21 November 2026</p>
+    <p class="muted">Last updated: 22 November 2026</p>
 
     <h2>In short</h2>
     <p>StoryRower has no user accounts of its own and stores no data on servers of its own. Your training data stays on your device and – only if you sign in with Google – in your own Google Drive. The operator of StoryRower never receives it. The only server-side part is a small sign-in service that keeps you signed in with Google; it handles sign-in keys only, never your training data, and stores nothing. There is no tracking, no analytics and no advertising.</p>
@@ -41,17 +41,18 @@
       <li><b>Rower and heart-rate monitor:</b> the values they send over Bluetooth (power, stroke rate, distance, heart rate …) are processed in your browser only.</li>
       <li><b>Training history:</b> every finished workout with a real rower (date, level, settings, results and the course of the workout) is stored in your browser's storage on this device.</li>
       <li><b>Settings</b> (workout, sound, graphics) are stored in your browser's storage as well.</li>
+      <li><b>Custom trainings</b> you build under "Customize trainings" (name and sections with length, split and stroke rate) are stored in your browser's storage as well. When you delete one, a short note that it was deleted is kept for up to 90 days, so the deletion also reaches your other devices.</li>
       <li><b>Recordings and diagnostics files</b> are only created when you tap "Download" and stay on your device unless you share them yourself.</li>
     </ul>
     <p>You can delete all of this at any time by clearing the site data of StoryRower in your browser.</p>
 
     <h2>Google Drive (optional)</h2>
-    <p>If you sign in with Google (cloud icon, top right), StoryRower saves your trainings and your latest settings as files in a folder called "StoryRower" in your own Google Drive and reads them from there, so they are available on your other devices.</p>
+    <p>If you sign in with Google (cloud icon, top right), StoryRower saves your trainings, your custom trainings and your latest settings as files in a folder called "StoryRower" in your own Google Drive and reads them from there, so they are available on your other devices.</p>
     <ul>
-      <li>Your trainings and settings go directly between your browser and Google. They do not pass through any server of StoryRower.</li>
+      <li>Your trainings, custom trainings and settings go directly between your browser and Google. They do not pass through any server of StoryRower.</li>
       <li>StoryRower only asks for access to <b>files it created itself</b> (Google's "drive.file" permission) and for your <b>e-mail address</b>, to show which account is signed in. It cannot see any other files in your Drive.</li>
       <li>You sign in on Google's own sign-in page; Google's <a href="https://policies.google.com/privacy" rel="noopener">privacy policy</a> applies to it. StoryRower never sees your Google password.</li>
-      <li><b>Staying signed in:</b> after the sign-in, Google hands StoryRower a one-time code. A small sign-in service of StoryRower (running at Cloudflare, see below) exchanges it with Google for an access key, which lasts about an hour, and a renewal key, which keeps you signed in. Both keys are stored in your browser's storage on this device. When the access key runs out, your browser sends the renewal key to the sign-in service, which gets a fresh access key from Google. The service only passes these keys on; it does not store them, and your trainings, settings and e-mail address never pass through it.</li>
+      <li><b>Staying signed in:</b> after the sign-in, Google hands StoryRower a one-time code. A small sign-in service of StoryRower (running at Cloudflare, see below) exchanges it with Google for an access key, which lasts about an hour, and a renewal key, which keeps you signed in. Both keys are stored in your browser's storage on this device. When the access key runs out, your browser sends the renewal key to the sign-in service, which gets a fresh access key from Google. The service only passes these keys on; it does not store them, and your trainings, custom trainings, settings and e-mail address never pass through it.</li>
       <li>You can sign out in StoryRower at any time and withdraw the access in your Google account under <a href="https://myaccount.google.com/permissions" rel="noopener">Security → Third-party connections</a>. Signing out also withdraws the renewal key at Google. Files already in your Drive stay there until you delete them.</li>
     </ul>
 
@@ -68,7 +69,7 @@
 
   <section id="de" lang="de">
     <h1>Datenschutz</h1>
-    <p class="muted">Stand: 21. November 2026</p>
+    <p class="muted">Stand: 22. November 2026</p>
 
     <h2>Kurz gesagt</h2>
     <p>StoryRower hat keine eigenen Benutzerkonten und speichert keine Daten auf eigenen Servern. Deine Trainingsdaten bleiben auf deinem Gerät und – nur wenn du dich mit Google anmeldest – in deinem eigenen Google Drive. Der Betreiber von StoryRower erhält sie nie. Auf einem Server läuft nur ein kleiner Anmelde-Dienst, der dich bei Google angemeldet hält; er verarbeitet nur Anmelde-Schlüssel, nie deine Trainingsdaten, und speichert nichts. Es gibt kein Tracking, keine Statistik-Dienste und keine Werbung.</p>
@@ -81,17 +82,18 @@
       <li><b>Rudergerät und Pulsmesser:</b> Die Werte, die sie per Bluetooth senden (Leistung, Schlagzahl, Distanz, Puls …), werden nur in deinem Browser verarbeitet.</li>
       <li><b>Trainings-History:</b> Jedes abgeschlossene Training mit einem echten Rudergerät (Datum, Level, Einstellungen, Ergebnisse und Verlauf) wird im Speicher deines Browsers auf diesem Gerät abgelegt.</li>
       <li><b>Einstellungen</b> (Workout, Sound, Grafik) werden ebenfalls im Browser-Speicher abgelegt.</li>
+      <li><b>Eigene Trainings</b>, die du unter „Customize trainings“ anlegst (Name und Abschnitte mit Länge, Split und Schlagzahl), werden ebenfalls im Browser-Speicher abgelegt. Löschst du eines, bleibt bis zu 90 Tage lang ein kurzer Vermerk, dass es gelöscht wurde, damit die Löschung auch auf deinen anderen Geräten ankommt.</li>
       <li><b>Aufzeichnungen und Diagnose-Dateien</b> entstehen nur, wenn du auf „Download“ tippst, und bleiben auf deinem Gerät, solange du sie nicht selbst weitergibst.</li>
     </ul>
     <p>Du kannst all das jederzeit löschen, indem du die Website-Daten von StoryRower in deinem Browser löschst.</p>
 
     <h2>Google Drive (freiwillig)</h2>
-    <p>Wenn du dich mit Google anmeldest (Wolken-Symbol oben rechts), speichert StoryRower deine Trainings und deine letzten Einstellungen als Dateien in einem Ordner „StoryRower“ in deinem eigenen Google Drive und liest sie von dort, damit sie auf deinen anderen Geräten verfügbar sind.</p>
+    <p>Wenn du dich mit Google anmeldest (Wolken-Symbol oben rechts), speichert StoryRower deine Trainings, deine eigenen Trainings und deine letzten Einstellungen als Dateien in einem Ordner „StoryRower“ in deinem eigenen Google Drive und liest sie von dort, damit sie auf deinen anderen Geräten verfügbar sind.</p>
     <ul>
-      <li>Deine Trainings und Einstellungen gehen direkt zwischen deinem Browser und Google hin und her, nicht über einen Server von StoryRower.</li>
+      <li>Deine Trainings, eigenen Trainings und Einstellungen gehen direkt zwischen deinem Browser und Google hin und her, nicht über einen Server von StoryRower.</li>
       <li>StoryRower fragt nur nach Zugriff auf <b>Dateien, die es selbst angelegt hat</b> (Googles Berechtigung „drive.file“), und nach deiner <b>E-Mail-Adresse</b>, um anzuzeigen, welches Konto angemeldet ist. Andere Dateien in deinem Drive kann es nicht sehen.</li>
       <li>Du meldest dich auf der Anmeldeseite von Google selbst an; dafür gilt die <a href="https://policies.google.com/privacy?hl=de" rel="noopener">Datenschutzerklärung von Google</a>. Dein Google-Passwort sieht StoryRower nie.</li>
-      <li><b>Angemeldet bleiben:</b> Nach der Anmeldung gibt Google StoryRower einen Einmal-Code. Ein kleiner Anmelde-Dienst von StoryRower (läuft bei Cloudflare, siehe unten) tauscht ihn bei Google gegen einen Zugangsschlüssel, der etwa eine Stunde gilt, und einen Erneuerungsschlüssel, der dich angemeldet hält. Beide Schlüssel liegen im Speicher deines Browsers auf diesem Gerät. Läuft der Zugangsschlüssel ab, schickt dein Browser den Erneuerungsschlüssel an den Anmelde-Dienst, der bei Google einen neuen Zugangsschlüssel holt. Der Dienst reicht diese Schlüssel nur weiter und speichert sie nicht; deine Trainings, Einstellungen und deine E-Mail-Adresse laufen nie über ihn.</li>
+      <li><b>Angemeldet bleiben:</b> Nach der Anmeldung gibt Google StoryRower einen Einmal-Code. Ein kleiner Anmelde-Dienst von StoryRower (läuft bei Cloudflare, siehe unten) tauscht ihn bei Google gegen einen Zugangsschlüssel, der etwa eine Stunde gilt, und einen Erneuerungsschlüssel, der dich angemeldet hält. Beide Schlüssel liegen im Speicher deines Browsers auf diesem Gerät. Läuft der Zugangsschlüssel ab, schickt dein Browser den Erneuerungsschlüssel an den Anmelde-Dienst, der bei Google einen neuen Zugangsschlüssel holt. Der Dienst reicht diese Schlüssel nur weiter und speichert sie nicht; deine Trainings, eigenen Trainings, Einstellungen und deine E-Mail-Adresse laufen nie über ihn.</li>
       <li>Du kannst dich in StoryRower jederzeit abmelden und den Zugriff in deinem Google-Konto unter <a href="https://myaccount.google.com/permissions" rel="noopener">Sicherheit → Verbindungen zu Drittanbietern</a> widerrufen. Beim Abmelden wird auch der Erneuerungsschlüssel bei Google widerrufen. Dateien, die schon in deinem Drive liegen, bleiben dort, bis du sie löschst.</li>
     </ul>
 
