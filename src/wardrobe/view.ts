@@ -4,7 +4,7 @@ import { Boat } from '../game/scene/Boat';
 import { bindFullscreenButton, FS_BUTTON } from '../ui/fullscreen';
 import { ICON_BACK, LOGO } from '../ui/icons';
 import { bindDriveButton, DRIVE_BUTTON } from '../ui/driveButton';
-import { accessories, defaults, headwear, shirts, onOutfitChanged, outfitFile, selectOutfit, type Accessory, type Outfit } from './store';
+import { accessories, boats, defaults, headwear, shirts, onOutfitChanged, outfitFile, selectOutfit, type Accessory, type Outfit } from './store';
 import './wardrobe.css';
 
 const THUMB_W=160,THUMB_H=114;
@@ -22,7 +22,7 @@ export function mountWardrobe(root: HTMLElement) {
       <div class="bar-right">${DRIVE_BUTTON}${FS_BUTTON}</div>
     </header>
     <main class="menu-page"><h1 class="menu-title">Customize rower</h1><div class="wardrobe">
-      <div class="outfit-controls">${options('headwear','Headwear',headwear)}${options('shirt','Shirt',shirts)}${options('accessories','Accessories',accessories)}</div>
+      <div class="outfit-controls">${options('boat','Boat',boats)}${options('headwear','Headwear',headwear)}${options('shirt','Shirt',shirts)}${options('accessories','Accessories',accessories)}</div>
       <div class="outfit-stage" aria-label="Animated 3D outfit preview"><span role="status">Loading rower…</span></div>
     </div></main></div>`;
   const offFs = bindFullscreenButton(root.querySelector<HTMLButtonElement>('[data-fs]')!);
@@ -30,12 +30,14 @@ export function mountWardrobe(root: HTMLElement) {
   const stage=root.querySelector<HTMLElement>('.outfit-stage')!;
   const buttons=Array.from(root.querySelectorAll<HTMLButtonElement>('[data-option]'));
   let boat: Boat | undefined;
+  let showBoat = false;
   function refresh() {
     const selection=outfitFile();
     boat?.setOutfit(selection);
     for(const btn of buttons) btn.setAttribute('aria-pressed',String(btn.dataset.category==='accessories' ? selection[btn.dataset.option as Accessory] : selection[btn.dataset.category as keyof Outfit]===btn.dataset.option));
   }
   for(const btn of buttons) btn.onclick=()=>{
+    showBoat=btn.dataset.category==='boat';
     const selected=outfitFile();
     const id=btn.dataset.option!;
     selectOutfit({...selected,...(btn.dataset.category==='accessories' ? {[id]:!selected[id as Accessory]} : {[btn.dataset.category!]:id})});
@@ -68,7 +70,6 @@ export function mountWardrobe(root: HTMLElement) {
     scene.add(water.mesh);
     const daylight={time:0,boatZ:0,speed:0,swell:0,water:new T.Color(0x387e97),sky:new T.Color(0xc8e5ec),sunColor:new T.Color(0xffedd4),sunDir:sun.position.clone().normalize(),light:1};
     water.milk=0;water.update(daylight);
-    scene.fog=new T.FogExp2(0xc8e5ec,.074);
     const camera=new T.PerspectiveCamera(32,1,.02,150);
     const thumbCamera=new T.PerspectiveCamera(32,THUMB_W/THUMB_H,.02,150);
     const rower=new Boat(false);scene.add(rower.group);
@@ -113,9 +114,14 @@ export function mountWardrobe(root: HTMLElement) {
         const id=btn.dataset.option!;
         model.setOutfit({...defaults,...(category==='accessories' ? {[id]:true} : {[category]:id})});
         const head=category==='headwear' || id==='sunglasses';
-        model.group.getObjectByName(head?'mixamorigHead':'mixamorigSpine2')!.getWorldPosition(target);
-        target.y+=id==='sunglasses'?.13:head?.20:.04;
-        thumbCamera.position.copy(target).add(new T.Vector3(0,.09,head?1.04:1.34));
+        if(category==='boat') {
+          target.set(0,.1,0);
+          thumbCamera.position.set(2.6,3.4,id==='default'?9.5:6.4);
+        } else {
+          model.group.getObjectByName(head?'mixamorigHead':'mixamorigSpine2')!.getWorldPosition(target);
+          target.y+=id==='sunglasses'?.13:head?.20:.04;
+          thumbCamera.position.copy(target).add(new T.Vector3(0,.09,head?1.04:1.34));
+        }
         thumbCamera.lookAt(target);
         await renderer.compileAsync(model.group,thumbCamera,scene);
         if(closed) return;
@@ -153,13 +159,19 @@ export function mountWardrobe(root: HTMLElement) {
         } else if(e.key==='Home') {e.preventDefault();yaw=0;}
       };
       const focus=new T.Vector3();
+      let zoom=0,previousTime=0;
       const draw=(time:number)=>{
         rower.update(reduce.matches?.28:(time%3400)/3400);
-        const distance=Math.max(2.85,2.7/camera.aspect);
+        const dt=previousTime ? Math.min(.1,(time-previousTime)/1000) : 0;
+        previousTime=time;
+        zoom=reduce.matches?Number(showBoat):T.MathUtils.lerp(zoom,Number(showBoat),1-Math.exp(-dt*6));
+        const closeDistance=Math.max(2.85,2.7/camera.aspect);
+        const wideDistance=Math.max(outfitFile().boat==='default'?10.8:7.6,6.2/camera.aspect);
+        const distance=T.MathUtils.lerp(closeDistance,wideDistance,zoom);
         rower.group.getObjectByName('mixamorigHead')!.localToWorld(focus.set(-.008,0,0));
-        const pivotZ=T.MathUtils.lerp(.24,focus.z,Math.abs(Math.sin(yaw)));
-        camera.position.set(focus.x+Math.sin(yaw)*(distance+.11),1.4,pivotZ+Math.cos(yaw)*(distance+.11));
-        camera.lookAt(focus.x,.78,pivotZ);
+        const pivotZ=T.MathUtils.lerp(T.MathUtils.lerp(.24,focus.z,Math.abs(Math.sin(yaw))),0,zoom);
+        camera.position.set(focus.x+Math.sin(yaw)*(distance+.11),T.MathUtils.lerp(1.4,4.3,zoom),pivotZ+Math.cos(yaw)*(distance+.11));
+        camera.lookAt(focus.x,T.MathUtils.lerp(.78,.2,zoom),pivotZ);
         daylight.time=reduce.matches?0:time/1000;water.update(daylight);
         if(pending && renderThumb(pending.btn)){pending.done();pending=null;}
         renderer.render(scene,camera);

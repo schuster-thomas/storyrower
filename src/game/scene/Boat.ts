@@ -5,6 +5,7 @@ import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js
 import { fitOutfit } from '../../wardrobe/fit';
 import { outfitFile, type Outfit } from '../../wardrobe/store';
 import boatUrl from '../../assets/models/boat.glb?url';
+import { fitBoat } from './boatStyles';
 
 /**
  * Racing single scull with the rigged rower (scripts/blender/boat.py). The model carries one
@@ -61,21 +62,29 @@ export class Boat {
 
   private root?: THREE.Object3D;
   private removeOutfit?: () => void;
+  private removeBoat?: () => void;
   private disposed = false;
 
   setOutfit(outfit: Outfit) {
+    const boatChanged = this.outfit.boat !== outfit.boat;
     this.outfit = outfit;
     this.removeOutfit?.();
     if (this.root) this.removeOutfit = fitOutfit(this.root, outfit);
+    if (this.root && (boatChanged || !this.removeBoat)) {
+      this.removeBoat?.();
+      this.removeBoat = fitBoat(this.root, outfit.boat);
+      this.setShadows(this.shadows);
+    }
   }
 
   dispose() {
     this.disposed = true;
     this.removeOutfit?.();
+    this.removeBoat?.();
     this.mixer?.stopAllAction();
   }
 
-  constructor(shadows: boolean, private outfit: Outfit = outfitFile()) {
+  constructor(private shadows: boolean, private outfit: Outfit = outfitFile()) {
     this.loaded = Boat.preload().then((gltf) => {
       // each game gets its own copy (the skeleton must be cloned with the skinned mesh)
       if (this.disposed) return;
@@ -105,6 +114,7 @@ export class Boat {
   }
 
   setShadows(on: boolean) {
+    this.shadows = on;
     this.group.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.castShadow = on; });
   }
 
