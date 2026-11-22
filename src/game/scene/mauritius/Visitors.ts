@@ -3,12 +3,21 @@ import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js
 import { placeModel, type Model } from '../models';
 import type { Water } from '../Water';
 import type { WorldHost } from '../World';
-import { beachX } from './Beach';
 import { lengthScale, type MauritiusKit } from './kit';
 
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 
-const FADE_IN = 3;              // seconds a new paddler takes to appear
+/**
+ * The stand-up paddlers – one woman, one man – each come out once or twice per workout, one at a
+ * time, while the weather is fine: far ahead on the left over open water (the beach is on the
+ * right), and never together with the speedboat or the windsurfer, who use the same water.
+ */
+const PADDLER_TIMES = [1, 2];       // appearances per paddler (picked per workout)
+const PADDLER_FIRST = [12, 25];     // seconds of fine weather before the first one
+const PADDLER_GAP = [70, 130];      // seconds of fine weather between one passing and the next
+const PADDLER_AHEAD = [170, 220];   // where one appears (m ahead of the boat)
+const PADDLER_X = [-17, -10];       // … and how far left (the rowing lane is around x = 0)
+const FADE_IN = 3;                  // seconds a paddler takes to appear (or to fade away)
 /**
  * Phases of the paddlers' baked stroke (scripts/blender/paddler.py, 0–1): the blade goes in, the
  * pull (the board surges), the blade comes out.
@@ -30,13 +39,15 @@ const SURF_SPEED = 7;   // m/s along the course
 /**
  * A stand-up paddler (a rigged model playing its stroke): `speed` along the heading, `stroke` the
  * phase of the paddle stroke (0–1), `side` the side the paddle is on (±1 along the figure's x; facing
- * +z the right is −x), `fade` 0–1 while appearing.
+ * +z the right is −x), `fade` 0–1 while appearing, `times` the appearances still to come,
+ * `leaving` fading away far out when the clouds gather.
  */
 interface Paddler {
   obj: THREE.Object3D; mixer: THREE.AnimationMixer; duration: number; mats: THREE.Material[];
   /** the blade's centre (a marker on the paddle bone) */
   blade: THREE.Object3D | null;
   x: number; z: number; heading: number; speed: number; stroke: number; side: number; fade: number; on: boolean;
+  times: number; leaving: boolean;
 }
 interface Runner { obj: THREE.Group; x: number; z: number; speed: number; on: boolean; t: number; spray: number }
 
@@ -50,17 +61,19 @@ function figure(m: Model, length: number, frontYaw: number, shadows: boolean) {
 }
 
 /**
- * People enjoying the lagoon while the weather is fine: stand-up paddlers scattered over the water
- * (upright figures read from the low rowing camera, people lying in the water didn't), a speedboat
+ * People enjoying the lagoon while the weather is fine: now and then a stand-up paddler out on the
+ * water (upright figures read from the low rowing camera, people lying in the water didn't), a speedboat
  * towing a water-skier that overtakes the rower on the open-sea side, and a windsurfer with a
  * bright sail who comes in from the left, sails a loop out ahead and leaves to the left again.
- * When the clouds gather nobody new comes out.
+ * They take turns on the open water on the left – only one of them is out at a time. When the
+ * clouds gather nobody new comes out.
  */
 export class Visitors {
   readonly group = new THREE.Group();
   private paddlers: Paddler[] = [];
-  /** the first paddlers are in place (later ones start far ahead) */
-  private placed = false;
+  /** seconds of fine weather until the next paddler may come out, and who came out last */
+  private paddlerNext = rnd(PADDLER_FIRST[0], PADDLER_FIRST[1]);
+  private lastPaddler = -1;
   private boat: Runner | null = null;
   private skier: THREE.Group | null = null;
   private rope: THREE.Mesh;
@@ -77,11 +90,11 @@ export class Visitors {
   constructor(private host: WorldHost, kit: MauritiusKit, private water: Water) {
     const { speedboat, skier, surfer } = kit.models;
     const shadows = host.shadows;
-    // stand-up paddlers: the two rigged models, alternating, each copy with its own skeleton, its own
-    // materials (to fade in) and its own place in the stroke. The models face +z, the board's
-    // underside at y = 0; the woman paddles on her right, the man on his left.
-    for (let i = 0; i < 5 && kit.paddlers.length; i++) {
-      const k = i % kit.paddlers.length, gltf = kit.paddlers[k];
+    // stand-up paddlers: the two rigged models, each with its own skeleton and its own materials
+    // (to fade in). The models face +z, the board's underside at y = 0; the woman paddles on her
+    // right, the man on his left.
+    for (let k = 0; k < kit.paddlers.length; k++) {
+      const gltf = kit.paddlers[k];
       const obj = cloneSkinned(gltf.scene);
       const mats: THREE.Material[] = [];
       obj.traverse((o) => {
@@ -100,7 +113,7 @@ export class Visitors {
       mixer.clipAction(clip).play();
       obj.visible = false;
       this.group.add(obj);
-      this.paddlers.push({ obj, mixer, duration: clip.duration || 1, mats, blade: obj.getObjectByName('Blade') ?? null, x: 0, z: 0, heading: 0, speed: 0, stroke: Math.random(), side: k === 0 ? -1 : 1, fade: 1, on: false });
+      this.paddlers.push({ obj, mixer, duration: clip.duration || 1, mats, blade: obj.getObjectByName('Blade') ?? null, x: 0, z: 0, heading: 0, speed: 0, stroke: Math.random(), side: k === 0 ? -1 : 1, fade: 1, on: false, times: Math.random() < 0.5 ? PADDLER_TIMES[0] : PADDLER_TIMES[1], leaving: false });
     }
     // the speedboat's bow points to +z; the skier's ski tips to -z
     if (speedboat) {
@@ -177,10 +190,25 @@ export class Visitors {
   }
 
   /** A speedboat right now (the "visitors" beat), unless one is out already. */
-  speedboatNow(boatZ: number) { if (this.boat && !this.boat.on && !this.surfer?.on) this.launchBoat(boatZ); else this.next = Math.min(this.next, 3); }
+  speedboatNow(boatZ: number) { if (this.boat && !this.leftBusy) this.launchBoat(boatZ); else this.next = Math.min(this.next, 3); }
 
-  /** The speedboat and the windsurfer share the open water on the left: only one of them is out at a time. */
-  private get leftBusy() { return !!(this.boat?.on || this.surfer?.on); }
+  /** The speedboat, the windsurfer and the paddlers share the open water on the left: one at a time. */
+  private get leftBusy() { return !!(this.boat?.on || this.surfer?.on || this.paddlers.some((p) => p.on)); }
+
+  /** A paddler far ahead on the left, fading in out of the haze. */
+  private launchPaddler(p: Paddler, boatZ: number) {
+    p.times--;
+    p.on = true;
+    p.leaving = false;
+    p.z = boatZ - rnd(PADDLER_AHEAD[0], PADDLER_AHEAD[1]);
+    p.x = rnd(PADDLER_X[0], PADDLER_X[1]);
+    // paddling along the shore, one way or the other – seen from the side, from ahead or behind
+    p.heading = (Math.random() < 0.5 ? 0 : Math.PI) + rnd(-0.7, 0.7);
+    p.speed = rnd(0.15, 0.3);
+    p.fade = 0;
+    for (const m of p.mats) { m.transparent = true; m.opacity = 0; m.needsUpdate = true; }
+    p.obj.visible = true;
+  }
 
   private launchBoat(boatZ: number) {
     const b = this.boat!;
@@ -207,31 +235,32 @@ export class Visitors {
     const surface = (x: number, z: number) => this.water.surfaceAt(x, z, time, f.swell);
     const out = f.visitors > 0.5;
 
-    // ---------- stand-up paddlers: scattered over the lagoon, paddling gently, hardly moving ----------
-    for (const p of this.paddlers) {
-      if (!p.on || p.z > f.boatZ + 25) {
-        p.on = false;
-        p.obj.visible = false;
-        if (!out) continue;
-        // a new one far ahead in the haze – small at first, bigger as the boat comes closer, until it
-        // rows past (at the start of the game they are spread over the whole stretch); mostly in the
-        // lagoon towards the beach, now and then on the sea side, never in the rowing lane
-        p.z = f.boatZ - (this.placed ? rnd(260, 450) : rnd(40, 450));
-        p.x = Math.random() < 0.7 ? rnd(9, beachX(p.z) - 4) : -rnd(10, 26);
-        p.heading = rnd(0, Math.PI * 2);
-        p.speed = rnd(0.1, 0.25);
-        // the first ones are simply there when the scene appears (like the palms); later ones fade in far out
-        p.fade = this.placed ? 0 : 1;
-        for (const m of p.mats) { m.transparent = p.fade < 1; m.opacity = p.fade; m.needsUpdate = true; }
-        p.on = true;
-        p.obj.visible = true;
+    // ---------- stand-up paddlers: one at a time, now and then ----------
+    if (out && !this.leftBusy) {
+      this.paddlerNext -= dt;
+      const ready = this.paddlers.filter((p) => p.times > 0);
+      if (this.paddlerNext <= 0 && ready.length) {
+        // the woman and the man take turns
+        const p = ready.find((q) => this.paddlers.indexOf(q) !== this.lastPaddler) ?? ready[0];
+        this.lastPaddler = this.paddlers.indexOf(p);
+        this.launchPaddler(p, f.boatZ);
+        this.paddlerNext = rnd(PADDLER_GAP[0], PADDLER_GAP[1]);
       }
-      if (p.fade < 1) {
-        p.fade = Math.min(1, p.fade + dt / FADE_IN);
+    }
+    for (const p of this.paddlers) {
+      if (!p.on) continue;
+      if (p.z > f.boatZ + 25) { p.on = false; p.obj.visible = false; continue; }
+      // the clouds gather: one still far out heads for the beach – it fades away in the haze (and
+      // keeps its turn for the evening)
+      if (!out && !p.leaving && p.z < f.boatZ - 120) { p.leaving = true; p.times++; }
+      const fade = p.leaving ? Math.max(0, p.fade - dt / FADE_IN) : Math.min(1, p.fade + dt / FADE_IN);
+      if (fade !== p.fade) {
+        p.fade = fade;
         const see = p.fade < 1;
         // (transparent switches the shader variant: recompile only when it changes)
         for (const m of p.mats) { if (m.transparent !== see) { m.transparent = see; m.needsUpdate = true; } m.opacity = p.fade; }
       }
+      if (p.leaving && p.fade <= 0) { p.on = false; p.obj.visible = false; continue; }
       // the stroke (baked: both hands on the paddle, the blade in far ahead, pulled back along the
       // board to the feet, out, and forward again above the water)
       const before = p.stroke;
@@ -244,8 +273,7 @@ export class Visitors {
       p.heading += Math.sin(time * 0.12 + p.x) * dt * 0.04 - p.side * surge * dt * 0.03;
       p.x += Math.sin(p.heading) * p.speed * (0.4 + surge) * dt;
       p.z += Math.cos(p.heading) * p.speed * (0.4 + surge) * dt;
-      if (p.x > 0) p.x = Math.max(8, Math.min(beachX(p.z) - 3, p.x));
-      else p.x = Math.min(-8, p.x);
+      p.x = Math.max(PADDLER_X[0] - 3, Math.min(PADDLER_X[1] + 2, p.x));
       p.obj.position.set(p.x, surface(p.x, p.z) - 0.06 + Math.sin(time * 1.9 + p.x) * 0.02, p.z);
       p.obj.rotation.set(Math.sin(time * 1.3 + p.z) * 0.02, p.heading, Math.sin(time * 1.1 + p.x) * 0.03 + p.side * 0.02);
       if (p.blade && p.fade > 0.5 && ((before < BLADE_IN && k >= BLADE_IN) || (before < BLADE_OUT && k >= BLADE_OUT))) {
@@ -256,8 +284,6 @@ export class Visitors {
         if (k < 0.3) this.host.effects.bladeSplash(blade, 0.55); else this.host.effects.puddle(blade);
       }
     }
-
-    this.placed = true;
 
     // ---------- now and then a speedboat with a water-skier, or a surfer ----------
     if (out) {
