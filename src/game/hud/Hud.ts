@@ -27,6 +27,13 @@ function setHtml(el: HTMLElement, html: string) { if (el.dataset.html !== html) 
 
 const KIND_LABEL: Record<Segment['kind'], string> = { steady: 'Steady', ramp: 'Build', hard: 'Hard', easy: 'Easy', peak: 'All out' };
 
+const targetKey = (s: Segment) => `${formatPace(s.pace.target)}|${s.spm.target}`;
+
+/** Segments whose split or stroke-rate target differs from the one before – a segment cut only at a story phase is not a change. */
+function tempoChanges(w: Workout): Segment[] {
+  return w.segments.filter((s, i) => i === 0 || targetKey(s) !== targetKey(w.segments[i - 1]));
+}
+
 /** DOM overlay on top of the 3D scene. Large digits – the tablet is 1–1.5 m away. */
 export class Hud {
   readonly el: HTMLElement;
@@ -107,11 +114,16 @@ export class Hud {
     this.captionTimer = setTimeout(() => el.classList.remove('show'), seconds * 1000);
   }
 
-  private buildProgress(w: Workout, level: Level) {
-    const spans = phaseSpans(w);
+  /** Start times of every tempo change (split or stroke-rate target), the same rule that triggers the big announcement. */
+  private tempoStarts: number[] = [];
+
+  private buildProgress(w: Workout) {
+    const changes = tempoChanges(w);
+    this.tempoStarts = changes.map((s) => s.start);
+    const dense = changes.length > 12;
     this.q('progress').innerHTML =
       `<div class="prog-track"><i class="prog-fill" data-h="progFill"></i>` +
-      spans.map((p, i) => `<div class="prog-node" data-phase="${p.phase}" style="left:${(p.start / w.duration) * 100}%" title="${level.phases[p.phase].name}">${i + 1}</div>`).join('') +
+      changes.map((s, i) => `<div class="prog-node${dense ? ' dot' : ''}" data-tempo style="left:${(s.start / w.duration) * 100}%" title="${KIND_LABEL[s.kind]} · ${formatPace(s.pace.target)} /500 m · ${s.spm.target} spm">${dense ? '' : i + 1}</div>`).join('') +
       `<div class="prog-node finish" style="left:100%">🏁</div></div>`;
     this.builtFor = w;
   }
@@ -134,9 +146,9 @@ export class Hud {
   get announcing() { return this.q('target').classList.contains('show'); }
 
   update(s: HudState) {
-    if (this.builtFor !== s.workout) this.buildProgress(s.workout, s.level);
+    if (this.builtFor !== s.workout) this.buildProgress(s.workout);
     // Announce when the target split (band centre) or stroke rate changes – also once at the start
-    const key = `${formatPace(s.segment.pace.target)}|${s.segment.spm.target}`;
+    const key = targetKey(s.segment);
     if (key !== this.targetKey) {
       const first = this.targetKey == null;
       this.targetKey = key;
@@ -148,9 +160,11 @@ export class Hud {
     setText(this.q('level'), s.level.title);
     setText(this.q('phase'), `Phase ${pi + 1}/${spans.length} – ${s.level.phases[s.segment.phase].name}`);
     this.q('progFill').style.width = `${Math.min(100, (s.t / s.workout.duration) * 100)}%`;
-    this.el.querySelectorAll<HTMLElement>('.prog-node[data-phase]').forEach((n, i) => {
-      n.classList.toggle('done', i < pi);
-      n.classList.toggle('current', i === pi);
+    let ti = -1;
+    while (ti + 1 < this.tempoStarts.length && this.tempoStarts[ti + 1] <= s.t) ti++;
+    this.el.querySelectorAll<HTMLElement>('.prog-node[data-tempo]').forEach((n, i) => {
+      n.classList.toggle('done', i < ti);
+      n.classList.toggle('current', i === ti);
     });
     setText(this.q('timer'), `${formatDuration(s.t)} / ${formatDuration(s.workout.duration)}`);
 
