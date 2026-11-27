@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from '../workout/workout';
-import { mergeTrainings, newTrainingId, parseTraining, sortTrainings, type TrainingRecord } from './history';
+import { mergeTrainings, newTrainingId, parseDeletedFile, parseTraining, sortTrainings, type TrainingRecord } from './history';
 
 const rec = (id: string, startedAt: string, distance = 1000): TrainingRecord => ({
   v: 1, id, startedAt, finishedAt: startedAt, level: { id: 'iceland-volcano-run', title: 'Iceland Volcano Run' }, mode: 'buildup',
@@ -34,5 +34,11 @@ describe('training history', () => {
     expect(parseTraining({ updatedAt: 'x', workout: {} })).toBeNull();   // the settings file
     expect(parseTraining(null)).toBeNull();
     expect(parseTraining({ ...rec('a', '2026-11-01T10:00:00Z'), v: 2 })).toBeNull();
+  });
+
+  it('reads the list of deleted trainings and nothing else', () => {
+    expect(parseDeletedFile({ v: 1, ids: ['a', 3, 'b'] })).toEqual(['a', 'b']);
+    expect(parseDeletedFile({ v: 1, trainings: [] })).toEqual([]);   // the custom trainings file
+    expect(parseDeletedFile(null)).toEqual([]);
   });
 });

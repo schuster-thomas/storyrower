@@ -47,6 +47,19 @@ export function mergeTrainings(a: TrainingRecord[], b: TrainingRecord[]): Traini
   return sortTrainings([...byId.values()]);
 }
 
+/**
+ * The ids of deleted trainings, kept in Drive as deleted-trainings.json: a device that still has
+ * a deleted training removes it on its next sync instead of uploading it again.
+ */
+export interface DeletedTrainingsFile { v: 1; ids: string[] }
+
+/** Accepts what Drive gave us; an empty list when it is not a deleted-trainings file. */
+export function parseDeletedFile(json: unknown): string[] {
+  const f = json as Partial<DeletedTrainingsFile> | null;
+  if (!f || f.v !== 1 || !Array.isArray(f.ids)) return [];
+  return f.ids.filter((id): id is string => typeof id === 'string');
+}
+
 /** Accepts what a file or Drive gave us; null when it is not a training record. */
 export function parseTraining(json: unknown): TrainingRecord | null {
   const r = json as Partial<TrainingRecord> | null;

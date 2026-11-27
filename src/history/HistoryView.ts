@@ -9,7 +9,7 @@ import { ICON_BACK, LOGO, MODE_LABELS } from '../ui/icons';
 import { cleanSettings, customDuration, type PhaseId, type WorkoutSettings } from '../workout/workout';
 import historyCard from '../assets/ui/history-card.svg';
 import { getCustom, saveCustom } from '../workout/customStore';
-import { getTraining, listTrainings, onHistoryChanged, type StoredTraining } from './store';
+import { deleteTraining, getTraining, listTrainings, onHistoryChanged, type StoredTraining } from './store';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const dateLine = (iso: string) => new Date(iso).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -121,6 +121,7 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
           ${level ? `<button class="btn-navy" data-act="again">Row again with these settings</button>` : ''}
           <span class="muted-line">${r.driveId ? 'Saved in Google Drive' : 'Saved on this device only'}</span>
           ${!r.driveId && drive.configured ? `<button class="hd-upload" data-act="upload">${drive.signedIn ? 'Upload to Google Drive' : 'Sign in with Google to upload'}</button>` : ''}
+          <button class="hd-delete" data-act="delete">Delete training</button>
         </div>
       </section>`;
     if (r.points.length > 1) {
@@ -132,6 +133,14 @@ export function mountHistory(root: HTMLElement, id: string | null): () => void {
       if (c && !getCustom(c.id)) saveCustom(c);
       saveSettings(cleanSettings(r.settings));
       location.hash = `#/play/${r.level.id}`;
+    });
+    body.querySelector<HTMLButtonElement>('[data-act="delete"]')?.addEventListener('click', async (e) => {
+      const where = r.driveId || drive.signedIn ? ' This removes it on this device, in Google Drive and on your other devices.' : '';
+      if (!confirm(`Delete this training (${dateLine(r.startedAt)}, ${r.level.title})?${where}`)) return;
+      (e.currentTarget as HTMLButtonElement).disabled = true;
+      try { await deleteTraining(r.id); } catch { alert('Could not delete this training.'); return; }
+      void drive.trainingDeleted();
+      location.hash = '#/history';
     });
   }
 

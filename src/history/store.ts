@@ -57,3 +57,37 @@ export async function putTrainings(list: StoredTraining[]): Promise<void> {
   for (const r of list) await putTraining(r, false);
   if (list.length) changed();
 }
+
+/**
+ * Deleted trainings, remembered on this device (localStorage, ids only) until the next Drive sync
+ * has trashed their files and told the other devices – and kept after that, so a copy that turns
+ * up again later (an old device, a restored file) is not brought back.
+ */
+const DELETED_KEY = 'storyrower.deletedTrainings';
+
+export function deletedTrainingIds(): Set<string> {
+  try {
+    const v = JSON.parse(localStorage.getItem(DELETED_KEY) ?? '[]') as unknown;
+    return new Set(Array.isArray(v) ? v.filter((id): id is string => typeof id === 'string') : []);
+  } catch { return new Set(); }
+}
+
+export function rememberDeleted(ids: Iterable<string>) {
+  const all = deletedTrainingIds();
+  const before = all.size;
+  for (const id of ids) all.add(id);
+  if (all.size === before) return;
+  try { localStorage.setItem(DELETED_KEY, JSON.stringify([...all])); } catch { /* ignore */ }
+}
+
+/** Remove trainings from this device only (a sync found them deleted elsewhere). */
+export async function removeTrainings(ids: string[], notify = true): Promise<void> {
+  for (const id of ids) await tx('readwrite', (s) => s.delete(id));
+  if (notify && ids.length) changed();
+}
+
+/** Delete a training here; the next Drive sync trashes its file and removes it on the other devices. */
+export async function deleteTraining(id: string): Promise<void> {
+  rememberDeleted([id]);
+  await removeTrainings([id]);
+}

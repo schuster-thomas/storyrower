@@ -1,14 +1,16 @@
 import { applySettingsSnapshot, onSettingsChanged, settingsSnapshot, type SettingsSnapshot } from '../app/settings';
-import { parseTraining, type TrainingRecord } from '../history/history';
-import { listTrainings, notifyHistoryChanged, putTraining, putTrainings, type StoredTraining } from '../history/store';
+import { parseDeletedFile, parseTraining, type DeletedTrainingsFile, type TrainingRecord } from '../history/history';
+import {
+  deletedTrainingIds, listTrainings, notifyHistoryChanged, putTraining, putTrainings, rememberDeleted, removeTrainings, type StoredTraining,
+} from '../history/store';
 import { applyCustomFile, customFile, mergeCustomFiles, onCustomEdited, parseCustomFile, sameCustomFiles } from '../workout/customStore';
 import { applyOutfit, onOutfitEdited, outfitFile, parseOutfit } from '../wardrobe/store';
 import { DRIVE_FOLDER, DRIVE_SCOPES, GOOGLE_CLIENT_ID, TOKEN_SERVICE } from './config';
 
 /**
  * Google Drive sync: every training as one JSON file, the custom trainings together in
- * custom-trainings.json and the latest settings as settings.json in a
- * "StoryRower" folder of the user's Drive. An access token lasts about an hour.
+ * custom-trainings.json, the ids of deleted trainings in deleted-trainings.json and the latest
+ * settings as settings.json in a "StoryRower" folder of the user's Drive. An access token lasts about an hour.
  *
  * With the token service (TOKEN_SERVICE): the page goes to Google once (same tab), comes back with
  * a code, and the service swaps it for an access token plus a refresh token. The app then renews
@@ -372,6 +374,15 @@ class DriveSync {
     return this._status.pending === 0 ? 'uploaded' : 'waiting';
   }
 
+  /** A training was deleted here: bin its Drive file now if possible (after a sync that is running). */
+  async trainingDeleted(): Promise<void> {
+    await this.refreshPending();
+    if (!this.configured || !this.linked) return;
+    if (!this.usable()) { this.wantSync = true; this.set({ state: 'needs-login' }); return; }
+    await this.running?.catch(() => {});
+    await this.sync();
+  }
+
   /** Upload what is missing in Drive, download what is missing here, and settle the settings. */
   sync(): Promise<void> {
     this.running ??= this.doSync().finally(() => { this.running = null; });
@@ -393,18 +404,22 @@ class DriveSync {
       let settingsFile: { id: string } | null = null;
       let outfitRef: { id: string } | null = null;
       let customFileRef: { id: string } | null = null;
+      let deletedRef: { id: string } | null = null;
       for (const f of files) {
         if (f.appProperties?.kind === 'training' && f.appProperties.trainingId) remote.set(f.appProperties.trainingId, f.id);
         if (f.appProperties?.kind === 'rower-outfit') outfitRef = f;
         if (f.appProperties?.kind === 'settings') settingsFile = f;
         if (f.appProperties?.kind === 'custom-trainings') customFileRef = f;
+        if (f.appProperties?.kind === 'deleted-trainings') deletedRef = f;
       }
+      await this.syncDeleted(folder, deletedRef, remote);
       const local = await listTrainings();
       const localIds = new Set(local.map((r) => r.id));
       // up: trainings rowed here (or while signed out)
       for (const r of local) {
         const fileId = remote.get(r.id);
         if (fileId) { if (r.driveId !== fileId) await putTraining({ ...r, driveId: fileId }, false); continue; }
+        if (deletedTrainingIds().has(r.id)) continue;   // deleted while this sync ran: the next one handles it
         const id = await this.upload({ name: fileName(r), parents: [folder], appProperties: { kind: 'training', trainingId: r.id } }, stripLocal(r));
         await putTraining({ ...r, driveId: id }, false);
       }
@@ -439,6 +454,44 @@ class DriveSync {
       }
       this.set({ state: 'error', error: (e as Error).message });
     }
+  }
+
+  /**
+   * Deleted trainings: deleted in the app on any device (deleted-trainings.json and this device's
+   * list) or put in the bin in Drive by hand. Their files go to the Drive bin, the copies here are
+   * removed, and they drop out of `remote` so the rest of the sync neither uploads nor fetches them.
+   */
+  private async syncDeleted(folder: string, file: { id: string } | null, remote: Map<string, string>) {
+    const listed = file ? parseDeletedFile(await (await this.api(`/drive/v3/files/${file.id}?alt=media`)).json()) : [];
+    rememberDeleted([...listed, ...await this.binnedTrainings(folder)]);
+    const gone = deletedTrainingIds();
+    if (!gone.size) return;
+    const known = new Set(listed);
+    if ([...gone].some((id) => !known.has(id))) {
+      const data: DeletedTrainingsFile = { v: 1, ids: [...gone] };
+      if (file) await this.overwrite(file.id, data);
+      else await this.upload({ name: 'deleted-trainings.json', parents: [folder], appProperties: { kind: 'deleted-trainings' } }, data);
+    }
+    for (const id of gone) {
+      const fid = remote.get(id);
+      if (!fid) continue;
+      await this.trash(fid);
+      remote.delete(id);
+    }
+    await removeTrainings((await listTrainings()).filter((r) => gone.has(r.id)).map((r) => r.id), false);
+  }
+
+  /** Training ids of the files in the Drive bin that came from this folder (deleted there by hand). */
+  private async binnedTrainings(folder: string): Promise<string[]> {
+    const q = encodeURIComponent(`'${folder}' in parents and trashed=true`);
+    const ids: string[] = [];
+    let page: string | undefined;
+    do {
+      const r = (await (await this.api(`/drive/v3/files?q=${q}&fields=nextPageToken,files(appProperties)&pageSize=1000${page ? `&pageToken=${page}` : ''}`)).json()) as { files: { appProperties?: Record<string, string> }[]; nextPageToken?: string };
+      for (const f of r.files) if (f.appProperties?.kind === 'training' && f.appProperties.trainingId) ids.push(f.appProperties.trainingId);
+      page = r.nextPageToken;
+    } while (page);
+    return ids;
   }
 
   private async syncOutfit(folder: string, file: { id: string } | null) {
@@ -550,6 +603,11 @@ class DriveSync {
 
   private async overwrite(fileId: string, data: unknown) {
     await this.api(`/upload/drive/v3/files/${fileId}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  }
+
+  /** Into the Drive bin (Google empties it after 30 days; until then it can be restored there). */
+  private async trash(fileId: string) {
+    await this.api(`/drive/v3/files/${fileId}?fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) });
   }
 }
 
